@@ -4,149 +4,108 @@ import '../../../../core/theme/app_theme.dart';
 import 'widgets/current_focus_card.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
-import 'widgets/task_list_tile.dart';
 import '../../focus/presentation/focus_screen.dart';
-import '../../timeline/presentation/pages/daily_timeline_page.dart';
-import 'widgets/create_new_sheet.dart';
 import '../../notes/data/notes_provider.dart';
 import '../../notes/domain/models/note.dart';
 
-class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+/// HomeScreen content without the bottom navigation bar (for use in MainShell)
+class HomeScreenContent extends ConsumerWidget {
+  const HomeScreenContent({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'WEDNESDAY, OCT 24',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
-                      ),
-                      Text(
-                        'Synq.',
-                        style: Theme.of(context).textTheme.displayLarge,
-                      ),
-                    ],
-                  ),
-                  const CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.grey, // Placeholder for profile image
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // Current Focus Section (Full Width)
-              SizedBox(
-                height: 200,
-                child: GestureDetector(
-                  onTap: () => Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (_) => const FocusScreen()),
-                  ),
-                  child: const CurrentFocusCard(
-                    title: 'Q3 Marketing Deck',
-                    description: 'Finalize the slide sequence and integrate the new revenue projections.',
-                    progress: 0.65,
-                    timeRemaining: '45m left',
-                    timeRange: '10:00 - 12:00',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Grid Row (Next Up + Stats)
-              SizedBox(
-                height: 160,
-                child: Row(
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(
-                      child: NextUpCard(
-                        title: 'Dentist',
-                        subtitle: 'Dr. Smith',
-                        time: '14:30',
-                      ),
+                    Text(
+                      _formatDateHeader(),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: StatsCard(
-                        count: 4,
-                        label: 'Tasks Completed',
-                      ),
+                    Text(
+                      'Synq.',
+                      style: Theme.of(context).textTheme.displayLarge,
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 32),
-
-              // YOUR TASKS Section - dynamic from provider
-              _buildYourTasksSection(context, ref),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadow.withOpacity(0.05),
-              blurRadius: 20, // Soft shadow
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            IconButton(icon: const Icon(Icons.grid_view_rounded, color: Colors.black), onPressed: () {}),
-            IconButton(
-              icon: const Icon(Icons.calendar_month, color: Colors.grey),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DailyTimelinePage()),
-              ),
-            ),
-            
-            // FAB replacement in dock
-            GestureDetector(
-              onTap: () => showCreateNewSheet(context),
-              child: Container(
-                width: 50,
-                height: 50,
-                decoration: const BoxDecoration(
-                  color: Colors.black, // Dark FAB
-                  shape: BoxShape.circle,
+                const CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.grey,
+                  child: Icon(Icons.person, color: Colors.white),
                 ),
-                child: const Icon(Icons.add, color: Colors.white),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // Current Focus Section
+            SizedBox(
+              height: 200,
+              child: GestureDetector(
+                onTap: () => Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (_) => const FocusScreen()),
+                ),
+                child: const CurrentFocusCard(
+                  title: 'Q3 Marketing Deck',
+                  description: 'Finalize the slide sequence and integrate the new revenue projections.',
+                  progress: 0.65,
+                  timeRemaining: '45m left',
+                  timeRange: '10:00 - 12:00',
+                ),
               ),
             ),
-            
-            IconButton(icon: const Icon(Icons.search, color: Colors.grey), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.settings, color: Colors.grey), onPressed: () {}),
+            const SizedBox(height: 16),
+
+            // Grid Row (Next Up + Stats)
+            SizedBox(
+              height: 160,
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: NextUpCard(
+                      title: 'Dentist',
+                      subtitle: 'Dr. Smith',
+                      time: '14:30',
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: StatsCard(
+                      count: 4,
+                      label: 'Tasks Completed',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // YOUR TASKS Section - dynamic from provider
+            _buildYourTasksSection(context, ref),
           ],
         ),
       ),
     );
+  }
+
+  String _formatDateHeader() {
+    final now = DateTime.now();
+    const weekdays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
   }
 
   Widget _buildYourTasksSection(BuildContext context, WidgetRef ref) {
@@ -155,7 +114,7 @@ class HomeScreen extends ConsumerWidget {
     final notesOnly = notes.where((n) => !n.isTask).toList();
 
     if (notes.isEmpty) {
-      return const SizedBox.shrink();
+      return _buildEmptyState(context);
     }
 
     return Column(
@@ -201,6 +160,35 @@ class HomeScreen extends ConsumerWidget {
           ...notesOnly.map((note) => _buildNoteItem(context, ref, note)),
         ],
       ],
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.task_alt, size: 48, color: AppColors.textSecondary.withAlpha(100)),
+          const SizedBox(height: 16),
+          Text(
+            'No tasks yet',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tap + to create your first task',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary.withAlpha(150),
+                ),
+          ),
+        ],
+      ),
     );
   }
 

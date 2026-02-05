@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/theme/app_theme.dart';
-import 'core/widgets/bento_card.dart';
-import 'features/tasks/domain/models/task_repository.dart';
 import 'features/tasks/data/hive_task_repository.dart';
 import 'features/tasks/domain/models/task.dart';
-import 'features/home/presentation/home_screen.dart';
+import 'features/shell/presentation/main_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +30,7 @@ class SynqApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
-      home: const HomeScreen(),
+      home: const MainShell(),
     );
   }
 }
