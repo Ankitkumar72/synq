@@ -30,7 +30,7 @@ class SynqApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
-      home: const MainShell(),
+      home: MainShell(),
     );
   }
 }

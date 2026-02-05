@@ -10,25 +10,31 @@ final currentNavIndexProvider = StateProvider<int>((ref) => 0);
 
 /// Main shell that provides persistent bottom navigation across all screens
 class MainShell extends ConsumerWidget {
-  const MainShell({super.key});
+  MainShell({super.key});
+
+  // Keys for each tab's navigator
+  final _navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(currentNavIndexProvider);
 
-    // Define the screens for each tab
-    final screens = [
-      const HomeScreenContent(),       // Index 0: Home/Dashboard
-      const DailyTimelineContent(),    // Index 1: Calendar/Timeline
-      const PlaceholderScreen(title: 'Search'),   // Index 2: Placeholder for search
-      const PlaceholderScreen(title: 'Settings'), // Index 3: Placeholder for settings
-    ];
-
     return Scaffold(
       backgroundColor: AppColors.background,
+      // Use IndexedStack with independent Navigators for each tab
       body: IndexedStack(
         index: currentIndex,
-        children: screens,
+        children: [
+          _buildTabNavigator(0, const HomeScreenContent()),
+          _buildTabNavigator(1, const DailyTimelineContent()),
+          _buildTabNavigator(2, const PlaceholderScreen(title: 'Search')),
+          _buildTabNavigator(3, const PlaceholderScreen(title: 'Settings')),
+        ],
       ),
       bottomNavigationBar: Container(
         height: 80,
@@ -37,7 +43,7 @@ class MainShell extends ConsumerWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow.withAlpha(13), // 0.05 opacity = 13/255
+              color: AppColors.shadow.withAlpha(13),
               blurRadius: 20,
             ),
           ],
@@ -45,23 +51,8 @@ class MainShell extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Home/Dashboard
-            IconButton(
-              icon: Icon(
-                Icons.grid_view_rounded,
-                color: currentIndex == 0 ? Colors.black : Colors.grey,
-              ),
-              onPressed: () => ref.read(currentNavIndexProvider.notifier).state = 0,
-            ),
-            
-            // Calendar/Timeline
-            IconButton(
-              icon: Icon(
-                Icons.calendar_month,
-                color: currentIndex == 1 ? Colors.black : Colors.grey,
-              ),
-              onPressed: () => ref.read(currentNavIndexProvider.notifier).state = 1,
-            ),
+            _buildNavButton(ref, currentIndex, 0, Icons.grid_view_rounded),
+            _buildNavButton(ref, currentIndex, 1, Icons.calendar_month),
             
             // FAB - Create New
             GestureDetector(
@@ -77,26 +68,39 @@ class MainShell extends ConsumerWidget {
               ),
             ),
             
-            // Search
-            IconButton(
-              icon: Icon(
-                Icons.search,
-                color: currentIndex == 2 ? Colors.black : Colors.grey,
-              ),
-              onPressed: () => ref.read(currentNavIndexProvider.notifier).state = 2,
-            ),
-            
-            // Settings
-            IconButton(
-              icon: Icon(
-                Icons.settings,
-                color: currentIndex == 3 ? Colors.black : Colors.grey,
-              ),
-              onPressed: () => ref.read(currentNavIndexProvider.notifier).state = 3,
-            ),
+            _buildNavButton(ref, currentIndex, 2, Icons.search),
+            _buildNavButton(ref, currentIndex, 3, Icons.settings),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTabNavigator(int index, Widget child) {
+    return Navigator(
+      key: _navigatorKeys[index],
+      onGenerateRoute: (routeSettings) {
+        return MaterialPageRoute(
+          builder: (context) => child,
+        );
+      },
+    );
+  }
+
+  Widget _buildNavButton(WidgetRef ref, int currentIndex, int index, IconData icon) {
+    return IconButton(
+      icon: Icon(
+        icon,
+        color: currentIndex == index ? Colors.black : Colors.grey,
+      ),
+      onPressed: () {
+        if (currentIndex == index) {
+          // If tapping active tab, pop to root
+          _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+        } else {
+          ref.read(currentNavIndexProvider.notifier).state = index;
+        }
+      },
     );
   }
 }

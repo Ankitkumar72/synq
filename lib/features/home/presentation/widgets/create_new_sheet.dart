@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../notes/domain/models/note.dart';
 import '../../../notes/data/notes_provider.dart';
+import '../../../agenda/presentation/create_meeting_screen.dart';
+import '../../../agenda/presentation/meeting_agenda_screen.dart';
+import '../../../agenda/data/meetings_provider.dart';
 
 /// A bottom sheet for creating new tasks or notes.
 class CreateNewSheet extends ConsumerStatefulWidget {
@@ -37,8 +40,10 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-      child: SingleChildScrollView(
-        child: Column(
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -94,11 +99,17 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                     controller: _taskController,
                     decoration: const InputDecoration(
                       hintText: 'What needs to be done?',
+                      hintStyle: TextStyle(color: Colors.grey),
                       border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      filled: false,
                       isDense: true,
-                      contentPadding: EdgeInsets.zero,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
                     ),
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    style: const TextStyle(color: Colors.black87, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
                   // Tags Row - Interactive
@@ -149,33 +160,102 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _noteTitleController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Title (optional)',
-                      hintStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppColors.textSecondary.withAlpha(150),
-                          ),
+                      hintStyle: TextStyle(color: Colors.grey),
                       border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      filled: false,
                       isDense: true,
-                      contentPadding: EdgeInsets.zero,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
                     ),
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: const TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _noteBodyController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Start typing your thoughts...',
-                      hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary.withAlpha(150),
-                          ),
+                      hintStyle: TextStyle(color: Colors.grey),
                       border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      filled: false,
                       isDense: true,
-                      contentPadding: EdgeInsets.zero,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
                     ),
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: const TextStyle(color: Colors.black87, fontSize: 16),
                     maxLines: 3,
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // NEW MEETING Card
+            GestureDetector(
+              onTap: () async {
+                Navigator.pop(context); // Close sheet first
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateMeetingScreen()),
+                );
+                if (result != null && context.mounted) {
+                  // Navigate to view the created meeting
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MeetingAgendaScreen(data: result)),
+                  );
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F4FF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF4C7BF3).withAlpha(50), width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4C7BF3).withAlpha(30),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.event_note, color: Color(0xFF4C7BF3), size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'NEW MEETING',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: const Color(0xFF4C7BF3),
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Create agenda with topics & participants',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[600],
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -239,7 +319,8 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildInteractiveChip(
