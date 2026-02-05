@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -177,6 +179,36 @@ class ProfileScreen extends StatelessWidget {
                   _buildSettingItem('Subscription'),
                   _buildSettingItem('Data Export'),
                   _buildSettingItem('Privacy'),
+                  const SizedBox(height: 16),
+                  
+                  // Logout Button
+                  Consumer(
+                    builder: (context, ref, _) {
+                      return GestureDetector(
+                        onTap: () {
+                           ref.read(authProvider.notifier).logout();
+                           Navigator.pop(context); // Close profile screen
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            children: [
+                              Icon(Icons.logout, color: Colors.red),
+                              SizedBox(width: 16),
+                              Text(
+                                'Log Out',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                  ),
                 ],
               ),
             ),
