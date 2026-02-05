@@ -18,7 +18,56 @@ class CreateNewSheet extends ConsumerStatefulWidget {
 class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
   NoteCategory _selectedCategory = NoteCategory.work;
   TaskPriority _selectedPriority = TaskPriority.medium;
-  bool _isDueTomorrow = false;
+  DateTime? _taskDueDate;
+  DateTime? _noteDate;
+  
+  Future<void> _pickDateTime(bool isTask) async {
+    final initialDate = DateTime.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: initialDate.subtract(const Duration(days: 365)),
+      lastDate: initialDate.add(const Duration(days: 365)),
+    );
+    
+    if (pickedDate != null && mounted) {
+      final pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(initialDate),
+      );
+      
+      if (pickedTime != null) {
+        final dateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+        
+        setState(() {
+          if (isTask) {
+            _taskDueDate = dateTime;
+          } else {
+            _noteDate = dateTime;
+          }
+        });
+      }
+    }
+  }
+  
+  String _formatDateTime(DateTime? dt) {
+    if (dt == null) return 'Set Date/Time';
+    final now = DateTime.now();
+    final isToday = dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    final isTomorrow = dt.year == now.year && dt.month == now.month && dt.day == now.day + 1;
+    
+    final timeStr = "${dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour)}:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}";
+    
+    if (isToday) return 'Today, $timeStr';
+    if (isTomorrow) return 'Tomorrow, $timeStr';
+    return '${dt.day}/${dt.month}, $timeStr';
+  }
   
   final _taskController = TextEditingController();
   final _noteTitleController = TextEditingController();
@@ -42,8 +91,7 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
       child: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: SingleChildScrollView(
-          child: Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -60,265 +108,278 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
             ),
             const SizedBox(height: 24),
 
-            // Title
-            Text(
-              'Create New',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 24),
-
-            // NEW TASK Card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primary.withAlpha(50), width: 1),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.check_circle, color: AppColors.primary, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'NEW TASK',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _taskController,
-                    decoration: const InputDecoration(
-                      hintText: 'What needs to be done?',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      filled: false,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    style: const TextStyle(color: Colors.black87, fontSize: 16),
-                  ),
-                  const SizedBox(height: 16),
-                  // Tags Row - Interactive
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildInteractiveChip(
-                        context,
-                        icon: Icons.calendar_today,
-                        label: _isDueTomorrow ? 'Tomorrow' : 'Today',
-                        isSelected: _isDueTomorrow,
-                        onTap: () => setState(() => _isDueTomorrow = !_isDueTomorrow),
-                      ),
-                      _buildPriorityChip(context),
-                      _buildCategoryChip(context),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // NEW NOTE Card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.description_outlined, color: AppColors.textSecondary, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'NEW NOTE',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _noteTitleController,
-                    decoration: const InputDecoration(
-                      hintText: 'Title (optional)',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      filled: false,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    style: const TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _noteBodyController,
-                    decoration: const InputDecoration(
-                      hintText: 'Start typing your thoughts...',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      filled: false,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    style: const TextStyle(color: Colors.black87, fontSize: 16),
-                    maxLines: 3,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // NEW MEETING Card
-            GestureDetector(
-              onTap: () async {
-                Navigator.pop(context); // Close sheet first
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CreateMeetingScreen()),
-                );
-                if (result != null && context.mounted) {
-                  // Navigate to view the created meeting
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => MeetingAgendaScreen(data: result)),
-                  );
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F4FF),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF4C7BF3).withAlpha(50), width: 1),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4C7BF3).withAlpha(30),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.event_note, color: Color(0xFF4C7BF3), size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'NEW MEETING',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: const Color(0xFF4C7BF3),
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Create agenda with topics & participants',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey[600],
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Category Selection
+            // Title Row
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: _buildCategoryTile(
-                    context,
-                    icon: Icons.work_outline,
-                    label: 'WORK TASK',
-                    value: NoteCategory.work,
-                  ),
+                Text(
+                  'Create New',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildCategoryTile(
-                    context,
-                    icon: Icons.person_outline,
-                    label: 'PERSONAL',
-                    value: NoteCategory.personal,
+                ElevatedButton(
+                  onPressed: _handleSave,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 0,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildCategoryTile(
-                    context,
-                    icon: Icons.lightbulb_outline,
-                    label: 'IDEA',
-                    value: NoteCategory.idea,
-                  ),
+                  child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
             const SizedBox(height: 24),
 
-            // Save Button
-            Center(
-              child: ElevatedButton(
-                onPressed: _handleSave,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentPurple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
+            // Scrollable Content
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward, size: 18),
+                    // NEW TASK Card
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.primary.withAlpha(50), width: 1),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'NEW TASK',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _taskController,
+                            decoration: const InputDecoration(
+                              hintText: 'What needs to be done?',
+                              hintStyle: TextStyle(color: Colors.grey),
+                              border: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              filled: false,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(vertical: 8),
+                            ),
+                            style: const TextStyle(color: Colors.black87, fontSize: 16),
+                          ),
+                          const SizedBox(height: 16),
+                          // Tags Row - Interactive
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _buildInteractiveChip(
+                                context,
+                                icon: Icons.calendar_today,
+                                label: _formatDateTime(_taskDueDate),
+                                isSelected: _taskDueDate != null,
+                                onTap: () => _pickDateTime(true),
+                              ),
+                              _buildPriorityChip(context),
+                              _buildCategoryChip(context),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // NEW NOTE Card
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.description_outlined, color: AppColors.textSecondary, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'NEW NOTE',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _noteTitleController,
+                            decoration: const InputDecoration(
+                              hintText: 'Title (optional)',
+                              hintStyle: TextStyle(color: Colors.grey),
+                              border: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              filled: false,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(vertical: 8),
+                            ),
+                            style: const TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _noteBodyController,
+                            decoration: const InputDecoration(
+                              hintText: 'Start typing your thoughts...',
+                              hintStyle: TextStyle(color: Colors.grey),
+                              border: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              filled: false,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(vertical: 8),
+                            ),
+                            style: const TextStyle(color: Colors.black87, fontSize: 16),
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 12),
+                          // Note Date Chip
+                          _buildInteractiveChip(
+                            context,
+                            icon: Icons.access_time,
+                            label: _formatDateTime(_noteDate),
+                            isSelected: _noteDate != null,
+                            onTap: () => _pickDateTime(false),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // NEW MEETING Card
+                    GestureDetector(
+                      onTap: () async {
+                        Navigator.pop(context); // Close sheet first
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CreateMeetingScreen()),
+                        );
+                        if (result != null && context.mounted) {
+                          // Navigate to view the created meeting
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => MeetingAgendaScreen(data: result)),
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F4FF),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFF4C7BF3).withAlpha(50), width: 1),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4C7BF3).withAlpha(30),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.event_note, color: Color(0xFF4C7BF3), size: 24),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'NEW MEETING',
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                          color: const Color(0xFF4C7BF3),
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1.2,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Create agenda with topics & participants',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: Colors.grey[600],
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Category Selection
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildCategoryTile(
+                            context,
+                            icon: Icons.work_outline,
+                            label: 'WORK TASK',
+                            value: NoteCategory.work,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildCategoryTile(
+                            context,
+                            icon: Icons.person_outline,
+                            label: 'PERSONAL',
+                            value: NoteCategory.personal,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildCategoryTile(
+                            context,
+                            icon: Icons.lightbulb_outline,
+                            label: 'IDEA',
+                            value: NoteCategory.idea,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
           ],
         ),
-      ),
     ),
   );
   }
@@ -495,9 +556,7 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
         title: taskText,
         category: _selectedCategory,
         createdAt: DateTime.now(),
-        dueDate: _isDueTomorrow 
-            ? DateTime.now().add(const Duration(days: 1)) 
-            : DateTime.now(),
+        dueDate: _taskDueDate ?? DateTime.now(),
         priority: _selectedPriority,
         isTask: true,
         tags: [_selectedCategory.name],
@@ -518,7 +577,7 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
         title: noteTitle.isEmpty ? 'Untitled Note' : noteTitle,
         body: noteBody,
         category: _selectedCategory,
-        createdAt: DateTime.now(),
+        createdAt: _noteDate ?? DateTime.now(),
         isTask: false,
         tags: [_selectedCategory.name],
       );
@@ -548,6 +607,7 @@ void showCreateNewSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (context) => const CreateNewSheet(),
   );
