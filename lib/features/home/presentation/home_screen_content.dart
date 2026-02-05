@@ -4,7 +4,6 @@ import '../../../../core/theme/app_theme.dart';
 import 'widgets/current_focus_card.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
-import '../../focus/presentation/focus_screen.dart';
 import '../../notes/data/notes_provider.dart';
 import '../../timeline/domain/models/timeline_event.dart';
 import '../../timeline/data/timeline_provider.dart';

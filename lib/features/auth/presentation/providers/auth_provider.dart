@@ -60,6 +60,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repository.signInWithGoogle();
+      // user cancelation returns null but doesn't throw, 
+      // success will trigger stream.
+      // If we are still here and loading is true, we might want to unset it
+      // but stream updates happen fast.
+      // If user cancels, we need to reset loading.
+      // However, repository method returns void.
+      // Implementing a small delay/check or just resetting loading if not authed?
+      // Actually, if repository returns without throwing, and stream fires, we are good.
+      // If repository returns without throwing because of cancel, stream won't fire.
+      // So we should reset loading state here.
+      if (!state.isAuthenticated) {
+         state = state.copyWith(isLoading: false);
+      }
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: _formatError(e.toString()));
+    }
+  }
+
   Future<void> signup(String name, String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -80,12 +102,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   String _formatError(String error) {
-    // Simple formatter to clean up Firebase exceptions
-    if (error.contains('user-not-found')) return 'No user found for that email.';
-    if (error.contains('wrong-password')) return 'Wrong password provided.';
-    if (error.contains('email-already-in-use')) return 'Email is already in use.';
-    if (error.contains('invalid-email')) return 'Invalid email address.';
+    // Better error messages
+    if (error.contains('user-not-found')) {
+      return 'Account not found. Please sign up first.';
+    }
+    if (error.contains('wrong-password') || error.contains('invalid-credential')) {
+      return 'Incorrect email or password.';
+    }
+    if (error.contains('email-already-in-use')) {
+      return 'This email is already linked to an account.';
+    }
+    if (error.contains('invalid-email')) {
+      return 'Please enter a valid email address.';
+    }
+    if (error.contains('weak-password')) {
+      return 'Password is too weak. Try a longer one.';
+    }
+    if (error.contains('network-request-failed')) {
+      return 'Network error. Check your connection.';
+    }
+    if (error.contains('dev.flutter.pigeon') || error.contains('channel-error')) {
+      return 'Please enter the details correctly.';
+    }
+    
+    // Fallback: clean up the detailed technical message
+    // e.g. "[firebase_auth/unknown] An unknown error occurred."
     final parts = error.split(']');
-    return parts.length > 1 ? parts[1].trim() : error;
+    return parts.length > 1 ? parts[1].trim() : 'Authentication failed. Please try again.'; // Generic fallback
   }
 }

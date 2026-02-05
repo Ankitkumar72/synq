@@ -260,17 +260,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24), // Reduced from 32
 
               // Social Buttons
               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(child: _buildSocialButton(Icons.g_mobiledata, 'Google')), // Placeholder icon
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildSocialButton(Icons.apple, 'Apple')),
+                  _buildSocialButton(
+                    Icons.g_mobiledata, 
+                    'Continue with Google',
+                    onTap: () => ref.read(authProvider.notifier).signInWithGoogle(),
+                    isFullWidth: true,
+                  ),
                 ],
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 24), // Reduced from 48
 
               // Toggle to Signup
               Row(
@@ -302,26 +306,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildSocialButton(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.black87), // In real app, use SVG/Image
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-        ],
+  Widget _buildSocialButton(IconData icon, String label, {VoidCallback? onTap, bool isFullWidth = false}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: isFullWidth ? double.infinity : null,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+             // Use a colored icon if possible, but IconData is monochromatic by default unless 
+             // we use specific widgets. For now, standard Icon is fine.
+             Icon(icon, size: 28),
+             const SizedBox(width: 12),
+             Text(
+               label,
+               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+             ),
+          ],
+        ),
       ),
     );
   }

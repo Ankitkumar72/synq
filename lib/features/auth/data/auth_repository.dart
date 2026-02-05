@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:google_sign_in/google_sign_in.dart' as google;
+
 class AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final google.GoogleSignIn _googleSignIn = google.GoogleSignIn();
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
   
@@ -12,6 +15,28 @@ class AuthRepository {
       email: email,
       password: password,
     );
+  }
+
+  Future<void> signInWithGoogle() async {
+    // 1. Trigger the authentication flow
+    final google.GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    
+    if (googleUser == null) {
+      // User canceled the sign-in
+      return;
+    }
+
+    // 2. Obtain the auth details from the request
+    final google.GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+    // 3. Create a new credential
+    final OAuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    // 4. Sign in to Firebase with the new credential
+    await _firebaseAuth.signInWithCredential(credential);
   }
 
   Future<void> signUp(String email, String password, {String? name}) async {
@@ -27,7 +52,10 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    await _firebaseAuth.signOut();
+    await Future.wait([
+      _firebaseAuth.signOut(),
+      _googleSignIn.signOut(),
+    ]);
   }
 
   // Not typically needed for Firebase (as state is handled via stream), but useful for snapshots
