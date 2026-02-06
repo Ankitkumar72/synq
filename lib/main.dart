@@ -46,7 +46,7 @@ class SynqApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
       home: authState.isLoading
-          ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+          ? Scaffold(backgroundColor: AppColors.background, body: const Center(child: CircularProgressIndicator()))
           : authState.isAuthenticated
               ? MainShell()
               : const LoginScreen(),

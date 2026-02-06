@@ -91,6 +91,12 @@ class AppTheme {
         selectionColor: Color(0x404B7BFF),
         selectionHandleColor: AppColors.primary,
       ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
     );
   }
 
