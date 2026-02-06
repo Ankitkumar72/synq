@@ -20,7 +20,8 @@ class CreateNewSheet extends ConsumerStatefulWidget {
 }
 
 class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
-  NoteCategory _selectedCategory = NoteCategory.work;
+  NoteCategory _selectedTaskCategory = NoteCategory.work;
+  NoteCategory _selectedNoteCategory = NoteCategory.work;
   TaskPriority _selectedPriority = TaskPriority.medium;
   DateTime? _taskDueDate;
   DateTime? _noteDate;
@@ -210,7 +211,7 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                                 onTap: () => _pickDateTime(true),
                               ),
                               _buildPriorityChip(context),
-                              _buildCategoryChip(context),
+                              _buildCategoryChip(context, isTask: true),
                             ],
                           ),
                         ],
@@ -284,6 +285,7 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
+                              _buildCategoryChip(context, isTask: false),
                               // Note Date Chip
                               _buildInteractiveChip(
                                 context,
@@ -416,39 +418,6 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Category Selection
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildCategoryTile(
-                            context,
-                            icon: Icons.work_outline,
-                            label: 'WORK TASK',
-                            value: NoteCategory.work,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildCategoryTile(
-                            context,
-                            icon: Icons.person_outline,
-                            label: 'PERSONAL',
-                            value: NoteCategory.personal,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildCategoryTile(
-                            context,
-                            icon: Icons.lightbulb_outline,
-                            label: 'IDEA',
-                            value: NoteCategory.idea,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -537,20 +506,28 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
     );
   }
 
-  Widget _buildCategoryChip(BuildContext context) {
+  Widget _buildCategoryChip(BuildContext context, {required bool isTask}) {
     final categoryLabels = {
       NoteCategory.work: 'Work',
       NoteCategory.personal: 'Personal',
       NoteCategory.idea: 'Idea',
     };
     
+    final currentCategory = isTask ? _selectedTaskCategory : _selectedNoteCategory;
+
     return GestureDetector(
       onTap: () {
         // Cycle through categories
         setState(() {
           final categories = NoteCategory.values;
-          final currentIndex = categories.indexOf(_selectedCategory);
-          _selectedCategory = categories[(currentIndex + 1) % categories.length];
+          final currentIndex = categories.indexOf(currentCategory);
+          final nextCategory = categories[(currentIndex + 1) % categories.length];
+          
+          if (isTask) {
+            _selectedTaskCategory = nextCategory;
+          } else {
+            _selectedNoteCategory = nextCategory;
+          }
         });
       },
       child: Container(
@@ -565,7 +542,7 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
             Icon(Icons.label_outline, size: 16, color: AppColors.textSecondary),
             const SizedBox(width: 6),
             Text(
-              categoryLabels[_selectedCategory]!,
+              categoryLabels[currentCategory]!,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -577,46 +554,7 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
     );
   }
 
-  Widget _buildCategoryTile(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required NoteCategory value,
-  }) {
-    final isSelected = _selectedCategory == value;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedCategory = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withAlpha(30) : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey.shade200,
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: isSelected ? AppColors.primary : AppColors.textSecondary, size: 24),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   void _handleSave() {
     final taskText = _taskController.text.trim();
@@ -629,12 +567,12 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
       final task = Note(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: taskText,
-        category: _selectedCategory,
+        category: _selectedTaskCategory,
         createdAt: DateTime.now(),
         dueDate: _taskDueDate ?? DateTime.now(),
         priority: _selectedPriority,
         isTask: true,
-        tags: [_selectedCategory.name],
+        tags: [_selectedTaskCategory.name],
         attachments: List.from(_taskAttachments),
         links: List.from(_taskLinks),
       );
@@ -653,10 +591,10 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: noteTitle.isEmpty ? 'Untitled Note' : noteTitle,
         body: noteBody,
-        category: _selectedCategory,
+        category: _selectedNoteCategory,
         createdAt: _noteDate ?? DateTime.now(),
         isTask: false,
-        tags: [_selectedCategory.name],
+        tags: [_selectedNoteCategory.name],
         attachments: List.from(_noteAttachments),
         links: List.from(_noteLinks),
       );
