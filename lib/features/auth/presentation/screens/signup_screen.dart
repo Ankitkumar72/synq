@@ -49,7 +49,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             children: [
               const SizedBox(height: 16),
               const Text(
-                'Start with\nIntent.',
+                'Start with\nSynq.',
                 style: TextStyle(
                   fontSize: 40,
                   fontWeight: FontWeight.w900,
@@ -82,6 +82,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _nameController,
+                      style: const TextStyle(color: Colors.black), // Ensure text is visible
                       decoration: InputDecoration(
                         hintText: 'Full Name',
                         prefixIcon: Icon(Icons.person, color: Colors.grey[400]),
@@ -101,6 +102,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _emailController,
+                      style: const TextStyle(color: Colors.black), // Ensure text is visible
                       decoration: InputDecoration(
                         hintText: 'Email Address',
                         prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[400]),
@@ -121,6 +123,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     TextField(
                       controller: _passwordController,
                       obscureText: !_isPasswordVisible,
+                      style: const TextStyle(color: Colors.black), // Ensure text is visible
                       decoration: InputDecoration(
                         hintText: 'Password',
                         prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
@@ -189,17 +192,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           _passwordController.text,
                         );
                         
-                        // Note: The AuthWrapper in main.dart will see the state change
-                        // and redirect to Home. We don't need manual navigation here.
-                        // However, we are in a pushed route.
-                        // Ideally, AuthWrapper handles everything, but since we pushed,
-                        // we might need to pop all asking logic.
-                        // Actually, if we use a Shell route or a StreamBuilder, it switches.
-                        // In our Main implementation (next step), we'll see.
-                        // For now, let's assume the provider update triggers a rebuild at the root.
-                        // But wait, if we are in a pushed stack (Login -> Signup),
-                        // and the Root Widget switches from Login to Home,
-                        // the entire navigator stack might be rebuilt/replaced.
                       },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4C7BF3),

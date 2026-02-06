@@ -22,7 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
@@ -31,13 +31,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               const SizedBox(height: 20),
               // Logo
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F4FF),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(Icons.filter_center_focus, size: 32, color: AppColors.primary),
+              Image.asset(
+                'assets/images/logo.png',
+                width: 100,
+                height: 100,
               ),
               const SizedBox(height: 16),
               
@@ -145,6 +142,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         children: [
                           TextField(
                             controller: _emailController,
+                            style: const TextStyle(color: Colors.black), // Ensure text is visible
                             decoration: InputDecoration(
                               hintText: 'alex@synq.com',
                               prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[400]),
@@ -161,6 +159,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           TextField(
                             controller: _passwordController,
                             obscureText: !_isPasswordVisible,
+                            style: const TextStyle(color: Colors.black), // Ensure text is visible
                             decoration: InputDecoration(
                               hintText: 'Password',
                               prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
