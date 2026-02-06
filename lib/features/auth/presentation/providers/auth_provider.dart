@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';
 
@@ -78,6 +79,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
          state = state.copyWith(isLoading: false);
       }
     } catch (e) {
+      debugPrint('GOOGLE_SIGN_IN_ERROR: $e'); // Added logging
       state = state.copyWith(isLoading: false, error: _formatError(e.toString()));
     }
   }

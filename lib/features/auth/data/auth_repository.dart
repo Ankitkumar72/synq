@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  bool _googleSignInInitialized = false;
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
   
@@ -16,24 +17,29 @@ class AuthRepository {
   }
 
   Future<void> signInWithGoogle() async {
-    // 1. Initialize Google Sign-In (required for v7.x)
-    await GoogleSignIn.instance.initialize();
+    // 1. Initialize GoogleSignIn (required once per app lifecycle in v7.x)
+    if (!_googleSignInInitialized) {
+      await GoogleSignIn.instance.initialize(
+        serverClientId: '474773003470-ip0dv62bdn1iiqfhsrfhjkp3s7oqf1vu.apps.googleusercontent.com',
+      );
+      _googleSignInInitialized = true;
+    }
+
+    // 2. Trigger the authentication flow (replaces signIn() in v7.x)
+    final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
     
-    // 2. Trigger the authentication flow
-    final authResult = await GoogleSignIn.instance.authenticate();
+    // 3. Check if user cancelled
+    if (googleUser == null) return;
 
-    // 3. Get authorization with required scopes for Firebase
-    final authorization = await GoogleSignIn.instance.authorizationClient.authorizeScopes(
-      ['email', 'profile'],
-    );
+    // 4. Obtain the auth details (synchronous in v7.x)
+    final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
-    // 4. Create a new credential using the tokens
+    // 5. Create a new credential using the tokens
     final OAuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: authorization.accessToken,
-      idToken: authResult.authentication.idToken,
+      idToken: googleAuth.idToken,
     );
 
-    // 5. Sign in to Firebase with the new credential
+    // 6. Sign in to Firebase with the new credential
     await _firebaseAuth.signInWithCredential(credential);
   }
 
@@ -62,4 +68,3 @@ class AuthRepository {
   String? get userName => _firebaseAuth.currentUser?.displayName;
   String? get userEmail => _firebaseAuth.currentUser?.email;
 }
-
