@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/navigation/fade_page_route.dart';
+import '../../../../core/services/media_service.dart';
 import '../../../notes/domain/models/note.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../agenda/presentation/create_meeting_screen.dart';
@@ -20,6 +23,14 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
   TaskPriority _selectedPriority = TaskPriority.medium;
   DateTime? _taskDueDate;
   DateTime? _noteDate;
+  
+  // Media and links state
+  final List<String> _taskAttachments = [];
+  final List<String> _taskLinks = [];
+  final List<String> _noteAttachments = [];
+  final List<String> _noteLinks = [];
+  final MediaService _mediaService = MediaService();
+  bool _isUploadingImage = false;
   
   Future<void> _pickDateTime(bool isTask) async {
     final initialDate = DateTime.now();
@@ -266,14 +277,73 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                             maxLines: 3,
                           ),
                           const SizedBox(height: 12),
-                          // Note Date Chip
-                          _buildInteractiveChip(
-                            context,
-                            icon: Icons.access_time,
-                            label: _formatDateTime(_noteDate),
-                            isSelected: _noteDate != null,
-                            onTap: () => _pickDateTime(false),
+                          // Note options row
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              // Note Date Chip
+                              _buildInteractiveChip(
+                                context,
+                                icon: Icons.access_time,
+                                label: _formatDateTime(_noteDate),
+                                isSelected: _noteDate != null,
+                                onTap: () => _pickDateTime(false),
+                              ),
+                              // Add Media button
+                              _buildInteractiveChip(
+                                context,
+                                icon: Icons.attach_file,
+                                label: 'Attach',
+                                isSelected: _noteAttachments.isNotEmpty,
+                                onTap: () => _showAttachmentOptions(false),
+                              ),
+                              // Add Link button
+                              _buildInteractiveChip(
+                                context,
+                                icon: Icons.link,
+                                label: 'Link',
+                                isSelected: _noteLinks.isNotEmpty,
+                                onTap: () => _showAddLinkDialog(false),
+                              ),
+                            ],
                           ),
+                          // Show attached images
+                          if (_noteAttachments.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 80,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _noteAttachments.length,
+                                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                                itemBuilder: (context, index) {
+                                  return _buildAttachmentThumbnail(_noteAttachments[index], () {
+                                    setState(() => _noteAttachments.removeAt(index));
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                          // Show links
+                          if (_noteLinks.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _noteLinks.asMap().entries.map((entry) {
+                                return _buildLinkChip(entry.value, () {
+                                  setState(() => _noteLinks.removeAt(entry.key));
+                                });
+                              }).toList(),
+                            ),
+                          ],
+                          // Loading indicator
+                          if (_isUploadingImage)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 12),
+                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            ),
                         ],
                       ),
                     ),
@@ -560,6 +630,8 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
         priority: _selectedPriority,
         isTask: true,
         tags: [_selectedCategory.name],
+        attachments: List.from(_taskAttachments),
+        links: List.from(_taskLinks),
       );
       ref.read(notesProvider.notifier).addNote(task);
       
@@ -580,6 +652,8 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
         createdAt: _noteDate ?? DateTime.now(),
         isTask: false,
         tags: [_selectedCategory.name],
+        attachments: List.from(_noteAttachments),
+        links: List.from(_noteLinks),
       );
       ref.read(notesProvider.notifier).addNote(note);
       
@@ -599,6 +673,211 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
         ),
       );
     }
+  }
+
+  // Show options for attaching media
+  void _showAttachmentOptions(bool isTask) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: AppColors.primary),
+              title: const Text(
+                'Choose from Gallery',
+                style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadImage(ImageSource.gallery, isTask);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: AppColors.primary),
+              title: const Text(
+                'Take a Photo',
+                style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadImage(ImageSource.camera, isTask);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Pick and upload an image
+  Future<void> _pickAndUploadImage(ImageSource source, bool isTask) async {
+    setState(() => _isUploadingImage = true);
+    
+    final url = await _mediaService.pickAndUploadImage(source: source);
+    
+    setState(() => _isUploadingImage = false);
+    
+    if (url != null) {
+      setState(() {
+        if (isTask) {
+          _taskAttachments.add(url);
+        } else {
+          _noteAttachments.add(url);
+        }
+      });
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to upload image'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Show dialog to add a link
+  void _showAddLinkDialog(bool isTask) {
+    final linkController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Link'),
+        content: TextField(
+          controller: linkController,
+          decoration: const InputDecoration(
+            hintText: 'https://example.com',
+            prefixIcon: Icon(Icons.link),
+          ),
+          keyboardType: TextInputType.url,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final link = linkController.text.trim();
+              if (link.isNotEmpty) {
+                // Add https:// if missing
+                String finalLink = link;
+                if (!link.startsWith('http://') && !link.startsWith('https://')) {
+                  finalLink = 'https://$link';
+                }
+                setState(() {
+                  if (isTask) {
+                    _taskLinks.add(finalLink);
+                  } else {
+                    _noteLinks.add(finalLink);
+                  }
+                });
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build attachment thumbnail widget
+  Widget _buildAttachmentThumbnail(String url, VoidCallback onRemove) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            url,
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                width: 80,
+                height: 80,
+                color: Colors.grey[200],
+                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: 80,
+                height: 80,
+                color: Colors.grey[200],
+                child: const Icon(Icons.broken_image, color: Colors.grey),
+              );
+            },
+          ),
+        ),
+        Positioned(
+          top: 2,
+          right: 2,
+          child: GestureDetector(
+            onTap: onRemove,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, size: 14, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Build link chip widget
+  Widget _buildLinkChip(String url, VoidCallback onRemove) {
+    // Extract domain for display
+    String displayText;
+    try {
+      final uri = Uri.parse(url);
+      displayText = uri.host.replaceFirst('www.', '');
+    } catch (_) {
+      displayText = url.length > 20 ? '${url.substring(0, 20)}...' : url;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.blue.withAlpha(30),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.link, size: 14, color: Colors.blue),
+          const SizedBox(width: 4),
+          Text(
+            displayText,
+            style: const TextStyle(
+              color: Colors.blue,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: onRemove,
+            child: const Icon(Icons.close, size: 14, color: Colors.blue),
+          ),
+        ],
+      ),
+    );
   }
 }
 

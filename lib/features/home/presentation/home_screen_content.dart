@@ -306,47 +306,52 @@ class HomeScreenContent extends ConsumerWidget {
               ? null
               : Border.all(color: priorityColors[task.priority]!.withAlpha(100), width: 1),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(
-              onTap: () => ref.read(notesProvider.notifier).toggleCompleted(task.id),
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: task.isCompleted ? AppColors.primary : Colors.transparent,
-                  border: Border.all(
-                    color: task.isCompleted ? AppColors.primary : priorityColors[task.priority]!,
-                    width: 2,
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => ref.read(notesProvider.notifier).toggleCompleted(task.id),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: task.isCompleted ? AppColors.primary : Colors.transparent,
+                      border: Border.all(
+                        color: task.isCompleted ? AppColors.primary : priorityColors[task.priority]!,
+                        width: 2,
+                      ),
+                    ),
+                    child: task.isCompleted
+                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        : null,
                   ),
                 ),
-                child: task.isCompleted
-                    ? const Icon(Icons.check, size: 16, color: Colors.white)
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task.title,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                          color: task.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
-                        ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        task.title,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                              color: task.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${task.category.name.toUpperCase()} · ${task.priority.name}',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${task.category.name.toUpperCase()} · ${task.priority.name}',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
@@ -382,7 +387,9 @@ class HomeScreenContent extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     note.title,
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.black,
+                        ),
                   ),
                 ),
               ],
@@ -392,10 +399,74 @@ class HomeScreenContent extends ConsumerWidget {
               Text(
                 note.body!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Colors.black87,
                     ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            // Show attachments if any
+            if (note.attachments.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 60,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: note.attachments.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        note.attachments[index],
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 60,
+                          height: 60,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.broken_image, color: Colors.grey, size: 20),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+            // Show links if any
+            if (note.links.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: note.links.map((link) {
+                  String displayText;
+                  try {
+                    final uri = Uri.parse(link);
+                    displayText = uri.host.replaceFirst('www.', '');
+                  } catch (_) {
+                    displayText = link.length > 15 ? '${link.substring(0, 15)}...' : link;
+                  }
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withAlpha(20),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.link, size: 12, color: Colors.blue),
+                        const SizedBox(width: 4),
+                        Text(
+                          displayText,
+                          style: const TextStyle(color: Colors.blue, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
             ],
           ],

@@ -23,6 +23,8 @@ class Note with _$Note {
     @Default(false) bool isTask, // true = task, false = note
     @Default(false) bool isCompleted,
     @Default([]) List<String> tags,
+    @Default([]) List<String> attachments, // URLs of uploaded images/media
+    @Default([]) List<String> links, // Embedded URLs
   }) = _Note;
 
   factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);

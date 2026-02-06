@@ -22,6 +22,13 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
+      attachments: (json['attachments'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      links:
+          (json['links'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+              const [],
     );
 
 Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
@@ -36,6 +43,8 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'isTask': instance.isTask,
       'isCompleted': instance.isCompleted,
       'tags': instance.tags,
+      'attachments': instance.attachments,
+      'links': instance.links,
     };
 
 const _$NoteCategoryEnumMap = {

@@ -31,6 +31,9 @@ mixin _$Note {
       throw _privateConstructorUsedError; // true = task, false = note
   bool get isCompleted => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
+  List<String> get attachments =>
+      throw _privateConstructorUsedError; // URLs of uploaded images/media
+  List<String> get links => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -52,7 +55,9 @@ abstract class $NoteCopyWith<$Res> {
       TaskPriority priority,
       bool isTask,
       bool isCompleted,
-      List<String> tags});
+      List<String> tags,
+      List<String> attachments,
+      List<String> links});
 }
 
 /// @nodoc
@@ -78,6 +83,8 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? isTask = null,
     Object? isCompleted = null,
     Object? tags = null,
+    Object? attachments = null,
+    Object? links = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -120,6 +127,14 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      attachments: null == attachments
+          ? _value.attachments
+          : attachments // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      links: null == links
+          ? _value.links
+          : links // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 }
@@ -141,7 +156,9 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       TaskPriority priority,
       bool isTask,
       bool isCompleted,
-      List<String> tags});
+      List<String> tags,
+      List<String> attachments,
+      List<String> links});
 }
 
 /// @nodoc
@@ -164,6 +181,8 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? isTask = null,
     Object? isCompleted = null,
     Object? tags = null,
+    Object? attachments = null,
+    Object? links = null,
   }) {
     return _then(_$NoteImpl(
       id: null == id
@@ -206,6 +225,14 @@ class __$$NoteImplCopyWithImpl<$Res>
           ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      attachments: null == attachments
+          ? _value._attachments
+          : attachments // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      links: null == links
+          ? _value._links
+          : links // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -223,8 +250,12 @@ class _$NoteImpl implements _Note {
       this.priority = TaskPriority.medium,
       this.isTask = false,
       this.isCompleted = false,
-      final List<String> tags = const []})
-      : _tags = tags;
+      final List<String> tags = const [],
+      final List<String> attachments = const [],
+      final List<String> links = const []})
+      : _tags = tags,
+        _attachments = attachments,
+        _links = links;
 
   factory _$NoteImpl.fromJson(Map<String, dynamic> json) =>
       _$$NoteImplFromJson(json);
@@ -260,9 +291,29 @@ class _$NoteImpl implements _Note {
     return EqualUnmodifiableListView(_tags);
   }
 
+  final List<String> _attachments;
+  @override
+  @JsonKey()
+  List<String> get attachments {
+    if (_attachments is EqualUnmodifiableListView) return _attachments;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_attachments);
+  }
+
+// URLs of uploaded images/media
+  final List<String> _links;
+// URLs of uploaded images/media
+  @override
+  @JsonKey()
+  List<String> get links {
+    if (_links is EqualUnmodifiableListView) return _links;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_links);
+  }
+
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, dueDate: $dueDate, priority: $priority, isTask: $isTask, isCompleted: $isCompleted, tags: $tags)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, dueDate: $dueDate, priority: $priority, isTask: $isTask, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links)';
   }
 
   @override
@@ -283,7 +334,10 @@ class _$NoteImpl implements _Note {
             (identical(other.isTask, isTask) || other.isTask == isTask) &&
             (identical(other.isCompleted, isCompleted) ||
                 other.isCompleted == isCompleted) &&
-            const DeepCollectionEquality().equals(other._tags, _tags));
+            const DeepCollectionEquality().equals(other._tags, _tags) &&
+            const DeepCollectionEquality()
+                .equals(other._attachments, _attachments) &&
+            const DeepCollectionEquality().equals(other._links, _links));
   }
 
   @JsonKey(ignore: true)
@@ -299,7 +353,9 @@ class _$NoteImpl implements _Note {
       priority,
       isTask,
       isCompleted,
-      const DeepCollectionEquality().hash(_tags));
+      const DeepCollectionEquality().hash(_tags),
+      const DeepCollectionEquality().hash(_attachments),
+      const DeepCollectionEquality().hash(_links));
 
   @JsonKey(ignore: true)
   @override
@@ -326,7 +382,9 @@ abstract class _Note implements Note {
       final TaskPriority priority,
       final bool isTask,
       final bool isCompleted,
-      final List<String> tags}) = _$NoteImpl;
+      final List<String> tags,
+      final List<String> attachments,
+      final List<String> links}) = _$NoteImpl;
 
   factory _Note.fromJson(Map<String, dynamic> json) = _$NoteImpl.fromJson;
 
@@ -350,6 +408,10 @@ abstract class _Note implements Note {
   bool get isCompleted;
   @override
   List<String> get tags;
+  @override
+  List<String> get attachments;
+  @override // URLs of uploaded images/media
+  List<String> get links;
   @override
   @JsonKey(ignore: true)
   _$$NoteImplCopyWith<_$NoteImpl> get copyWith =>
