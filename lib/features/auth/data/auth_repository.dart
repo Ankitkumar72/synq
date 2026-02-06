@@ -1,10 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
-
-import 'package:google_sign_in/google_sign_in.dart' as google;
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final google.GoogleSignIn _googleSignIn = google.GoogleSignIn();
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
   
@@ -18,24 +16,24 @@ class AuthRepository {
   }
 
   Future<void> signInWithGoogle() async {
-    // 1. Trigger the authentication flow
-    final google.GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    // 1. Initialize Google Sign-In (required for v7.x)
+    await GoogleSignIn.instance.initialize();
     
-    if (googleUser == null) {
-      // User canceled the sign-in
-      return;
-    }
+    // 2. Trigger the authentication flow
+    final authResult = await GoogleSignIn.instance.authenticate();
 
-    // 2. Obtain the auth details from the request
-    final google.GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-    // 3. Create a new credential
-    final OAuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
+    // 3. Get authorization with required scopes for Firebase
+    final authorization = await GoogleSignIn.instance.authorizationClient.authorizeScopes(
+      ['email', 'profile'],
     );
 
-    // 4. Sign in to Firebase with the new credential
+    // 4. Create a new credential using the tokens
+    final OAuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: authorization.accessToken,
+      idToken: authResult.authentication.idToken,
+    );
+
+    // 5. Sign in to Firebase with the new credential
     await _firebaseAuth.signInWithCredential(credential);
   }
 
@@ -54,7 +52,7 @@ class AuthRepository {
   Future<void> signOut() async {
     await Future.wait([
       _firebaseAuth.signOut(),
-      _googleSignIn.signOut(),
+      GoogleSignIn.instance.disconnect(),
     ]);
   }
 
@@ -64,3 +62,4 @@ class AuthRepository {
   String? get userName => _firebaseAuth.currentUser?.displayName;
   String? get userEmail => _firebaseAuth.currentUser?.email;
 }
+

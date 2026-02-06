@@ -4,7 +4,6 @@ import '../../../../core/theme/app_theme.dart';
 import 'widgets/current_focus_card.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
-import 'widgets/task_list_tile.dart';
 import '../../focus/presentation/focus_screen.dart';
 import '../../timeline/presentation/pages/daily_timeline_page.dart';
 import 'widgets/create_new_sheet.dart';
@@ -110,7 +109,7 @@ class HomeScreen extends ConsumerWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow.withOpacity(0.05),
+              color: AppColors.shadow.withValues(alpha: 0.05),
               blurRadius: 20, // Soft shadow
             ),
           ],

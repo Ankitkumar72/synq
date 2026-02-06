@@ -29,7 +29,7 @@ class TimelineConnector extends StatelessWidget {
         Expanded(
           child: Container(
             width: 2,
-            color: isActive ? AppColors.primary : Colors.grey.withOpacity(0.2),
+            color: isActive ? AppColors.primary : Colors.grey.withValues(alpha: 0.2),
           ),
         ),
       ],

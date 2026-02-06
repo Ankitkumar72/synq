@@ -12,20 +12,25 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  await Hive.initFlutter();
-  
-  // Register adapters
-  Hive.registerAdapter(TaskStatusAdapter());
-  Hive.registerAdapter(TaskAdapter());
-  
-  // Open box (optional here, but good for startup)
-  await Hive.openBox<Task>(HiveTaskRepository.boxName);
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await Hive.initFlutter();
+    
+    // Register adapters
+    Hive.registerAdapter(TaskStatusAdapter());
+    Hive.registerAdapter(TaskAdapter());
+    
+    // Open box (optional here, but good for startup)
+    await Hive.openBox<Task>(HiveTaskRepository.boxName);
 
-  runApp(const ProviderScope(child: SynqApp()));
+    runApp(const ProviderScope(child: SynqApp()));
+  } catch (e, stack) {
+    debugPrint('ERROR_IN_MAIN: $e');
+    debugPrint(stack.toString());
+  }
 }
 
 class SynqApp extends ConsumerWidget {

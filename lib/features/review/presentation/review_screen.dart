@@ -68,7 +68,7 @@ class ReviewScreen extends ConsumerWidget {
                         CircularProgressIndicator(
                           value: progress,
                           strokeWidth: 6,
-                          backgroundColor: AppColors.primary.withOpacity(0.1),
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                           valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accentPurple),
                         ),
                         Text(

@@ -5,7 +5,6 @@ import 'widgets/current_focus_card.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
 import '../../notes/data/notes_provider.dart';
-import '../../timeline/domain/models/timeline_event.dart';
 import '../../timeline/data/timeline_provider.dart';
 import 'package:intl/intl.dart';
 import '../../timeline/presentation/pages/daily_timeline_page.dart';

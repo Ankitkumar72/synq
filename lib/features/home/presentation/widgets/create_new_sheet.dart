@@ -5,7 +5,6 @@ import '../../../notes/domain/models/note.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../agenda/presentation/create_meeting_screen.dart';
 import '../../../agenda/presentation/meeting_agenda_screen.dart';
-import '../../../agenda/data/meetings_provider.dart';
 
 /// A bottom sheet for creating new tasks or notes.
 class CreateNewSheet extends ConsumerStatefulWidget {

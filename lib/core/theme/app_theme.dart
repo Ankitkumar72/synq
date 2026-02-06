@@ -40,7 +40,6 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
-        background: AppColors.background,
         surface: AppColors.surface,
       ),
       textTheme: GoogleFonts.interTextTheme().copyWith(
@@ -103,7 +102,6 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
-        background: Color(0xFF000000),
         surface: AppColors.surfaceDark,
       ),
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),

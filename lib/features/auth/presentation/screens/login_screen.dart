@@ -266,11 +266,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildSocialButton(
-                    Icons.g_mobiledata, 
-                    'Continue with Google',
-                    onTap: () => ref.read(authProvider.notifier).signInWithGoogle(),
-                    isFullWidth: true,
+                  Expanded(
+                    child: _buildSocialButton(
+                      Icons.g_mobiledata, 
+                      'Continue with Google',
+                      onTap: () => ref.read(authProvider.notifier).signInWithGoogle(),
+                      isFullWidth: true,
+                    ),
                   ),
                 ],
               ),
