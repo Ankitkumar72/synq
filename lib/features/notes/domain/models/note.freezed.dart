@@ -14,6 +14,10 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+Note _$NoteFromJson(Map<String, dynamic> json) {
+  return _Note.fromJson(json);
+}
+
 /// @nodoc
 mixin _$Note {
   String get id => throw _privateConstructorUsedError;
@@ -28,6 +32,7 @@ mixin _$Note {
   bool get isCompleted => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
 
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $NoteCopyWith<Note> get copyWith => throw _privateConstructorUsedError;
 }
@@ -206,7 +211,7 @@ class __$$NoteImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-
+@JsonSerializable()
 class _$NoteImpl implements _Note {
   const _$NoteImpl(
       {required this.id,
@@ -220,6 +225,9 @@ class _$NoteImpl implements _Note {
       this.isCompleted = false,
       final List<String> tags = const []})
       : _tags = tags;
+
+  factory _$NoteImpl.fromJson(Map<String, dynamic> json) =>
+      _$$NoteImplFromJson(json);
 
   @override
   final String id;
@@ -278,6 +286,7 @@ class _$NoteImpl implements _Note {
             const DeepCollectionEquality().equals(other._tags, _tags));
   }
 
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -297,6 +306,13 @@ class _$NoteImpl implements _Note {
   @pragma('vm:prefer-inline')
   _$$NoteImplCopyWith<_$NoteImpl> get copyWith =>
       __$$NoteImplCopyWithImpl<_$NoteImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$NoteImplToJson(
+      this,
+    );
+  }
 }
 
 abstract class _Note implements Note {
@@ -311,6 +327,8 @@ abstract class _Note implements Note {
       final bool isTask,
       final bool isCompleted,
       final List<String> tags}) = _$NoteImpl;
+
+  factory _Note.fromJson(Map<String, dynamic> json) = _$NoteImpl.fromJson;
 
   @override
   String get id;

@@ -20,7 +20,8 @@ class HomeScreenContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 1. Watch providers at the top level
     final timelineEvents = ref.watch(timelineEventsProvider);
-    final notes = ref.watch(notesProvider);
+    final notesAsync = ref.watch(notesProvider);
+    final notes = notesAsync.value ?? [];
 
     // 2. Calculate Stats
     final completedTasksCount = notes.where((n) => n.isTask && n.isCompleted).length;
@@ -193,7 +194,8 @@ class HomeScreenContent extends ConsumerWidget {
   }
 
   Widget _buildYourTasksSection(BuildContext context, WidgetRef ref) {
-    final notes = ref.watch(notesProvider);
+    final notesAsync = ref.watch(notesProvider);
+    final notes = notesAsync.value ?? [];
     final tasks = notes.where((n) => n.isTask).toList();
     final notesOnly = notes.where((n) => !n.isTask).toList();
 

@@ -16,7 +16,7 @@ class AuthRepository {
     );
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<UserCredential?> signInWithGoogle() async {
     // 1. Initialize GoogleSignIn (required once per app lifecycle in v7.x)
     if (!_googleSignInInitialized) {
       await GoogleSignIn.instance.initialize(
@@ -29,7 +29,7 @@ class AuthRepository {
     final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
     
     // 3. Check if user cancelled
-    if (googleUser == null) return;
+    if (googleUser == null) return null;
 
     // 4. Obtain the auth details (synchronous in v7.x)
     final GoogleSignInAuthentication googleAuth = googleUser.authentication;
@@ -40,7 +40,7 @@ class AuthRepository {
     );
 
     // 6. Sign in to Firebase with the new credential
-    await _firebaseAuth.signInWithCredential(credential);
+    return await _firebaseAuth.signInWithCredential(credential);
   }
 
   Future<void> signUp(String email, String password, {String? name}) async {

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';
+import '../../../notes/data/seed_notes.dart';
 
 // State to hold preventing duplicate loading
 class AuthState {
@@ -74,7 +75,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      await _repository.signInWithGoogle();
+      final userCredential = await _repository.signInWithGoogle();
+      
+      if (userCredential != null && userCredential.user != null) {
+        // Seed sample data for new users
+        await SeedNotesService.seedIfEmpty(userCredential.user!.uid);
+      }
+
       // user cancelation returns null but doesn't throw, 
       // success will trigger stream.
       // If we are still here and loading is true, we might want to unset it

@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'note.freezed.dart';
+part 'note.g.dart';
 
 /// Category for notes and tasks
 enum NoteCategory { work, personal, idea }
@@ -23,4 +24,6 @@ class Note with _$Note {
     @Default(false) bool isCompleted,
     @Default([]) List<String> tags,
   }) = _Note;
+
+  factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);
 }

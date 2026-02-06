@@ -1,56 +1,56 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
 import '../domain/models/note.dart';
+import 'firestore_notes_repository.dart';
 
-/// Provider for managing notes and tasks
-final notesProvider = NotifierProvider<NotesNotifier, List<Note>>(() {
+final notesProvider = StreamNotifierProvider<NotesNotifier, List<Note>>(() {
   return NotesNotifier();
 });
 
-class NotesNotifier extends Notifier<List<Note>> {
+class NotesNotifier extends StreamNotifier<List<Note>> {
+  late FirestoreNotesRepository _repository;
+
   @override
-  List<Note> build() {
-    // Start with empty list - could load from storage in a real app
-    return [];
+  Stream<List<Note>> build() {
+    final authState = ref.watch(authProvider);
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (!authState.isAuthenticated || user == null) {
+      return Stream.value([]);
+    }
+
+    _repository = FirestoreNotesRepository(
+      firestore: FirebaseFirestore.instance,
+      userId: user.uid,
+    );
+
+    return _repository.watchNotes();
   }
 
-  /// Add a new note or task
-  void addNote(Note note) {
-    state = [...state, note];
+  Future<void> addNote(Note note) async {
+    await _repository.addNote(note);
   }
 
-  /// Remove a note by ID
-  void removeNote(String id) {
-    state = state.where((n) => n.id != id).toList();
+  Future<void> updateNote(Note note) async {
+    await _repository.updateNote(note);
   }
 
-  /// Toggle task completion
-  void toggleCompleted(String id) {
-    state = state.map((n) {
-      if (n.id == id) {
-        return n.copyWith(isCompleted: !n.isCompleted);
-      }
-      return n;
-    }).toList();
+  Future<void> deleteNote(String id) async {
+    await _repository.deleteNote(id);
   }
 
-  /// Update a note
-  void updateNote(Note updatedNote) {
-    state = state.map((n) {
-      if (n.id == updatedNote.id) {
-        return updatedNote;
-      }
-      return n;
-    }).toList();
+  // Alias for deleteNote to match previous interface
+  Future<void> removeNote(String id) async {
+    await deleteNote(id);
   }
 
-  /// Get all tasks (notes with isTask = true)
-  List<Note> get tasks => state.where((n) => n.isTask).toList();
-
-  /// Get all notes (notes with isTask = false)
-  List<Note> get notes => state.where((n) => !n.isTask).toList();
-
-  /// Get notes by category
-  List<Note> getByCategory(NoteCategory category) {
-    return state.where((n) => n.category == category).toList();
+  // Toggle completed status for a note
+  Future<void> toggleCompleted(String id) async {
+    final currentNotes = state.value ?? [];
+    final note = currentNotes.firstWhere((n) => n.id == id, orElse: () => throw Exception('Note not found'));
+    final updatedNote = note.copyWith(isCompleted: !note.isCompleted);
+    await _repository.updateNote(updatedNote);
   }
 }

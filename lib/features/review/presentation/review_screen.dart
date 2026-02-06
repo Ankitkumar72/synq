@@ -4,17 +4,18 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/bento_card.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../tasks/data/hive_task_repository.dart';
-import '../../tasks/domain/models/task.dart';
+import '../../notes/data/notes_provider.dart';
 
 class ReviewScreen extends ConsumerWidget {
   const ReviewScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tasks = ref.watch(tasksProvider);
+    final notesAsync = ref.watch(notesProvider);
+    final notes = notesAsync.value ?? [];
+    final tasks = notes.where((n) => n.isTask).toList();
     final totalTasks = tasks.length;
-    final completedTasks = tasks.where((t) => t.status == TaskStatus.completed).length;
+    final completedTasks = tasks.where((t) => t.isCompleted).length;
     final progress = totalTasks > 0 ? completedTasks / totalTasks : 0.0;
     final percentage = (progress * 100).toInt();
     return Scaffold(

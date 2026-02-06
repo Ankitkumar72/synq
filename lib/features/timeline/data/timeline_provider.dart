@@ -13,7 +13,8 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
   List<TimelineEvent> build() {
     // 1. Fetch real data sources
     final meetings = ref.watch(meetingsProvider);
-    final notes = ref.watch(notesProvider);
+    final notesAsync = ref.watch(notesProvider);
+    final notes = notesAsync.value ?? [];
     
     final allEvents = <TimelineEvent>[];
 

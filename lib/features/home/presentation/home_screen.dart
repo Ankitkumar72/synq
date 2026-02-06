@@ -150,7 +150,8 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildYourTasksSection(BuildContext context, WidgetRef ref) {
-    final notes = ref.watch(notesProvider);
+    final notesAsync = ref.watch(notesProvider);
+    final notes = notesAsync.value ?? [];
     final tasks = notes.where((n) => n.isTask).toList();
     final notesOnly = notes.where((n) => !n.isTask).toList();
 
