@@ -63,7 +63,7 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
         endTime: endFormat.format(endTime),
         type: _mapCategoryToType(task.category.name),
         tag: task.category.name.toUpperCase(),
-        isCompleted: false, // Could map to task status if available
+        isCompleted: task.isCompleted, 
       ));
     }
 
@@ -84,12 +84,19 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
       return e.copyWith(isCurrent: isNow);
     }).toList();
 
-    // 5. Add default items if empty (Optional, but good for demo)
-    // if (processedEvents.isEmpty) {
-    //   return _getSampleData();
-    // }
-
     return processedEvents;
+  }
+
+  Future<void> toggleEventCompletion(String eventId) async {
+    if (!eventId.startsWith('task_')) return;
+
+    final noteId = eventId.replaceFirst('task_', '');
+    if (noteId.isEmpty || noteId == eventId) {
+       // Invalid ID format
+       return;
+    }
+    
+    await ref.read(notesProvider.notifier).toggleCompleted(noteId);
   }
 
   TimelineEventType _mapCategoryToType(String category) {
@@ -112,38 +119,6 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     } catch (e) {
       return 0; // Fallback
     }
-  }
-
-  List<TimelineEvent> _getSampleData() {
-    final now = DateTime.now();
-    
-    // Helper to format time
-    String fmt(int h, int m) {
-      final dt = DateTime(now.year, now.month, now.day, h, m);
-      return DateFormat('h:mm a').format(dt);
-    }
-
-    return [
-      TimelineEvent(
-        id: 'sample_1',
-        title: 'Strategy Planning',
-        startTime: fmt(9, 0),
-        endTime: fmt(10, 30),
-        type: TimelineEventType.strategy,
-        tag: 'STRATEGY',
-        isCompleted: true,
-      ),
-      TimelineEvent(
-        id: 'sample_2',
-        title: 'Deep Work Block',
-        subtitle: 'Focus: Core Architecture',
-        startTime: fmt(11, 0),
-        endTime: fmt(13, 0),
-        type: TimelineEventType.active,
-        isCurrent: true,
-        isCompleted: false,
-      ),
-    ];
   }
 
   void addTask(TimelineEvent event) {

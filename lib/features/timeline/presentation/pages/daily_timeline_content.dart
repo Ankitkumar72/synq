@@ -5,6 +5,7 @@ import '../../data/timeline_provider.dart';
 import '../widgets/timeline_header.dart';
 import '../widgets/timeline_connector.dart';
 import '../widgets/timeline_task_card.dart';
+import '../../../../features/home/presentation/widgets/create_new_sheet.dart';
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
 class DailyTimelineContent extends ConsumerWidget {
@@ -21,6 +22,42 @@ class DailyTimelineContent extends ConsumerWidget {
             remainingTasks: events.where((e) => !e.isCompleted).length,
             date: DateTime.now(),
           ),
+          if (events.isEmpty)
+             Expanded(
+               child: Center(
+                 child: Column(
+                   mainAxisAlignment: MainAxisAlignment.center,
+                   children: [
+                     Icon(Icons.beach_access, size: 64, color: Colors.grey.shade300),
+                     const SizedBox(height: 16),
+                     Text(
+                       'No tasks today — enjoy your free time!',
+                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                         color: AppColors.textSecondary,
+                       ),
+                       textAlign: TextAlign.center,
+                     ),
+                     const SizedBox(height: 24),
+                     TextButton.icon(
+                       onPressed: () {
+                         showModalBottomSheet(
+                           context: context,
+                           isScrollControlled: true,
+                           backgroundColor: Colors.transparent,
+                           builder: (context) => const CreateNewSheet(),
+                         );
+                       },
+                       icon: const Icon(Icons.add),
+                       label: const Text('Add Your First Task'),
+                       style: TextButton.styleFrom(
+                         foregroundColor: AppColors.primary,
+                       ),
+                     ),
+                   ],
+                 ),
+               ),
+             )
+          else
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -67,6 +104,10 @@ class DailyTimelineContent extends ConsumerWidget {
                             type: TaskType.values.byName(event.type.name),
                             tag: event.tag,
                             isCompleted: event.isCompleted,
+                            // Pass the toggle callback
+                            onToggleCompletion: (_) {
+                              ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
+                            },
                           ),
                         ),
                       ),
