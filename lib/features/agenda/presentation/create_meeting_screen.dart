@@ -13,6 +13,35 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
   final _timeController = TextEditingController();
   final List<AgendaItemData> _agendaItems = [];
 
+  Future<void> _pickTimeRange() async {
+    final now = TimeOfDay.now();
+    
+    // Pick Start Time
+    final start = await showTimePicker(
+      context: context, 
+      initialTime: now,
+      helpText: 'SELECT START TIME',
+    );
+    if (start == null) return;
+    
+    if (!mounted) return;
+
+    // Pick End Time (defaulting to start + 1 hour approx logic for convenience, or just start)
+    final end = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: (start.hour + 1) % 24, minute: start.minute),
+      helpText: 'SELECT END TIME',
+    );
+    if (end == null) return;
+
+    if (!mounted) return;
+
+    // Format Times
+    setState(() {
+      _timeController.text = "${start.format(context)} - ${end.format(context)}";
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +54,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
         actions: [
           TextButton(
             onPressed: _saveMeeting,
-            child: const Text("Save", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            child: const Text("Save", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF4C7BF3))),
           )
         ],
       ),
@@ -42,9 +71,11 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
             const SizedBox(height: 16),
             _buildInputCard(
               label: "Time Range",
-              hint: "e.g. 10:30 AM - 11:30 AM",
+              hint: "Select time range...",
               controller: _timeController,
               icon: Icons.access_time,
+              readOnly: true,
+              onTap: _pickTimeRange,
             ),
             const SizedBox(height: 32),
             Row(
@@ -52,7 +83,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
               children: [
                 const Text(
                   "Agenda Items",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF4C7BF3)),
                 ),
                 IconButton(
                   onPressed: _showAddAgendaItemSheet,
@@ -71,7 +102,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
     );
   }
 
-  Widget _buildInputCard({required String label, required String hint, required TextEditingController controller, IconData? icon}) {
+  Widget _buildInputCard({required String label, required String hint, required TextEditingController controller, IconData? icon, bool readOnly = false, VoidCallback? onTap}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -79,6 +110,8 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
+          readOnly: readOnly,
+          onTap: onTap,
           style: const TextStyle(color: Colors.black87, fontSize: 16),
           decoration: InputDecoration(
             hintText: hint,
@@ -151,72 +184,126 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
   void _showAddAgendaItemSheet() {
     String title = "";
     String subtitle = "";
-    String duration = "15m";
+    final durationController = TextEditingController(); // Use controller for picking
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            left: 20,
-            right: 20,
-            top: 20
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Add Agenda Topic", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              TextField(
-                style: const TextStyle(color: Colors.black87, fontSize: 16),
-                decoration: const InputDecoration(
-                  labelText: "Topic Title (e.g. Design Review)",
-                  labelStyle: TextStyle(color: Colors.grey),
-                ),
-                onChanged: (val) => title = val,
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setSheetState) {
+            
+            Future<void> pickDurationRange() async {
+              final now = TimeOfDay.now();
+              final start = await showTimePicker(
+                context: context, 
+                initialTime: now,
+                helpText: 'TOPIC START TIME',
+              );
+              if (start == null) return;
+              
+              if (!context.mounted) return;
+
+              final end = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay(hour: (start.hour + 1) % 24, minute: start.minute),
+                helpText: 'TOPIC END TIME',
+              );
+              if (end == null) return;
+
+              if (!context.mounted) return;
+
+              setSheetState(() {
+                durationController.text = "${start.format(context)} - ${end.format(context)}";
+              });
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: 20,
+                right: 20,
+                top: 20
               ),
-              TextField(
-                style: const TextStyle(color: Colors.black87, fontSize: 16),
-                decoration: const InputDecoration(
-                  labelText: "Description",
-                  labelStyle: TextStyle(color: Colors.grey),
-                ),
-                onChanged: (val) => subtitle = val,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Add Agenda Topic", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                  const SizedBox(height: 20),
+                  TextField(
+                    style: const TextStyle(color: Colors.black87, fontSize: 16),
+                    decoration: InputDecoration(
+                      labelText: "Topic Title (e.g. Design Review)",
+                      labelStyle: const TextStyle(color: Color(0xFF4C7BF3), fontWeight: FontWeight.bold),
+                      filled: true,
+                      fillColor: const Color(0xFFF6F7F9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (val) => title = val,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    style: const TextStyle(color: Colors.black87, fontSize: 16),
+                    decoration: InputDecoration(
+                      labelText: "Description",
+                      labelStyle: const TextStyle(color: Color(0xFF4C7BF3), fontWeight: FontWeight.bold),
+                      filled: true,
+                      fillColor: const Color(0xFFF6F7F9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (val) => subtitle = val,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: durationController,
+                    readOnly: true,
+                    onTap: pickDurationRange,
+                    style: const TextStyle(color: Colors.black87, fontSize: 16),
+                    decoration: InputDecoration(
+                      labelText: "Time Slot ",
+                      labelStyle: const TextStyle(color: Color(0xFF4C7BF3), fontWeight: FontWeight.bold),
+                      filled: true,
+                      fillColor: const Color(0xFFF6F7F9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      suffixIcon: const Icon(Icons.access_time, color: Color(0xFF4C7BF3)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4C7BF3),
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      if (title.isNotEmpty) {
+                        setState(() {
+                          _agendaItems.add(AgendaItemData(
+                            title: title,
+                            subtitle: subtitle,
+                            duration: durationController.text.isNotEmpty ? durationController.text : "15m",
+                          ));
+                        });
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Text("Add Item", style: TextStyle(color: Colors.white)),
+                  )
+                ],
               ),
-              TextField(
-                style: const TextStyle(color: Colors.black87, fontSize: 16),
-                decoration: const InputDecoration(
-                  labelText: "Duration (e.g. 15m)",
-                  labelStyle: TextStyle(color: Colors.grey),
-                ),
-                onChanged: (val) => duration = val,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4C7BF3),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () {
-                  if (title.isNotEmpty) {
-                    setState(() {
-                      _agendaItems.add(AgendaItemData(
-                        title: title,
-                        subtitle: subtitle,
-                        duration: duration,
-                      ));
-                    });
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text("Add Item", style: TextStyle(color: Colors.white)),
-              )
-            ],
-          ),
+            );
+          }
         );
       },
     );

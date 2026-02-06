@@ -16,6 +16,40 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 1. Watch providers
+    final timelineEvents = ref.watch(timelineEventsProvider);
+    final notesAsync = ref.watch(notesProvider);
+    final notes = notesAsync.value ?? [];
+
+    // 2. Calculate Stats
+    final completedTasksCount = notes.where((n) => n.isTask && n.isCompleted).length;
+
+    // 3. Calculate Timeline Data (Current & Next)
+    int parseMinutes(String t) {
+      try {
+        final fmt = DateFormat("h:mm a");
+        final d = fmt.parse(t.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase());
+        return d.hour * 60 + d.minute;
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    final nowDateTime = DateTime.now();
+    final currentMinutes = nowDateTime.hour * 60 + nowDateTime.minute;
+
+    // Find current event
+    final currentEvent = timelineEvents.where((e) => e.isCurrent).firstOrNull;
+
+    // Find next event
+    final nextEvent = timelineEvents
+        .where((e) {
+          final start = parseMinutes(e.startTime);
+          return start > currentMinutes && !e.isCompleted;
+        })
+        .toList()
+        .firstOrNull;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -32,7 +66,7 @@ class HomeScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'WEDNESDAY, OCT 24',
+                        _formatDateHeader(),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.bold,
@@ -54,23 +88,59 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
 
-              // Current Focus Section (Full Width)
-              SizedBox(
-                height: 200,
-                child: GestureDetector(
-                  onTap: () => Navigator.push(
-                    context, 
-                    FadePageRoute(builder: (_) => const FocusScreen()),
-                  ),
-                  child: const CurrentFocusCard(
-                    title: 'Q3 Marketing Deck',
-                    description: 'Finalize the slide sequence and integrate the new revenue projections.',
-                    progress: 0.65,
-                    timeRemaining: '45m left',
-                    timeRange: '10:00 - 12:00',
-                  ),
-                ),
-              ),
+              // Current Focus Section (Dynamic)
+              if (currentEvent != null) ...[
+                 Builder(
+                   builder: (context) {
+                      final startMin = parseMinutes(currentEvent.startTime);
+                      final endMin = parseMinutes(currentEvent.endTime);
+                      
+                      final duration = endMin - startMin;
+                      final elapsed = currentMinutes - startMin;
+                      final progress = duration > 0 ? (elapsed / duration).clamp(0.0, 1.0) : 0.0;
+                      final remaining = endMin - currentMinutes;
+
+                      return SizedBox(
+                        height: 200,
+                        child: GestureDetector(
+                          onTap: () => Navigator.push(
+                            context, 
+                            FadePageRoute(builder: (_) => const DailyTimelinePage()),
+                          ),
+                          child: CurrentFocusCard(
+                            title: currentEvent.title,
+                            description: currentEvent.subtitle ?? 'Stay focused on your goals.',
+                            progress: progress,
+                            timeRemaining: remaining > 60 
+                                ? '${(remaining / 60).floor()}h ${remaining % 60}m left'
+                                : '${remaining}m left',
+                            timeRange: '${currentEvent.startTime} - ${currentEvent.endTime}',
+                          ),
+                        ),
+                      );
+                   }
+                 )
+              ] else ...[
+                 // Fallback / Free Time State
+                 SizedBox(
+                   height: 200,
+                   child: GestureDetector(
+                     onTap: () => Navigator.push(
+                       context, 
+                       FadePageRoute(builder: (_) => const DailyTimelinePage()),
+                     ),
+                     child: CurrentFocusCard(
+                       title: 'Free Time',
+                       description: nextEvent != null 
+                            ? 'Next up: ${nextEvent.title} at ${nextEvent.startTime}' 
+                            : 'No upcoming tasks. Good time to plan or rest.',
+                       progress: 0.0,
+                       timeRemaining: 'Relax',
+                       timeRange: 'Now',
+                     ),
+                   ),
+                 )
+              ],
               const SizedBox(height: 16),
 
               // Grid Row (Next Up + Stats)
@@ -78,17 +148,17 @@ class HomeScreen extends ConsumerWidget {
                 height: 160,
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: NextUpCard(
-                        title: 'Dentist',
-                        subtitle: 'Dr. Smith',
-                        time: '14:30',
+                        title: nextEvent?.title ?? 'All Caught Up',
+                        subtitle: nextEvent?.subtitle ?? 'No upcoming events',
+                        time: nextEvent?.startTime ?? '--:--',
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: StatsCard(
-                        count: 4,
+                        count: completedTasksCount,
                         label: 'Tasks Completed',
                       ),
                     ),
@@ -147,6 +217,13 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _formatDateHeader() {
+    final now = DateTime.now();
+    const weekdays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
   }
 
   Widget _buildYourTasksSection(BuildContext context, WidgetRef ref) {

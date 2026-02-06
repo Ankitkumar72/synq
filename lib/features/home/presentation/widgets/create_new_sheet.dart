@@ -9,6 +9,7 @@ import '../../../notes/domain/models/note.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../agenda/presentation/create_meeting_screen.dart';
 import '../../../agenda/presentation/meeting_agenda_screen.dart';
+import '../../../agenda/data/meetings_provider.dart';
 
 /// A bottom sheet for creating new tasks or notes.
 class CreateNewSheet extends ConsumerStatefulWidget {
@@ -223,18 +224,19 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.primary.withAlpha(50), width: 1),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.description_outlined, color: AppColors.textSecondary, size: 20),
+                              Icon(Icons.description, color: AppColors.primary, size: 20),
                               const SizedBox(width: 8),
                               Text(
                                 'NEW NOTE',
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: AppColors.textSecondary,
+                                      color: AppColors.primary,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.2,
                                     ),
@@ -358,6 +360,9 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                           FadePageRoute(builder: (_) => const CreateMeetingScreen()),
                         );
                         if (result != null && context.mounted) {
+                          // Save the meeting to the provider so it appears in Timeline
+                          ref.read(meetingsProvider.notifier).addMeeting(result);
+                          
                           // Navigate to view the created meeting
                           Navigator.push(
                             context,
@@ -679,35 +684,117 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
   void _showAttachmentOptions(bool isTask) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Add Attachment',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildAttachmentOptionCard(
+                      context,
+                      icon: Icons.photo_library_rounded,
+                      label: 'Gallery',
+                      color: Colors.purple,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _pickAndUploadImage(ImageSource.gallery, isTask);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildAttachmentOptionCard(
+                      context,
+                      icon: Icons.camera_alt_rounded,
+                      label: 'Camera',
+                      color: Colors.blue,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _pickAndUploadImage(ImageSource.camera, isTask);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
       ),
-      builder: (ctx) => SafeArea(
+    );
+  }
+
+  Widget _buildAttachmentOptionCard(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.12), width: 1.5),
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primary),
-              title: const Text(
-                'Choose from Gallery',
-                style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickAndUploadImage(ImageSource.gallery, isTask);
-              },
+              child: Icon(icon, size: 28, color: color),
             ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.primary),
-              title: const Text(
-                'Take a Photo',
-                style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickAndUploadImage(ImageSource.camera, isTask);
-              },
             ),
           ],
         ),

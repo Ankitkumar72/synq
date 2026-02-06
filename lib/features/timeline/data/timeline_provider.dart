@@ -4,6 +4,10 @@ import '../../agenda/data/meetings_provider.dart';
 import '../../notes/data/notes_provider.dart';
 import '../domain/models/timeline_event.dart';
 
+final minuteProvider = StreamProvider<int>((ref) {
+  return Stream.periodic(const Duration(seconds: 30), (i) => i); // Refresh every 30s for accuracy
+});
+
 final timelineEventsProvider = NotifierProvider<TimelineEventsNotifier, List<TimelineEvent>>(() {
   return TimelineEventsNotifier();
 });
@@ -11,6 +15,9 @@ final timelineEventsProvider = NotifierProvider<TimelineEventsNotifier, List<Tim
 class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
   @override
   List<TimelineEvent> build() {
+    // 0. Tick for real-time updates
+    ref.watch(minuteProvider);
+
     // 1. Fetch real data sources
     final meetings = ref.watch(meetingsProvider);
     final notesAsync = ref.watch(notesProvider);
@@ -78,9 +85,9 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     }).toList();
 
     // 5. Add default items if empty (Optional, but good for demo)
-    if (processedEvents.isEmpty) {
-      return _getSampleData();
-    }
+    // if (processedEvents.isEmpty) {
+    //   return _getSampleData();
+    // }
 
     return processedEvents;
   }

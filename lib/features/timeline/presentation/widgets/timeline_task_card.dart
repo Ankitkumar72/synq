@@ -12,6 +12,7 @@ class TimelineTaskCard extends StatelessWidget {
   final TaskType type;
   final String? tag;
   final bool isCompleted;
+  final VoidCallback? onTap;
 
   const TimelineTaskCard({
     super.key,
@@ -21,6 +22,7 @@ class TimelineTaskCard extends StatelessWidget {
     required this.type,
     this.tag,
     this.isCompleted = false,
+    this.onTap,
   });
 
   @override
@@ -220,20 +222,22 @@ class TimelineTaskCard extends StatelessWidget {
       tagText = AppColors.textAdmin;
     }
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isCompleted ? AppColors.surface.withAlpha(150) : AppColors.surface, // Dim if completed
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -322,7 +326,23 @@ class TimelineTaskCard extends StatelessWidget {
                ],
              ),
            ],
+           
+           // Show checkmark if completed (new addition)
+           if (isCompleted) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                   const Icon(Icons.check_circle, size: 16, color: AppColors.restGreen),
+                   const SizedBox(width: 4),
+                   Text(
+                     'Completed', 
+                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.restGreen)
+                   ),
+                ],
+              )
+           ],
         ],
+      ),
       ),
     );
   }
