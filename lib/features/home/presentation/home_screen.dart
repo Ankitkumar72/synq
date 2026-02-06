@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/navigation/fade_page_route.dart';
 import 'widgets/current_focus_card.dart';
@@ -75,7 +76,12 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       Text(
                         'Synq.',
-                        style: Theme.of(context).textTheme.displayLarge,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF555555),
+                          letterSpacing: -0.5,
+                        ),
                       ),
                     ],
                   ),
