@@ -62,6 +62,11 @@ class AuthRepository {
     ]);
   }
 
+  /// Sends a password reset email to the specified email address
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _firebaseAuth.sendPasswordResetEmail(email: email);
+  }
+
   // Not typically needed for Firebase (as state is handled via stream), but useful for snapshots
   bool get isAuthenticated => _firebaseAuth.currentUser != null;
 

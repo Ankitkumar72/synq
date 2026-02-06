@@ -61,6 +61,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> signup(String name, String email, String password) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repository.signUp(email, password, name: name);
+      // Success is handled by stream listener (authStateChanges will fire)
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: _formatError(e.toString()));
+    }
+  }
+
   Future<void> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -84,22 +94,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> signup(String name, String email, String password) async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      await _repository.signUp(email, password, name: name);
-      // Success is handled by stream listener
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: _formatError(e.toString()));
-    }
-  }
-
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     try {
        await _repository.signOut();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  /// Sends a password reset email. Returns true on success, false on failure.
+  Future<bool> resetPassword(String email) async {
+    try {
+      await _repository.sendPasswordResetEmail(email);
+      return true;
+    } catch (e) {
+      debugPrint('PASSWORD_RESET_ERROR: $e');
+      return false;
     }
   }
 

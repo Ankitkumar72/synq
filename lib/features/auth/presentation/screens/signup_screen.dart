@@ -19,6 +19,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
+    // Listen for auth changes - when user becomes authenticated, pop back
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.isAuthenticated && !(previous?.isAuthenticated ?? false)) {
+        // User just became authenticated, pop this screen
+        if (context.mounted && Navigator.canPop(context)) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      }
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA), // Light grey background like design
       appBar: AppBar(
