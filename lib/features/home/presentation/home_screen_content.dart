@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../timeline/presentation/pages/daily_timeline_page.dart';
+import '../../notes/domain/models/note.dart';
+import 'providers/next_task_provider.dart';
+import '../../profile/presentation/profile_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/navigation/fade_page_route.dart';
-import 'widgets/current_focus_card.dart';
+import 'widgets/current_focus_widget.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
 import '../../notes/data/notes_provider.dart';
-import '../../timeline/data/timeline_provider.dart';
-import 'package:intl/intl.dart';
-import '../../timeline/presentation/pages/daily_timeline_page.dart';
-import '../../notes/domain/models/note.dart';
-import '../../profile/presentation/profile_screen.dart';
 
 /// HomeScreen content without the bottom navigation bar (for use in MainShell)
 class HomeScreenContent extends ConsumerWidget {
@@ -19,44 +18,9 @@ class HomeScreenContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Watch providers at the top level
-    final timelineEvents = ref.watch(timelineEventsProvider);
-    final notesAsync = ref.watch(notesProvider);
-    final notes = notesAsync.value ?? [];
-
-    // 2. Calculate Stats
-    final completedTasksCount = notes.where((n) => n.isTask && n.isCompleted).length;
-
-    // 3. Calculate Timeline Data (Current & Next)
-    // Helper to parse "HH:mm AM/PM" to minutes
-    int parseMinutes(String t) {
-      try {
-        final fmt = DateFormat("h:mm a");
-        final d = fmt.parse(t.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase());
-        return d.hour * 60 + d.minute;
-      } catch (_) {
-        return 0;
-      }
-    }
-
-    final nowDateTime = DateTime.now();
-    final currentMinutes = nowDateTime.hour * 60 + nowDateTime.minute;
-
-    // Find current event
-    final currentEvent = timelineEvents.where((e) => e.isCurrent).firstOrNull;
-
-    // Find next event:
-    // A simple heuristic: the first event that starts AFTER now and isn't completed.
-    // Ideally, we'd sort by start time first, but assuming list is sorted or roughly ordered:
-    final nextEvent = timelineEvents
-        .where((e) {
-          final start = parseMinutes(e.startTime);
-          return start > currentMinutes && !e.isCompleted;
-        })
-        .toList()
-        .firstOrNull; 
-        // Fallback: if no future event, maybe just the next one in the list that isn't this one?
-        // keeping it simple for now.
+    // 1. Watch providers
+    // final notesAsync = ref.watch(notesProvider);
+    // final notes = notesAsync.value ?? [];
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -106,58 +70,14 @@ class HomeScreenContent extends ConsumerWidget {
             const SizedBox(height: 32),
 
             // Current Focus Section (Dynamic)
-            if (currentEvent != null) ...[
-                 Builder(
-                   builder: (context) {
-                      final startMin = parseMinutes(currentEvent.startTime);
-                      final endMin = parseMinutes(currentEvent.endTime);
-                      
-                      final duration = endMin - startMin;
-                      final elapsed = currentMinutes - startMin;
-                      final progress = duration > 0 ? (elapsed / duration).clamp(0.0, 1.0) : 0.0;
-                      final remaining = endMin - currentMinutes;
-
-                      return SizedBox(
-                        height: 200,
-                        child: GestureDetector(
-                          onTap: () => Navigator.push(
-                            context, 
-                            FadePageRoute(builder: (_) => const DailyTimelinePage()),
-                          ),
-                          child: CurrentFocusCard(
-                            title: currentEvent.title,
-                            description: currentEvent.subtitle ?? 'Stay focused on your goals.',
-                            progress: progress,
-                            timeRemaining: remaining > 60 
-                                ? '${(remaining / 60).floor()}h ${remaining % 60}m left'
-                                : '${remaining}m left',
-                            timeRange: '${currentEvent.startTime} - ${currentEvent.endTime}',
-                          ),
-                        ),
-                      );
-                   }
-                 )
-            ] else ...[
-               // Fallback / Free Time State
-                SizedBox(
-                  height: 200,
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(
-                      context, 
-                      FadePageRoute(builder: (_) => const DailyTimelinePage()),
-                    ),
-                    child: CurrentFocusCard(
-                      title: 'Free Time',
-                      description: nextEvent != null 
-                           ? 'Next up: ${nextEvent.title} at ${nextEvent.startTime}' 
-                           : 'No upcoming tasks. Good time to plan or rest.',
-                      progress: 0.0,
-                      timeRemaining: 'Relax', // Or 'Free'
-                      timeRange: 'Now',
-                    ),
-                  ),
-                )
-            ],
+            // Current Focus Section (Dynamic)
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context, 
+                FadePageRoute(builder: (_) => const DailyTimelinePage()),
+              ),
+              child: const CurrentFocusWidget(),
+            ),
             const SizedBox(height: 16),
 
             // Grid Row (Next Up + Stats)
@@ -165,19 +85,23 @@ class HomeScreenContent extends ConsumerWidget {
               height: 160,
               child: Row(
                 children: [
-                  Expanded(
-                    child: NextUpCard(
-                      title: nextEvent?.title ?? 'All Caught Up',
-                      subtitle: nextEvent?.subtitle ?? 'No upcoming events',
-                      time: nextEvent?.startTime ?? '--:--',
-                    ),
-                  ),
+                   Consumer(
+                     builder: (context, ref, _) {
+                       final nextTask = ref.watch(nextTaskProvider).value;
+                       final timeUntil = ref.watch(nextTaskTimeUntilProvider);
+                       
+                       return Expanded(
+                        child: NextUpCard(
+                          title: nextTask?.title ?? 'All Caught Up',
+                          subtitle: nextTask?.body ?? 'No upcoming events',
+                          time: nextTask != null ? timeUntil : '--:--',
+                        ),
+                      );
+                     }
+                   ),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: StatsCard(
-                      count: completedTasksCount,
-                      label: 'Tasks Completed',
-                    ),
+                  const Expanded(
+                    child: StatsCard(),
                   ),
                 ],
               ),

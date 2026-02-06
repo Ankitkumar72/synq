@@ -22,7 +22,8 @@ class SeedNotesService {
           isTask: true,
           category: NoteCategory.work, // Added required field
           createdAt: DateTime.now(),
-          dueDate: DateTime.now().add(const Duration(hours: 2)),
+          scheduledTime: DateTime.now().add(const Duration(hours: 2)),
+          endTime: DateTime.now().add(const Duration(hours: 3)),
         ),
         Note(
           id: uuid.v4(),
@@ -30,7 +31,8 @@ class SeedNotesService {
           isTask: false, // Assuming 'focus' meant a non-task note or different category, adapting to bool
           category: NoteCategory.work,
           createdAt: DateTime.now(),
-          dueDate: DateTime.now().add(const Duration(hours: 1)),
+          scheduledTime: DateTime.now().add(const Duration(hours: 1)),
+          endTime: DateTime.now().add(const Duration(hours: 2)),
         ),
       ];
       

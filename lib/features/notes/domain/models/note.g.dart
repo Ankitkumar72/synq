@@ -12,9 +12,15 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       body: json['body'] as String?,
       category: $enumDecode(_$NoteCategoryEnumMap, json['category']),
       createdAt: DateTime.parse(json['createdAt'] as String),
-      dueDate: json['dueDate'] == null
+      scheduledTime: json['scheduledTime'] == null
           ? null
-          : DateTime.parse(json['dueDate'] as String),
+          : DateTime.parse(json['scheduledTime'] as String),
+      endTime: json['endTime'] == null
+          ? null
+          : DateTime.parse(json['endTime'] as String),
+      completedAt: json['completedAt'] == null
+          ? null
+          : DateTime.parse(json['completedAt'] as String),
       priority: $enumDecodeNullable(_$TaskPriorityEnumMap, json['priority']) ??
           TaskPriority.medium,
       isTask: json['isTask'] as bool? ?? false,
@@ -38,7 +44,9 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'body': instance.body,
       'category': _$NoteCategoryEnumMap[instance.category]!,
       'createdAt': instance.createdAt.toIso8601String(),
-      'dueDate': instance.dueDate?.toIso8601String(),
+      'scheduledTime': instance.scheduledTime?.toIso8601String(),
+      'endTime': instance.endTime?.toIso8601String(),
+      'completedAt': instance.completedAt?.toIso8601String(),
       'priority': _$TaskPriorityEnumMap[instance.priority]!,
       'isTask': instance.isTask,
       'isCompleted': instance.isCompleted,

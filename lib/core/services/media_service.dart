@@ -1,10 +1,9 @@
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:path_provider/path_provider.dart';
 
 class MediaService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final ImagePicker _picker = ImagePicker();
 
   /// Pick an image from the specified source
@@ -22,44 +21,25 @@ class MediaService {
     return null;
   }
 
-  /// Upload an image file to Firebase Storage and return the download URL
-  Future<String?> uploadImage(File file) async {
+  /// Save an image file to local application documents directory
+  Future<String?> saveToLocalDocuments(File file) async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return null;
-
-      // Create a unique filename
+      final appDir = await getApplicationDocumentsDirectory();
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
-      final ref = _storage.ref().child('users/${user.uid}/attachments/$fileName');
-
-      // Upload the file
-      final uploadTask = await ref.putFile(file);
-
-      // Get the download URL
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-      return downloadUrl;
+      final savedImage = await file.copy('${appDir.path}/$fileName');
+      return savedImage.path;
     } catch (e) {
-      print('Error uploading image: $e');
+      debugPrint('Error saving image locally: $e');
       return null;
     }
   }
 
-  /// Pick and upload an image, returning the download URL
-  Future<String?> pickAndUploadImage({ImageSource source = ImageSource.gallery}) async {
+  /// Pick and save an image locally, returning the file path
+  Future<String?> pickAndSaveImage({ImageSource source = ImageSource.gallery}) async {
     final file = await pickImage(source: source);
     if (file != null) {
-      return await uploadImage(file);
+      return await saveToLocalDocuments(file);
     }
     return null;
-  }
-
-  /// Delete an image from Firebase Storage
-  Future<void> deleteImage(String url) async {
-    try {
-      final ref = _storage.refFromURL(url);
-      await ref.delete();
-    } catch (e) {
-      print('Error deleting image: $e');
-    }
   }
 }

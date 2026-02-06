@@ -34,21 +34,179 @@ class TimelineTaskCard extends StatelessWidget {
 
   Widget _buildCard(BuildContext context) {
     if (type == TaskType.rest) {
-// ... keep rest unchanged or add if needed ...
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-// ...
-// ...
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(100), // Pill shape
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: AppColors.restGreen,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.restGreenBg,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'AI Suggested',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: AppColors.restGreen,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isCompleted) ...[
+              const SizedBox(width: 8),
+              const Icon(Icons.check, size: 16, color: AppColors.textSecondary),
+            ],
+          ],
+        ),
+      );
     }
 
     if (type == TaskType.active) {
-       // ... active card ...
-       // For now, only adding to standard as per primary requirement, 
-       // but strictly "active" usually implies currently doing.
-       // Only adding check for standard/admin/design to avoid cluttering specific active UI unless requested.
-       return Container(
-        // ...
-// ...
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.activeCardBg,
+           border: Border(
+             left: BorderSide(color: AppColors.activeCardBorder, width: 4),
+          ),
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(24),
+            bottomRight: Radius.circular(24),
+            bottomLeft: Radius.circular(24),
+            topLeft: Radius.circular(24),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'CURRENT BLOCK',
+                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                ),
+                 Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.videocam, color: AppColors.primary, size: 20),
+                 ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (subtitle != null)
+              Text(
+                subtitle!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        FadePageRoute(builder: (_) => const MeetingAgendaScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.surface,
+                      foregroundColor: AppColors.textPrimary,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.description_outlined, size: 20),
+                          const SizedBox(width: 8),
+                          const Text('View Agenda'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {},
+                     style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accentPurple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text('Join Call'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
     }
 
     // Standard Card
@@ -71,10 +229,10 @@ class TimelineTaskCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isCompleted ? AppColors.surface.withAlpha(150) : AppColors.surface, // Dim if completed
+          color: isCompleted ? AppColors.surface.withAlpha(150) : AppColors.surface,
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
-             BoxShadow(
+            BoxShadow(
               color: AppColors.shadow,
               blurRadius: 10,
               offset: Offset(0, 4),
@@ -99,7 +257,7 @@ class TimelineTaskCard extends StatelessWidget {
                       onChanged: onToggleCompletion,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                       activeColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.5), width: 2),
+                      side: BorderSide(color: AppColors.textSecondary.withAlpha(128), width: 2),
                     ),
                   ),
                 ),
@@ -165,7 +323,6 @@ class TimelineTaskCard extends StatelessWidget {
                    ),
                    child: const Text('S', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                  ),
-                 // Use Transform to overlap the avatars instead of negative width
                  Transform.translate(
                    offset: const Offset(-6, 0),
                    child: Container(
@@ -187,21 +344,6 @@ class TimelineTaskCard extends StatelessWidget {
                  ),
                ],
              ),
-           ],
-           
-           // Show checkmark if completed (new addition)
-           if (isCompleted) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                   const Icon(Icons.check_circle, size: 16, color: AppColors.restGreen),
-                   const SizedBox(width: 4),
-                   Text(
-                     'Completed', 
-                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.restGreen)
-                   ),
-                ],
-              )
            ],
         ],
       ),

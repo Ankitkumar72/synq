@@ -47,13 +47,13 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     // 3. Process Tasks (Notes where isTask = true)
     final tasks = notes.where((n) => n.isTask).toList();
     for (final task in tasks) {
-      // Format time from dueDate or default
-      final date = task.dueDate ?? DateTime.now();
+      // Format time from scheduledTime or default
+      final date = task.scheduledTime ?? DateTime.now();
       final startFormat = DateFormat('h:mm a');
       final endFormat = DateFormat('h:mm a');
       
-      // Default duration 1 hour for tasks
-      final endTime = date.add(const Duration(hours: 1));
+      // Use existing endTime or default duration
+      final endTime = task.endTime ?? date.add(const Duration(hours: 1));
       
       allEvents.add(TimelineEvent(
         id: 'task_${task.id}',

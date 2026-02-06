@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/navigation/fade_page_route.dart';
 import '../../../../core/services/media_service.dart';
@@ -294,14 +293,16 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                                 isSelected: _noteDate != null,
                                 onTap: () => _pickDateTime(false),
                               ),
-                              // Add Media button
+
+                              // Add Media button (New position)
                               _buildInteractiveChip(
                                 context,
-                                icon: Icons.attach_file,
-                                label: 'Attach',
+                                icon: Icons.image_outlined,
+                                label: 'Media',
                                 isSelected: _noteAttachments.isNotEmpty,
-                                onTap: () => _showAttachmentOptions(false),
+                                onTap: () => _pickAndSaveImage(ImageSource.gallery, false), // Attaching to note
                               ),
+
                               // Add Link button
                               _buildInteractiveChip(
                                 context,
@@ -563,13 +564,24 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
     
     // Determine if we're saving a task or note
     if (taskText.isNotEmpty) {
+      if (_taskDueDate == null) {
+         ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please set a time for the task')),
+        );
+        return;
+      }
+
       // Save as task
+      final startTime = _taskDueDate!;
+      final endTime = startTime.add(const Duration(hours: 1)); // Default 1 hour duration
+
       final task = Note(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: taskText,
         category: _selectedTaskCategory,
         createdAt: DateTime.now(),
-        dueDate: _taskDueDate ?? DateTime.now(),
+        scheduledTime: startTime,
+        endTime: endTime,
         priority: _selectedPriority,
         isTask: true,
         tags: [_selectedTaskCategory.name],
@@ -593,6 +605,10 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
         body: noteBody,
         category: _selectedNoteCategory,
         createdAt: _noteDate ?? DateTime.now(),
+        // For notes, we might not use scheduledTime, or we could if we want to schedule notes
+        // For now, leaving null or using noteDate as scheduledTime if desired.
+        // The prompt implies unification, so let's map noteDate to scheduledTime if it exists
+        scheduledTime: _noteDate,
         isTask: false,
         tags: [_selectedNoteCategory.name],
         attachments: List.from(_noteAttachments),
@@ -618,153 +634,37 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
     }
   }
 
-  // Show options for attaching media
-  void _showAttachmentOptions(bool isTask) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Add Attachment',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAttachmentOptionCard(
-                      context,
-                      icon: Icons.photo_library_rounded,
-                      label: 'Gallery',
-                      color: Colors.purple,
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        _pickAndUploadImage(ImageSource.gallery, isTask);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildAttachmentOptionCard(
-                      context,
-                      icon: Icons.camera_alt_rounded,
-                      label: 'Camera',
-                      color: Colors.blue,
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        _pickAndUploadImage(ImageSource.camera, isTask);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildAttachmentOptionCard(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.12), width: 1.5),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(icon, size: 28, color: color),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  // Pick and upload an image
-  Future<void> _pickAndUploadImage(ImageSource source, bool isTask) async {
+  // Pick and save an image locally
+  Future<void> _pickAndSaveImage(ImageSource source, bool isTask) async {
+    // Determine target based on which field has content or focus?
+    // Since we have two separate cards, let's assume if Task text is not empty we attach to task, else note?
+    // Or simpler: The user requested a toolbar. 
+    // Let's modify the flow: 
+    // If the user taps the image icon, we'll ask or default.
+    // Given the constraints, let's default to attaching to the "Task" if that controller is not empty, otherwise "Note".
+    
+    // Correction: The previous logic passed `isTask` boolean. 
+    // Let's try to detect context or just show options.
+    
     setState(() => _isUploadingImage = true);
     
-    final url = await _mediaService.pickAndUploadImage(source: source);
+    final path = await _mediaService.pickAndSaveImage(source: source);
     
     setState(() => _isUploadingImage = false);
     
-    if (url != null) {
+    if (path != null) {
       setState(() {
-        if (isTask) {
-          _taskAttachments.add(url);
+        // Simple heuristic: If task has text, add to task. Else add to note.
+        if (_taskController.text.isNotEmpty) {
+           _taskAttachments.add(path);
         } else {
-          _noteAttachments.add(url);
+           _noteAttachments.add(path);
         }
       });
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to upload image'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Cancelled or failed
     }
   }
 

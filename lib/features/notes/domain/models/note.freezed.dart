@@ -25,7 +25,9 @@ mixin _$Note {
   String? get body => throw _privateConstructorUsedError;
   NoteCategory get category => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
-  DateTime? get dueDate => throw _privateConstructorUsedError;
+  DateTime? get scheduledTime => throw _privateConstructorUsedError;
+  DateTime? get endTime => throw _privateConstructorUsedError;
+  DateTime? get completedAt => throw _privateConstructorUsedError;
   TaskPriority get priority => throw _privateConstructorUsedError;
   bool get isTask =>
       throw _privateConstructorUsedError; // true = task, false = note
@@ -51,7 +53,9 @@ abstract class $NoteCopyWith<$Res> {
       String? body,
       NoteCategory category,
       DateTime createdAt,
-      DateTime? dueDate,
+      DateTime? scheduledTime,
+      DateTime? endTime,
+      DateTime? completedAt,
       TaskPriority priority,
       bool isTask,
       bool isCompleted,
@@ -78,7 +82,9 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? body = freezed,
     Object? category = null,
     Object? createdAt = null,
-    Object? dueDate = freezed,
+    Object? scheduledTime = freezed,
+    Object? endTime = freezed,
+    Object? completedAt = freezed,
     Object? priority = null,
     Object? isTask = null,
     Object? isCompleted = null,
@@ -107,9 +113,17 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
-      dueDate: freezed == dueDate
-          ? _value.dueDate
-          : dueDate // ignore: cast_nullable_to_non_nullable
+      scheduledTime: freezed == scheduledTime
+          ? _value.scheduledTime
+          : scheduledTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      endTime: freezed == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      completedAt: freezed == completedAt
+          ? _value.completedAt
+          : completedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       priority: null == priority
           ? _value.priority
@@ -152,7 +166,9 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       String? body,
       NoteCategory category,
       DateTime createdAt,
-      DateTime? dueDate,
+      DateTime? scheduledTime,
+      DateTime? endTime,
+      DateTime? completedAt,
       TaskPriority priority,
       bool isTask,
       bool isCompleted,
@@ -176,7 +192,9 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? body = freezed,
     Object? category = null,
     Object? createdAt = null,
-    Object? dueDate = freezed,
+    Object? scheduledTime = freezed,
+    Object? endTime = freezed,
+    Object? completedAt = freezed,
     Object? priority = null,
     Object? isTask = null,
     Object? isCompleted = null,
@@ -205,9 +223,17 @@ class __$$NoteImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
-      dueDate: freezed == dueDate
-          ? _value.dueDate
-          : dueDate // ignore: cast_nullable_to_non_nullable
+      scheduledTime: freezed == scheduledTime
+          ? _value.scheduledTime
+          : scheduledTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      endTime: freezed == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      completedAt: freezed == completedAt
+          ? _value.completedAt
+          : completedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       priority: null == priority
           ? _value.priority
@@ -239,14 +265,16 @@ class __$$NoteImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$NoteImpl implements _Note {
+class _$NoteImpl extends _Note {
   const _$NoteImpl(
       {required this.id,
       required this.title,
       this.body,
       required this.category,
       required this.createdAt,
-      this.dueDate,
+      this.scheduledTime,
+      this.endTime,
+      this.completedAt,
       this.priority = TaskPriority.medium,
       this.isTask = false,
       this.isCompleted = false,
@@ -255,7 +283,8 @@ class _$NoteImpl implements _Note {
       final List<String> links = const []})
       : _tags = tags,
         _attachments = attachments,
-        _links = links;
+        _links = links,
+        super._();
 
   factory _$NoteImpl.fromJson(Map<String, dynamic> json) =>
       _$$NoteImplFromJson(json);
@@ -271,7 +300,11 @@ class _$NoteImpl implements _Note {
   @override
   final DateTime createdAt;
   @override
-  final DateTime? dueDate;
+  final DateTime? scheduledTime;
+  @override
+  final DateTime? endTime;
+  @override
+  final DateTime? completedAt;
   @override
   @JsonKey()
   final TaskPriority priority;
@@ -313,7 +346,7 @@ class _$NoteImpl implements _Note {
 
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, dueDate: $dueDate, priority: $priority, isTask: $isTask, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links)';
   }
 
   @override
@@ -328,7 +361,11 @@ class _$NoteImpl implements _Note {
                 other.category == category) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
-            (identical(other.dueDate, dueDate) || other.dueDate == dueDate) &&
+            (identical(other.scheduledTime, scheduledTime) ||
+                other.scheduledTime == scheduledTime) &&
+            (identical(other.endTime, endTime) || other.endTime == endTime) &&
+            (identical(other.completedAt, completedAt) ||
+                other.completedAt == completedAt) &&
             (identical(other.priority, priority) ||
                 other.priority == priority) &&
             (identical(other.isTask, isTask) || other.isTask == isTask) &&
@@ -349,7 +386,9 @@ class _$NoteImpl implements _Note {
       body,
       category,
       createdAt,
-      dueDate,
+      scheduledTime,
+      endTime,
+      completedAt,
       priority,
       isTask,
       isCompleted,
@@ -371,20 +410,23 @@ class _$NoteImpl implements _Note {
   }
 }
 
-abstract class _Note implements Note {
+abstract class _Note extends Note {
   const factory _Note(
       {required final String id,
       required final String title,
       final String? body,
       required final NoteCategory category,
       required final DateTime createdAt,
-      final DateTime? dueDate,
+      final DateTime? scheduledTime,
+      final DateTime? endTime,
+      final DateTime? completedAt,
       final TaskPriority priority,
       final bool isTask,
       final bool isCompleted,
       final List<String> tags,
       final List<String> attachments,
       final List<String> links}) = _$NoteImpl;
+  const _Note._() : super._();
 
   factory _Note.fromJson(Map<String, dynamic> json) = _$NoteImpl.fromJson;
 
@@ -399,7 +441,11 @@ abstract class _Note implements Note {
   @override
   DateTime get createdAt;
   @override
-  DateTime? get dueDate;
+  DateTime? get scheduledTime;
+  @override
+  DateTime? get endTime;
+  @override
+  DateTime? get completedAt;
   @override
   TaskPriority get priority;
   @override

@@ -26,17 +26,16 @@ class AuthRepository {
     }
 
     // 2. Trigger the authentication flow (replaces signIn() in v7.x)
-    final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
+    final googleUser = await GoogleSignIn.instance.authenticate();
     
-    // 3. Check if user cancelled
-    if (googleUser == null) return null;
+
 
     // 4. Obtain the auth details (synchronous in v7.x)
-    final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+    final GoogleSignInAuthentication auth = googleUser.authentication;
 
     // 5. Create a new credential using the tokens
     final OAuthCredential credential = GoogleAuthProvider.credential(
-      idToken: googleAuth.idToken,
+      idToken: auth.idToken,
     );
 
     // 6. Sign in to Firebase with the new credential
