@@ -5,7 +5,7 @@ import '../../data/timeline_provider.dart';
 import '../widgets/timeline_header.dart';
 import '../widgets/timeline_connector.dart';
 import '../widgets/timeline_task_card.dart';
-import '../../../../features/home/presentation/widgets/create_new_sheet.dart';
+
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
 class DailyTimelineContent extends ConsumerWidget {
@@ -37,22 +37,7 @@ class DailyTimelineContent extends ConsumerWidget {
                        ),
                        textAlign: TextAlign.center,
                      ),
-                     const SizedBox(height: 24),
-                     TextButton.icon(
-                       onPressed: () {
-                         showModalBottomSheet(
-                           context: context,
-                           isScrollControlled: true,
-                           backgroundColor: Colors.transparent,
-                           builder: (context) => const CreateNewSheet(),
-                         );
-                       },
-                       icon: const Icon(Icons.add),
-                       label: const Text('Add Your First Task'),
-                       style: TextButton.styleFrom(
-                         foregroundColor: AppColors.primary,
-                       ),
-                     ),
+
                    ],
                  ),
                ),
