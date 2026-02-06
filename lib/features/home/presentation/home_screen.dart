@@ -21,135 +21,135 @@ class HomeScreen extends ConsumerWidget {
 
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _formatDateHeader(),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
-                      ),
-                      Text(
-                        'Synq.',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF555555),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.grey, // Placeholder for profile image
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // Current Focus Section (Dynamic)
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context, 
-                  FadePageRoute(builder: (_) => const DailyTimelinePage()),
-                ),
-                child: const CurrentFocusWidget(),
-              ),
-              const SizedBox(height: 16),
-
-              // Grid Row (Next Up + Stats)
-              SizedBox(
-                height: 160,
-                child: Row(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                     Consumer(
-                       builder: (context, ref, _) {
-                         final nextTask = ref.watch(nextTaskProvider).value;
-                         final timeUntil = ref.watch(nextTaskTimeUntilProvider);
-                         
-                         return Expanded(
-                          child: NextUpCard(
-                            title: nextTask?.title ?? 'All Caught Up',
-                            subtitle: nextTask?.body ?? 'No upcoming events',
-                            time: nextTask != null ? timeUntil : '--:--',
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatDateHeader(),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                        ),
+                        Text(
+                          'Synq.',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF555555),
+                            letterSpacing: -0.5,
                           ),
-                        );
-                       }
-                     ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: StatsCard(),
+                        ),
+                      ],
+                    ),
+                    const CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.grey, // Placeholder for profile image
+                      child: Icon(Icons.person, color: Colors.white),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // YOUR TASKS Section - dynamic from provider
-              _buildYourTasksSection(context, ref),
+                // Current Focus Section (Dynamic)
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context, 
+                    FadePageRoute(builder: (_) => const DailyTimelinePage()),
+                  ),
+                  child: const CurrentFocusWidget(),
+                ),
+                const SizedBox(height: 16),
+
+                // Grid Row (Next Up + Stats)
+                SizedBox(
+                  height: 160,
+                  child: Row(
+                    children: [
+                       Consumer(
+                         builder: (context, ref, _) {
+                           final nextTask = ref.watch(nextTaskProvider).value;
+                           final timeUntil = ref.watch(nextTaskTimeUntilProvider);
+                           
+                           return Expanded(
+                            child: NextUpCard(
+                              title: nextTask?.title ?? 'All Caught Up',
+                              subtitle: nextTask?.body ?? 'No upcoming events',
+                              time: nextTask != null ? timeUntil : '--:--',
+                            ),
+                          );
+                         }
+                       ),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: StatsCard(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // YOUR TASKS Section - dynamic from provider
+                _buildYourTasksSection(context, ref),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: Container(
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow.withValues(alpha: 0.05),
+                blurRadius: 20, // Soft shadow
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(icon: const Icon(Icons.grid_view_rounded, color: Colors.black), onPressed: () {}),
+              IconButton(
+                icon: const Icon(Icons.calendar_month, color: Colors.grey),
+                onPressed: () => Navigator.push(
+                  context,
+                  FadePageRoute(builder: (_) => const DailyTimelinePage()),
+                ),
+              ),
+              
+              // FAB replacement in dock
+              GestureDetector(
+                onTap: () => showCreateNewSheet(context),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: const BoxDecoration(
+                    color: Colors.black, // Dark FAB
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.add, color: Colors.white),
+                ),
+              ),
+              
+              IconButton(icon: const Icon(Icons.search, color: Colors.grey), onPressed: () {}),
+              IconButton(icon: const Icon(Icons.settings, color: Colors.grey), onPressed: () {}),
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadow.withValues(alpha: 0.05),
-              blurRadius: 20, // Soft shadow
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            IconButton(icon: const Icon(Icons.grid_view_rounded, color: Colors.black), onPressed: () {}),
-            IconButton(
-              icon: const Icon(Icons.calendar_month, color: Colors.grey),
-              onPressed: () => Navigator.push(
-                context,
-                FadePageRoute(builder: (_) => const DailyTimelinePage()),
-              ),
-            ),
-            
-            // FAB replacement in dock
-            GestureDetector(
-              onTap: () => showCreateNewSheet(context),
-              child: Container(
-                width: 50,
-                height: 50,
-                decoration: const BoxDecoration(
-                  color: Colors.black, // Dark FAB
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.add, color: Colors.white),
-              ),
-            ),
-            
-            IconButton(icon: const Icon(Icons.search, color: Colors.grey), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.settings, color: Colors.grey), onPressed: () {}),
-          ],
-        ),
-      ),
     );
   }
 
