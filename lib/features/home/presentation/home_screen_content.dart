@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/navigation/fade_page_route.dart';
 import 'widgets/current_focus_card.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
@@ -85,7 +86,7 @@ class HomeScreenContent extends ConsumerWidget {
                 GestureDetector(
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    FadePageRoute(builder: (_) => const ProfileScreen()),
                   ),
                   child: const CircleAvatar(
                     radius: 24,
@@ -114,7 +115,7 @@ class HomeScreenContent extends ConsumerWidget {
                         child: GestureDetector(
                           onTap: () => Navigator.push(
                             context, 
-                            MaterialPageRoute(builder: (_) => const DailyTimelinePage()),
+                            FadePageRoute(builder: (_) => const DailyTimelinePage()),
                           ),
                           child: CurrentFocusCard(
                             title: currentEvent.title,
@@ -136,7 +137,7 @@ class HomeScreenContent extends ConsumerWidget {
                   child: GestureDetector(
                     onTap: () => Navigator.push(
                       context, 
-                      MaterialPageRoute(builder: (_) => const DailyTimelinePage()),
+                      FadePageRoute(builder: (_) => const DailyTimelinePage()),
                     ),
                     child: CurrentFocusCard(
                       title: 'Free Time',

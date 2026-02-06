@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/navigation/fade_page_route.dart';
 import 'widgets/current_focus_card.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
@@ -59,7 +60,7 @@ class HomeScreen extends ConsumerWidget {
                 child: GestureDetector(
                   onTap: () => Navigator.push(
                     context, 
-                    MaterialPageRoute(builder: (_) => const FocusScreen()),
+                    FadePageRoute(builder: (_) => const FocusScreen()),
                   ),
                   child: const CurrentFocusCard(
                     title: 'Q3 Marketing Deck',
@@ -122,7 +123,7 @@ class HomeScreen extends ConsumerWidget {
               icon: const Icon(Icons.calendar_month, color: Colors.grey),
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const DailyTimelinePage()),
+                FadePageRoute(builder: (_) => const DailyTimelinePage()),
               ),
             ),
             

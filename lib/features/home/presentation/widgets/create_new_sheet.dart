@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/navigation/fade_page_route.dart';
 import '../../../notes/domain/models/note.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../agenda/presentation/create_meeting_screen.dart';
@@ -284,13 +285,13 @@ class _CreateNewSheetState extends ConsumerState<CreateNewSheet> {
                         Navigator.pop(context); // Close sheet first
                         final result = await Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const CreateMeetingScreen()),
+                          FadePageRoute(builder: (_) => const CreateMeetingScreen()),
                         );
                         if (result != null && context.mounted) {
                           // Navigate to view the created meeting
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => MeetingAgendaScreen(data: result)),
+                            FadePageRoute(builder: (_) => MeetingAgendaScreen(data: result)),
                           );
                         }
                       },

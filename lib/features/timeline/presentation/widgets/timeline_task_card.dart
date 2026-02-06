@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/navigation/fade_page_route.dart';
 import '../../../agenda/presentation/meeting_agenda_screen.dart';
 
 enum TaskType { strategy, active, rest, standard, admin, design }
@@ -156,7 +157,7 @@ class TimelineTaskCard extends StatelessWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const MeetingAgendaScreen()),
+                        FadePageRoute(builder: (_) => const MeetingAgendaScreen()),
                       );
                     },
                     style: ElevatedButton.styleFrom(

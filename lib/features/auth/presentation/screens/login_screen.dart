@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/navigation/fade_page_route.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import '../../../../core/widgets/google_logo.dart';
@@ -112,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: GestureDetector(
                               onTap: () => Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => const SignupScreen()),
+                                FadePageRoute(builder: (_) => const SignupScreen()),
                               ),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -292,7 +293,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   GestureDetector(
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const SignupScreen()),
+                      FadePageRoute(builder: (_) => const SignupScreen()),
                     ),
                     child: const Text(
                       'Create Account',
