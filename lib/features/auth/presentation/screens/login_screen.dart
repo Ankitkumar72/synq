@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
+import '../../../../core/widgets/google_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -308,27 +309,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildSocialButton(IconData icon, String label, {VoidCallback? onTap, bool isFullWidth = false}) {
+  Widget _buildSocialButton(IconData? icon, String label, {VoidCallback? onTap, bool isFullWidth = false}) {
+    // Official Google Sign-In Button Style
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: isFullWidth ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), // Sames as official 40dp height usually, adjusted for padding
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[200]!),
+          borderRadius: BorderRadius.circular(24), // Rounded pill shape or 4px? Google uses both. Pill is better for this app.
+          border: Border.all(color: const Color(0xFFDADCE0)), // Google Border
+          boxShadow: [
+             BoxShadow(
+               color: Colors.black.withValues(alpha: 0.05),
+               offset: const Offset(0, 1),
+               blurRadius: 3,
+             ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-             // Use a colored icon if possible, but IconData is monochromatic by default unless 
-             // we use specific widgets. For now, standard Icon is fine.
-             Icon(icon, size: 28),
+             if (label.contains('Google')) 
+               const GoogleLogo(size: 24)
+             else 
+               Icon(icon, size: 24),
              const SizedBox(width: 12),
              Text(
                label,
-               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+               style: const TextStyle(
+                 fontFamily: 'Roboto', // Use Roboto if available, else standard
+                 fontWeight: FontWeight.w500, 
+                 fontSize: 16,
+                 color: Color(0xFF3C4043), // Google Text Color
+               ),
              ),
           ],
         ),

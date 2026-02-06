@@ -48,3 +48,18 @@ app.*.map.json
 lib/firebase_options.dart
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+
+# Environment variables
+*.env
+.env.*
+
+# Android signing keys
+*.keystore
+*.jks
+key.properties
+android/key.properties
+
+# iOS signing certificates
+*.p12
+*.cer
+*.mobileprovision
