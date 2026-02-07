@@ -316,7 +316,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12), // Reduced spacing
 
                   // Time & Date Row
                   Row(
@@ -347,7 +347,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                     ],
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12), // Reduced spacing
 
                   // Description
                   Row(
@@ -359,7 +359,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    height: 100, // Matched to design screenshot
+                    height: 140, // Maximized height
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.grey[100], // Explicit standard light grey
@@ -387,7 +387,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12), // Reduced spacing
 
                   // Tags & Project Row
                   Row(
