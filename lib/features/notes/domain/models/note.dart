@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'recurrence_rule.dart';
 
 part 'note.freezed.dart';
 part 'note.g.dart';
@@ -8,6 +9,8 @@ enum NoteCategory { work, personal, idea }
 
 /// Priority level for tasks
 enum TaskPriority { low, medium, high }
+
+
 
 /// Represents a note or task created by the user
 @freezed
@@ -20,9 +23,15 @@ class Note with _$Note {
     required DateTime createdAt,
     DateTime? scheduledTime,
     DateTime? endTime,
+    DateTime? reminderTime,
+    RecurrenceRule? recurrenceRule, // For defining recurrence
+    String? parentRecurringId, // ID of the parent/original task
+    DateTime? originalScheduledTime, // The original date this instance was generated for
     DateTime? completedAt,
     @Default(TaskPriority.medium) TaskPriority priority,
     @Default(false) bool isTask, // true = task, false = note
+    @Default(false) bool isAllDay, // true = all day event (no specific time)
+    @Default(false) bool isRecurringInstance, // true if generated from recurrence
     @Default(false) bool isCompleted,
     @Default([]) List<String> tags,
     @Default([]) List<String> attachments, // URLs of uploaded images/media

@@ -18,12 +18,25 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       endTime: json['endTime'] == null
           ? null
           : DateTime.parse(json['endTime'] as String),
+      reminderTime: json['reminderTime'] == null
+          ? null
+          : DateTime.parse(json['reminderTime'] as String),
+      recurrenceRule: json['recurrenceRule'] == null
+          ? null
+          : RecurrenceRule.fromJson(
+              json['recurrenceRule'] as Map<String, dynamic>),
+      parentRecurringId: json['parentRecurringId'] as String?,
+      originalScheduledTime: json['originalScheduledTime'] == null
+          ? null
+          : DateTime.parse(json['originalScheduledTime'] as String),
       completedAt: json['completedAt'] == null
           ? null
           : DateTime.parse(json['completedAt'] as String),
       priority: $enumDecodeNullable(_$TaskPriorityEnumMap, json['priority']) ??
           TaskPriority.medium,
       isTask: json['isTask'] as bool? ?? false,
+      isAllDay: json['isAllDay'] as bool? ?? false,
+      isRecurringInstance: json['isRecurringInstance'] as bool? ?? false,
       isCompleted: json['isCompleted'] as bool? ?? false,
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
@@ -46,9 +59,16 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'createdAt': instance.createdAt.toIso8601String(),
       'scheduledTime': instance.scheduledTime?.toIso8601String(),
       'endTime': instance.endTime?.toIso8601String(),
+      'reminderTime': instance.reminderTime?.toIso8601String(),
+      'recurrenceRule': instance.recurrenceRule,
+      'parentRecurringId': instance.parentRecurringId,
+      'originalScheduledTime':
+          instance.originalScheduledTime?.toIso8601String(),
       'completedAt': instance.completedAt?.toIso8601String(),
       'priority': _$TaskPriorityEnumMap[instance.priority]!,
       'isTask': instance.isTask,
+      'isAllDay': instance.isAllDay,
+      'isRecurringInstance': instance.isRecurringInstance,
       'isCompleted': instance.isCompleted,
       'tags': instance.tags,
       'attachments': instance.attachments,

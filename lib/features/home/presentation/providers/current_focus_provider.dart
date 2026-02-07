@@ -27,10 +27,14 @@ final currentFocusProgressProvider = Provider<double>((ref) {
       
       final now = DateTime.now();
       final total = focus.endTime!.difference(focus.scheduledTime!).inSeconds;
-      final elapsed = now.difference(focus.scheduledTime!).inSeconds;
+      final remaining = focus.endTime!.difference(now).inSeconds;
       
       if (total == 0) return 0.0;
-      return (elapsed / total).clamp(0.0, 1.0);
+      
+      // Calculate progress as fraction of time remaining (Full -> Empty)
+      // If just started (remaining == total), progress is 1.0 (Full bar)
+      // If finished (remaining == 0), progress is 0.0 (Empty bar)
+      return (remaining / total).clamp(0.0, 1.0);
     },
     loading: () => 0.0,
     error: (_, __) => 0.0,
@@ -45,14 +49,18 @@ final currentFocusTimeRemainingProvider = Provider<String>((ref) {
       if (focus == null || focus.endTime == null) return '';
       
       final remaining = focus.endTime!.difference(DateTime.now());
+      
+      if (remaining.isNegative) return 'Time\'s Up';
+      
       final hours = remaining.inHours;
       final minutes = remaining.inMinutes % 60;
+      final seconds = remaining.inSeconds % 60;
 
-      
-      if (remaining.isNegative) return 'Overtime';
-      
-      if (hours > 0) return '${hours}h ${minutes}m left';
-      return '${minutes}m left';
+      // Format as HH:MM:SS or MM:SS
+      if (hours > 0) {
+        return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+      }
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     },
     loading: () => '',
     error: (_, __) => '',

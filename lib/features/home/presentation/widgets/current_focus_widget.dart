@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -54,10 +55,12 @@ class CurrentFocusWidget extends ConsumerWidget {
                   ),
                 ),
                 const Spacer(),
-                Text(
-                  timeRemaining,
-                  style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w500),
-                ),
+                // Show Time Slot if available
+                if (focus != null && focus.scheduledTime != null && focus.endTime != null)
+                   Text(
+                    '${_formatTime(focus.scheduledTime!)} - ${_formatTime(focus.endTime!)}',
+                    style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
               ],
             ),
             const SizedBox(height: 20),
@@ -84,7 +87,7 @@ class CurrentFocusWidget extends ConsumerWidget {
             
             const SizedBox(height: 24),
             
-            // Animated progress bar
+            // Animated progress bar with Timer on the right
             Row(
               children: [
                 Expanded(
@@ -100,7 +103,15 @@ class CurrentFocusWidget extends ConsumerWidget {
                 ),
                 if (focus != null) ...[
                   const SizedBox(width: 12),
-                  const Icon(Icons.timer_outlined, color: Colors.white54, size: 16),
+                   Text(
+                    timeRemaining,
+                    style: const TextStyle(
+                      color: Colors.white, 
+                      fontSize: 14, 
+                      fontWeight: FontWeight.bold,
+                      fontFeatures: [FontFeature.tabularFigures()], // Fixed width numbers
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -121,5 +132,12 @@ class CurrentFocusWidget extends ConsumerWidget {
       ),
       child: const Center(child: CircularProgressIndicator(color: Colors.white24)),
     );
+  }
+
+  String _formatTime(DateTime time) {
+    final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 }

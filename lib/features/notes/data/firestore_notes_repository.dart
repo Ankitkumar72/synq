@@ -35,4 +35,12 @@ class FirestoreNotesRepository {
   Future<void> deleteNote(String id) async {
     await _notesCollection.doc(id).delete();
   }
+
+  Future<void> deleteNotes(List<String> ids) async {
+    final batch = _firestore.batch();
+    for (final id in ids) {
+      batch.delete(_notesCollection.doc(id));
+    }
+    await batch.commit();
+  }
 }

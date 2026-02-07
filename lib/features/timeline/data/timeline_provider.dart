@@ -44,8 +44,15 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
       ));
     }
 
-    // 3. Process Tasks (Notes where isTask = true)
-    final tasks = notes.where((n) => n.isTask).toList();
+    // 3. Process Tasks (Notes where isTask = true and has scheduledTime)
+    final now = DateTime.now();
+    final tasks = notes.where((n) => 
+      n.isTask && 
+      n.scheduledTime != null && 
+      n.scheduledTime!.year == now.year &&
+      n.scheduledTime!.month == now.month &&
+      n.scheduledTime!.day == now.day
+    ).toList();
     for (final task in tasks) {
       // Format time from scheduledTime or default
       final date = task.scheduledTime ?? DateTime.now();
@@ -71,7 +78,7 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     allEvents.sort((a, b) => _parseToMinutes(a.startTime).compareTo(_parseToMinutes(b.startTime)));
 
     // Calculate isCurrent
-    final now = DateTime.now();
+    // reuse 'now' from above
     final currentMinutes = now.hour * 60 + now.minute;
 
     // Use a mappable list to update isCurrent

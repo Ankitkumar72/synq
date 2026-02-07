@@ -10,6 +10,7 @@ import '../../../../core/navigation/fade_page_route.dart';
 import 'widgets/current_focus_widget.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
+import 'widgets/create_new_sheet.dart';
 import '../../notes/data/notes_provider.dart';
 
 /// HomeScreen content without the bottom navigation bar (for use in MainShell)
@@ -219,7 +220,63 @@ class HomeScreenContent extends ConsumerWidget {
     return Dismissible(
       key: Key(task.id),
       direction: DismissDirection.endToStart,
-      onDismissed: (_) => ref.read(notesProvider.notifier).removeNote(task.id),
+      confirmDismiss: (_) async {
+        if (task.recurrenceRule == null && task.parentRecurringId == null) {
+          return true; // Normal task
+        }
+        
+        // recurring task - ask user
+        return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) {
+            return SimpleDialog(
+              title: const Text('Delete Repeating Task'),
+              children: [
+                SimpleDialogOption(
+                  onPressed: () {
+                    // This only
+                    Navigator.pop(dialogContext, true);
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('Delete this task only'),
+                  ),
+                ),
+                SimpleDialogOption(
+                  onPressed: () {
+                    // Future
+                    ref.read(notesProvider.notifier).deleteFutureInstances(task);
+                    Navigator.pop(dialogContext, false); // Manual update
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('Delete this and future tasks'),
+                  ),
+                ),
+                SimpleDialogOption(
+                  onPressed: () {
+                    // All
+                    ref.read(notesProvider.notifier).deleteAllInstances(task);
+                    Navigator.pop(dialogContext, false); // Manual update
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('Delete all tasks in series', style: TextStyle(color: Colors.red)),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      onDismissed: (_) {
+         // This is only called if confirmDismiss returns true (Delete This Only or Normal Task)
+         ref.read(notesProvider.notifier).removeNote(task.id);
+      },
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
@@ -261,24 +318,43 @@ class HomeScreenContent extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        task.title,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                              color: task.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+                  child: GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => CreateNewSheet(noteToEdit: task),
+                      );
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          task.title,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                                color: task.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            if (task.recurrenceRule != null || task.parentRecurringId != null)
+                              const Padding(
+                                padding: EdgeInsets.only(right: 4.0),
+                                child: Icon(Icons.repeat, size: 12, color: AppColors.textSecondary),
+                              ),
+                            Text(
+                              '${task.category.name.toUpperCase()} · ${task.priority.name}${task.isAllDay ? ' · ALL DAY' : (task.scheduledTime != null ? ' · ${task.scheduledTime!.hour > 12 ? task.scheduledTime!.hour - 12 : (task.scheduledTime!.hour == 0 ? 12 : task.scheduledTime!.hour)}:${task.scheduledTime!.minute.toString().padLeft(2, '0')} ${task.scheduledTime!.hour >= 12 ? 'PM' : 'AM'}' : '')}',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
                             ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${task.category.name.toUpperCase()} · ${task.priority.name}',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

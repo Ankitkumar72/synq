@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/services/firebase_service.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/firebase_provider.dart';
 import 'features/shell/presentation/main_shell.dart';
@@ -13,6 +14,7 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     await FirebaseService.initialize();
+    await NotificationService().init();
   } catch (e, stack) {
     debugPrint('ERROR_IN_MAIN: $e');
     debugPrint(stack.toString());
