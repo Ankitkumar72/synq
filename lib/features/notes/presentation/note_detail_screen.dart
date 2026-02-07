@@ -9,6 +9,7 @@ import '../domain/models/note.dart';
 import '../domain/models/folder.dart';
 import '../data/notes_provider.dart';
 import '../data/folder_provider.dart';
+import '../presentation/widgets/tag_manage_dialog.dart';
 
 
 class NoteDetailScreen extends ConsumerStatefulWidget {
@@ -253,7 +254,21 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                              label: 'TAGS',
                              value: _tags.isNotEmpty ? _tags.first : 'Add Tags',
                              color: Colors.grey[700]!,
-                             onTap: _showTagManageDialog,
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => TagManageDialog(
+                                    initialTags: _tags,
+                                    onTagsChanged: (tags) {
+                                      setState(() {
+                                        _tags.clear();
+                                        _tags.addAll(tags);
+                                        _hasUnsavedChanges = true;
+                                      });
+                                    },
+                                  ),
+                                );
+                              },
                            ),
                              const SizedBox(width: 12),
                            _buildMetaCard(
@@ -454,81 +469,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
     );
   }
 
-  Future<void> _showTagManageDialog() async {
-    final textController = TextEditingController();
-    await showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            title: const Text('Manage Tags'),
-            content: SizedBox(
-               width: double.maxFinite,
-               child: Column(
-                 mainAxisSize: MainAxisSize.min,
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                   Wrap(
-                     spacing: 8,
-                     runSpacing: 8,
-                     children: _tags.map((tag) => Chip(
-                       label: Text(tag),
-                       onDeleted: () {
-                         setDialogState(() {
-                            setState(() {
-                              _tags.remove(tag);
-                              _hasUnsavedChanges = true;
-                            });
-                         });
-                       },
-                     )).toList(),
-                   ),
-                   const SizedBox(height: 16),
-                   TextField(
-                     controller: textController,
-                     decoration: InputDecoration(
-                       hintText: 'Add new tag',
-                       suffixIcon: IconButton(
-                         icon: const Icon(Icons.add),
-                         onPressed: () {
-                           if (textController.text.isNotEmpty) {
-                             setDialogState(() {
-                               setState(() {
-                                 _tags.add(textController.text.trim());
-                                 _hasUnsavedChanges = true;
-                               });
-                               textController.clear();
-                             });
-                           }
-                         },
-                       ),
-                     ),
-                     onSubmitted: (value) {
-                        if (value.isNotEmpty) {
-                           setDialogState(() {
-                             setState(() {
-                               _tags.add(value.trim());
-                               _hasUnsavedChanges = true;
-                             });
-                             textController.clear();
-                           });
-                        }
-                     },
-                   ),
-                 ],
-               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Done'),
-              ),
-            ],
-          );
-        }
-      ),
-    );
-  }
 
   Future<void> _showLinkManageDialog() async {
     final textController = TextEditingController();

@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../home/presentation/home_screen_content.dart';
 import '../../timeline/presentation/pages/daily_timeline_content.dart';
-import '../../home/presentation/widgets/create_task_sheet.dart';
 import '../../notes/presentation/folders_screen.dart';
 import '../../notes/presentation/note_detail_screen.dart';
 import '../../../../core/navigation/fade_page_route.dart';
@@ -85,19 +84,7 @@ class _MainShellState extends ConsumerState<MainShell> {
               _buildNavButton(ref, currentIndex, 0, Icons.grid_view_rounded),
               _buildNavButton(ref, currentIndex, 1, Icons.calendar_month),
               
-              // Add Task Button
-              IconButton(
-                onPressed: () => showCreateTaskSheet(context),
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check_circle_outlined, color: Colors.blue),
-                ),
-                tooltip: 'Add Task',
-              ),
+              // Add Task Button Removed
 
               // Add Note Button
               IconButton(
