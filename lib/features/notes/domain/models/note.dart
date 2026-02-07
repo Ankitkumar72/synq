@@ -36,6 +36,8 @@ class Note with _$Note {
     @Default([]) List<String> tags,
     @Default([]) List<String> attachments, // URLs of uploaded images/media
     @Default([]) List<String> links, // Embedded URLs
+    String? folderId, // ID of the folder this note belongs to
+    DateTime? updatedAt, // Last edited time
   }) = _Note;
 
   const Note._();

@@ -10,7 +10,8 @@ import '../../../../core/navigation/fade_page_route.dart';
 import 'widgets/current_focus_widget.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
-import 'widgets/create_new_sheet.dart';
+import 'widgets/create_task_sheet.dart';
+import '../../notes/presentation/note_detail_screen.dart';
 import '../../notes/data/notes_provider.dart';
 
 /// HomeScreen content without the bottom navigation bar (for use in MainShell)
@@ -320,12 +321,7 @@ class HomeScreenContent extends ConsumerWidget {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => CreateNewSheet(noteToEdit: task),
-                      );
+                      showCreateTaskSheet(context, taskToEdit: task);
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,17 +372,22 @@ class HomeScreenContent extends ConsumerWidget {
         color: Colors.red,
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+      child: GestureDetector(
+        onTap: () => Navigator.push(
+          context,
+          FadePageRoute(builder: (_) => NoteDetailScreen(noteToEdit: note)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
               children: [
                 Icon(Icons.description_outlined, size: 16, color: AppColors.textSecondary),
                 const SizedBox(width: 8),
@@ -476,6 +477,7 @@ class HomeScreenContent extends ConsumerWidget {
               ),
             ],
           ],
+          ),
         ),
       ),
     );

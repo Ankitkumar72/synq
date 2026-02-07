@@ -8,7 +8,7 @@ import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
 import 'providers/next_task_provider.dart';
 import '../../timeline/presentation/pages/daily_timeline_page.dart';
-import 'widgets/create_new_sheet.dart';
+import 'widgets/create_task_sheet.dart';
 import '../../notes/data/notes_provider.dart';
 import '../../notes/domain/models/note.dart';
 
@@ -133,7 +133,7 @@ class HomeScreen extends ConsumerWidget {
               
               // FAB replacement in dock
               GestureDetector(
-                onTap: () => showCreateNewSheet(context),
+                onTap: () => showCreateTaskSheet(context),
                 child: Container(
                   width: 50,
                   height: 50,

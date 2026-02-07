@@ -5,7 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/timeline_provider.dart';
-import '../../../home/presentation/widgets/create_new_sheet.dart';
+import '../../../home/presentation/widgets/create_task_sheet.dart'; 
 
 class DailyTimelinePage extends ConsumerStatefulWidget {
   const DailyTimelinePage({super.key});
@@ -35,7 +35,7 @@ class _DailyTimelinePageState extends ConsumerState<DailyTimelinePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => showCreateNewSheet(context),
+        onPressed: () => showCreateTaskSheet(context),
         backgroundColor: AppColors.accentPurple,
         child: const Icon(Icons.add, color: Colors.white),
       ),

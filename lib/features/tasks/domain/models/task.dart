@@ -31,7 +31,7 @@ class Task extends HiveObject {
   TaskStatus status;
 
   @HiveField(5)
-  int priority; // 0: Normal, 1: Medium, 2: High
+  int priority; 
 
   @HiveField(6)
   DateTime createdAt;

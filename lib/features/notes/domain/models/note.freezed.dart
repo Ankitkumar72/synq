@@ -46,7 +46,10 @@ mixin _$Note {
   List<String> get tags => throw _privateConstructorUsedError;
   List<String> get attachments =>
       throw _privateConstructorUsedError; // URLs of uploaded images/media
-  List<String> get links => throw _privateConstructorUsedError;
+  List<String> get links => throw _privateConstructorUsedError; // Embedded URLs
+  String? get folderId =>
+      throw _privateConstructorUsedError; // ID of the folder this note belongs to
+  DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -78,7 +81,9 @@ abstract class $NoteCopyWith<$Res> {
       bool isCompleted,
       List<String> tags,
       List<String> attachments,
-      List<String> links});
+      List<String> links,
+      String? folderId,
+      DateTime? updatedAt});
 
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
 }
@@ -116,6 +121,8 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? tags = null,
     Object? attachments = null,
     Object? links = null,
+    Object? folderId = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -198,6 +205,14 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
           ? _value.links
           : links // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      folderId: freezed == folderId
+          ? _value.folderId
+          : folderId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ) as $Val);
   }
 
@@ -241,7 +256,9 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       bool isCompleted,
       List<String> tags,
       List<String> attachments,
-      List<String> links});
+      List<String> links,
+      String? folderId,
+      DateTime? updatedAt});
 
   @override
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
@@ -277,6 +294,8 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? tags = null,
     Object? attachments = null,
     Object? links = null,
+    Object? folderId = freezed,
+    Object? updatedAt = freezed,
   }) {
     return _then(_$NoteImpl(
       id: null == id
@@ -359,6 +378,14 @@ class __$$NoteImplCopyWithImpl<$Res>
           ? _value._links
           : links // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      folderId: freezed == folderId
+          ? _value.folderId
+          : folderId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -386,7 +413,9 @@ class _$NoteImpl extends _Note {
       this.isCompleted = false,
       final List<String> tags = const [],
       final List<String> attachments = const [],
-      final List<String> links = const []})
+      final List<String> links = const [],
+      this.folderId,
+      this.updatedAt})
       : _tags = tags,
         _attachments = attachments,
         _links = links,
@@ -469,9 +498,16 @@ class _$NoteImpl extends _Note {
     return EqualUnmodifiableListView(_links);
   }
 
+// Embedded URLs
+  @override
+  final String? folderId;
+// ID of the folder this note belongs to
+  @override
+  final DateTime? updatedAt;
+
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, folderId: $folderId, updatedAt: $updatedAt)';
   }
 
   @override
@@ -511,7 +547,11 @@ class _$NoteImpl extends _Note {
             const DeepCollectionEquality().equals(other._tags, _tags) &&
             const DeepCollectionEquality()
                 .equals(other._attachments, _attachments) &&
-            const DeepCollectionEquality().equals(other._links, _links));
+            const DeepCollectionEquality().equals(other._links, _links) &&
+            (identical(other.folderId, folderId) ||
+                other.folderId == folderId) &&
+            (identical(other.updatedAt, updatedAt) ||
+                other.updatedAt == updatedAt));
   }
 
   @JsonKey(ignore: true)
@@ -537,7 +577,9 @@ class _$NoteImpl extends _Note {
         isCompleted,
         const DeepCollectionEquality().hash(_tags),
         const DeepCollectionEquality().hash(_attachments),
-        const DeepCollectionEquality().hash(_links)
+        const DeepCollectionEquality().hash(_links),
+        folderId,
+        updatedAt
       ]);
 
   @JsonKey(ignore: true)
@@ -575,7 +617,9 @@ abstract class _Note extends Note {
       final bool isCompleted,
       final List<String> tags,
       final List<String> attachments,
-      final List<String> links}) = _$NoteImpl;
+      final List<String> links,
+      final String? folderId,
+      final DateTime? updatedAt}) = _$NoteImpl;
   const _Note._() : super._();
 
   factory _Note.fromJson(Map<String, dynamic> json) = _$NoteImpl.fromJson;
@@ -620,6 +664,10 @@ abstract class _Note extends Note {
   List<String> get attachments;
   @override // URLs of uploaded images/media
   List<String> get links;
+  @override // Embedded URLs
+  String? get folderId;
+  @override // ID of the folder this note belongs to
+  DateTime? get updatedAt;
   @override
   @JsonKey(ignore: true)
   _$$NoteImplCopyWith<_$NoteImpl> get copyWith =>

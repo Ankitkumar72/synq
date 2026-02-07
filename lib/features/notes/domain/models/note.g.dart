@@ -48,6 +48,10 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       links:
           (json['links'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
+      folderId: json['folderId'] as String?,
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String),
     );
 
 Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
@@ -73,6 +77,8 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'tags': instance.tags,
       'attachments': instance.attachments,
       'links': instance.links,
+      'folderId': instance.folderId,
+      'updatedAt': instance.updatedAt?.toIso8601String(),
     };
 
 const _$NoteCategoryEnumMap = {
