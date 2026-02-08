@@ -14,6 +14,176 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+SubTask _$SubTaskFromJson(Map<String, dynamic> json) {
+  return _SubTask.fromJson(json);
+}
+
+/// @nodoc
+mixin _$SubTask {
+  String get id => throw _privateConstructorUsedError;
+  String get title => throw _privateConstructorUsedError;
+  bool get isCompleted => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $SubTaskCopyWith<SubTask> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $SubTaskCopyWith<$Res> {
+  factory $SubTaskCopyWith(SubTask value, $Res Function(SubTask) then) =
+      _$SubTaskCopyWithImpl<$Res, SubTask>;
+  @useResult
+  $Res call({String id, String title, bool isCompleted});
+}
+
+/// @nodoc
+class _$SubTaskCopyWithImpl<$Res, $Val extends SubTask>
+    implements $SubTaskCopyWith<$Res> {
+  _$SubTaskCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? title = null,
+    Object? isCompleted = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      isCompleted: null == isCompleted
+          ? _value.isCompleted
+          : isCompleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$SubTaskImplCopyWith<$Res> implements $SubTaskCopyWith<$Res> {
+  factory _$$SubTaskImplCopyWith(
+          _$SubTaskImpl value, $Res Function(_$SubTaskImpl) then) =
+      __$$SubTaskImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({String id, String title, bool isCompleted});
+}
+
+/// @nodoc
+class __$$SubTaskImplCopyWithImpl<$Res>
+    extends _$SubTaskCopyWithImpl<$Res, _$SubTaskImpl>
+    implements _$$SubTaskImplCopyWith<$Res> {
+  __$$SubTaskImplCopyWithImpl(
+      _$SubTaskImpl _value, $Res Function(_$SubTaskImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? title = null,
+    Object? isCompleted = null,
+  }) {
+    return _then(_$SubTaskImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      isCompleted: null == isCompleted
+          ? _value.isCompleted
+          : isCompleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$SubTaskImpl implements _SubTask {
+  const _$SubTaskImpl(
+      {required this.id, required this.title, this.isCompleted = false});
+
+  factory _$SubTaskImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SubTaskImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  final String title;
+  @override
+  @JsonKey()
+  final bool isCompleted;
+
+  @override
+  String toString() {
+    return 'SubTask(id: $id, title: $title, isCompleted: $isCompleted)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SubTaskImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.title, title) || other.title == title) &&
+            (identical(other.isCompleted, isCompleted) ||
+                other.isCompleted == isCompleted));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, title, isCompleted);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$SubTaskImplCopyWith<_$SubTaskImpl> get copyWith =>
+      __$$SubTaskImplCopyWithImpl<_$SubTaskImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$SubTaskImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _SubTask implements SubTask {
+  const factory _SubTask(
+      {required final String id,
+      required final String title,
+      final bool isCompleted}) = _$SubTaskImpl;
+
+  factory _SubTask.fromJson(Map<String, dynamic> json) = _$SubTaskImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  String get title;
+  @override
+  bool get isCompleted;
+  @override
+  @JsonKey(ignore: true)
+  _$$SubTaskImplCopyWith<_$SubTaskImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Note _$NoteFromJson(Map<String, dynamic> json) {
   return _Note.fromJson(json);
 }
@@ -47,6 +217,8 @@ mixin _$Note {
   List<String> get attachments =>
       throw _privateConstructorUsedError; // URLs of uploaded images/media
   List<String> get links => throw _privateConstructorUsedError; // Embedded URLs
+  List<SubTask> get subtasks =>
+      throw _privateConstructorUsedError; // Sub-tasks for this note
   String? get folderId =>
       throw _privateConstructorUsedError; // ID of the folder this note belongs to
   DateTime? get updatedAt => throw _privateConstructorUsedError;
@@ -82,6 +254,7 @@ abstract class $NoteCopyWith<$Res> {
       List<String> tags,
       List<String> attachments,
       List<String> links,
+      List<SubTask> subtasks,
       String? folderId,
       DateTime? updatedAt});
 
@@ -121,6 +294,7 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? tags = null,
     Object? attachments = null,
     Object? links = null,
+    Object? subtasks = null,
     Object? folderId = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -205,6 +379,10 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
           ? _value.links
           : links // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      subtasks: null == subtasks
+          ? _value.subtasks
+          : subtasks // ignore: cast_nullable_to_non_nullable
+              as List<SubTask>,
       folderId: freezed == folderId
           ? _value.folderId
           : folderId // ignore: cast_nullable_to_non_nullable
@@ -257,6 +435,7 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       List<String> tags,
       List<String> attachments,
       List<String> links,
+      List<SubTask> subtasks,
       String? folderId,
       DateTime? updatedAt});
 
@@ -294,6 +473,7 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? tags = null,
     Object? attachments = null,
     Object? links = null,
+    Object? subtasks = null,
     Object? folderId = freezed,
     Object? updatedAt = freezed,
   }) {
@@ -378,6 +558,10 @@ class __$$NoteImplCopyWithImpl<$Res>
           ? _value._links
           : links // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      subtasks: null == subtasks
+          ? _value._subtasks
+          : subtasks // ignore: cast_nullable_to_non_nullable
+              as List<SubTask>,
       folderId: freezed == folderId
           ? _value.folderId
           : folderId // ignore: cast_nullable_to_non_nullable
@@ -414,11 +598,13 @@ class _$NoteImpl extends _Note {
       final List<String> tags = const [],
       final List<String> attachments = const [],
       final List<String> links = const [],
+      final List<SubTask> subtasks = const [],
       this.folderId,
       this.updatedAt})
       : _tags = tags,
         _attachments = attachments,
         _links = links,
+        _subtasks = subtasks,
         super._();
 
   factory _$NoteImpl.fromJson(Map<String, dynamic> json) =>
@@ -499,6 +685,17 @@ class _$NoteImpl extends _Note {
   }
 
 // Embedded URLs
+  final List<SubTask> _subtasks;
+// Embedded URLs
+  @override
+  @JsonKey()
+  List<SubTask> get subtasks {
+    if (_subtasks is EqualUnmodifiableListView) return _subtasks;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_subtasks);
+  }
+
+// Sub-tasks for this note
   @override
   final String? folderId;
 // ID of the folder this note belongs to
@@ -507,7 +704,7 @@ class _$NoteImpl extends _Note {
 
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, folderId: $folderId, updatedAt: $updatedAt)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt)';
   }
 
   @override
@@ -548,6 +745,7 @@ class _$NoteImpl extends _Note {
             const DeepCollectionEquality()
                 .equals(other._attachments, _attachments) &&
             const DeepCollectionEquality().equals(other._links, _links) &&
+            const DeepCollectionEquality().equals(other._subtasks, _subtasks) &&
             (identical(other.folderId, folderId) ||
                 other.folderId == folderId) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -578,6 +776,7 @@ class _$NoteImpl extends _Note {
         const DeepCollectionEquality().hash(_tags),
         const DeepCollectionEquality().hash(_attachments),
         const DeepCollectionEquality().hash(_links),
+        const DeepCollectionEquality().hash(_subtasks),
         folderId,
         updatedAt
       ]);
@@ -618,6 +817,7 @@ abstract class _Note extends Note {
       final List<String> tags,
       final List<String> attachments,
       final List<String> links,
+      final List<SubTask> subtasks,
       final String? folderId,
       final DateTime? updatedAt}) = _$NoteImpl;
   const _Note._() : super._();
@@ -665,6 +865,8 @@ abstract class _Note extends Note {
   @override // URLs of uploaded images/media
   List<String> get links;
   @override // Embedded URLs
+  List<SubTask> get subtasks;
+  @override // Sub-tasks for this note
   String? get folderId;
   @override // ID of the folder this note belongs to
   DateTime? get updatedAt;

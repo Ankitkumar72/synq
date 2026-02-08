@@ -13,7 +13,7 @@ import 'widgets/stats_card.dart';
 import 'widgets/create_task_sheet.dart';
 import '../../notes/presentation/note_detail_screen.dart';
 import '../../notes/data/notes_provider.dart';
-
+import '../../tasks/presentation/task_detail_screen.dart';
 /// HomeScreen content without the bottom navigation bar (for use in MainShell)
 class HomeScreenContent extends ConsumerWidget {
   const HomeScreenContent({super.key});
@@ -284,9 +284,17 @@ class HomeScreenContent extends ConsumerWidget {
         color: Colors.red,
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(16),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            FadePageRoute(builder: (_) => TaskDetailScreen(task: task)),
+          );
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
@@ -319,11 +327,7 @@ class HomeScreenContent extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      showCreateTaskSheet(context, taskToEdit: task);
-                    },
-                    child: Column(
+                  child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -351,12 +355,12 @@ class HomeScreenContent extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ),
                 ),
               ],
             ),
           ],
         ),
+      ),
       ),
     );
   }

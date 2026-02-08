@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'recurrence_rule.dart';
+import 'recurrence_rule.dart'; 
 
 part 'note.freezed.dart';
 part 'note.g.dart';
@@ -7,14 +7,25 @@ part 'note.g.dart';
 /// Category for notes and tasks
 enum NoteCategory { work, personal, idea }
 
-/// Priority level for tasks
+
 enum TaskPriority { low, medium, high }
 
+@freezed
+class SubTask with _$SubTask {
+  const factory SubTask({
+    required String id,
+    required String title,
+    @Default(false) bool isCompleted,
+  }) = _SubTask;
 
+  factory SubTask.fromJson(Map<String, dynamic> json) => _$SubTaskFromJson(json);
+}
 
-/// Represents a note or task created by the user
 @freezed
 class Note with _$Note {
+
+  const Note._();
+
   const factory Note({
     required String id,
     required String title,
@@ -24,40 +35,38 @@ class Note with _$Note {
     DateTime? scheduledTime,
     DateTime? endTime,
     DateTime? reminderTime,
-    RecurrenceRule? recurrenceRule, // For defining recurrence
-    String? parentRecurringId, // ID of the parent/original task
-    DateTime? originalScheduledTime, // The original date this instance was generated for
+    RecurrenceRule? recurrenceRule, 
+    String? parentRecurringId, 
+    DateTime? originalScheduledTime, 
     DateTime? completedAt,
     @Default(TaskPriority.medium) TaskPriority priority,
-    @Default(false) bool isTask, // true = task, false = note
-    @Default(false) bool isAllDay, // true = all day event (no specific time)
-    @Default(false) bool isRecurringInstance, // true if generated from recurrence
+    @Default(false) bool isTask, 
+    @Default(false) bool isAllDay, 
+    @Default(false) bool isRecurringInstance, 
     @Default(false) bool isCompleted,
     @Default([]) List<String> tags,
-    @Default([]) List<String> attachments, // URLs of uploaded images/media
-    @Default([]) List<String> links, // Embedded URLs
-    String? folderId, // ID of the folder this note belongs to
-    DateTime? updatedAt, // Last edited time
+    @Default([]) List<String> attachments, 
+    @Default([]) List<String> links, 
+    @Default([]) List<SubTask> subtasks, 
+    String? folderId, 
+    DateTime? updatedAt, 
   }) = _Note;
-
-  const Note._();
 
   factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);
 
-  // Duration helper
   Duration? get duration => 
     (scheduledTime != null && endTime != null) 
       ? endTime!.difference(scheduledTime!) 
       : null;
       
-  // Is happening now?
+  /// Checks if the task is currently happening (Now is between Start and End)
   bool get isActive {
     if (scheduledTime == null || endTime == null) return false;
     final now = DateTime.now();
     return now.isAfter(scheduledTime!) && now.isBefore(endTime!);
   }
   
-  // Is upcoming (within next hour)?
+  /// Checks if the task is starting within the next hour
   bool get isUpcoming {
     if (scheduledTime == null) return false;
     final now = DateTime.now();

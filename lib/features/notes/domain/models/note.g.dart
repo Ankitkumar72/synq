@@ -6,6 +6,20 @@ part of 'note.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_$SubTaskImpl _$$SubTaskImplFromJson(Map<String, dynamic> json) =>
+    _$SubTaskImpl(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      isCompleted: json['isCompleted'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$$SubTaskImplToJson(_$SubTaskImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'isCompleted': instance.isCompleted,
+    };
+
 _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -48,6 +62,10 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       links:
           (json['links'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
+      subtasks: (json['subtasks'] as List<dynamic>?)
+              ?.map((e) => SubTask.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       folderId: json['folderId'] as String?,
       updatedAt: json['updatedAt'] == null
           ? null
@@ -77,6 +95,7 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'tags': instance.tags,
       'attachments': instance.attachments,
       'links': instance.links,
+      'subtasks': instance.subtasks,
       'folderId': instance.folderId,
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

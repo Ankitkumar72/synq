@@ -49,16 +49,26 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   }
 
   Future<void> updateNote(Note note) async {
-    await _repository.updateNote(note);
-    if (note.reminderTime != null && note.reminderTime!.isAfter(DateTime.now()) && !note.isCompleted) {
-      await NotificationService().scheduleNotification(
-        id: note.id.hashCode,
-        title: 'Reminder: ${note.title}',
-        body: note.body ?? 'Time to focus!',
-        scheduledDate: note.reminderTime!,
-      );
-    } else {
-      await NotificationService().cancelNotification(note.id.hashCode);
+    // Optimistic update
+    final currentList = state.value ?? [];
+    final updatedList = currentList.map((n) => n.id == note.id ? note : n).toList();
+    state = AsyncValue.data(updatedList);
+
+    try {
+      await _repository.updateNote(note);
+      if (note.reminderTime != null && note.reminderTime!.isAfter(DateTime.now()) && !note.isCompleted) {
+        await NotificationService().scheduleNotification(
+          id: note.id.hashCode,
+          title: 'Reminder: ${note.title}',
+          body: note.body ?? 'Time to focus!',
+          scheduledDate: note.reminderTime!,
+        );
+      } else {
+        await NotificationService().cancelNotification(note.id.hashCode);
+      }
+    } catch (e) {
+      // Revert on error if necessary, though the stream will eventually refresh
+      // For now, we rely on the repository watch to pull the correct state back
     }
   }
 
