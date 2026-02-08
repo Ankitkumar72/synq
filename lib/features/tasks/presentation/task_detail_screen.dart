@@ -105,6 +105,60 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     ref.read(notesProvider.notifier).updateNote(updatedTask);
   }
 
+  void _editSubTask(SubTask subtask) {
+    final controller = TextEditingController(text: subtask.title);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Sub-task'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(color: Colors.black87),
+          cursorColor: AppColors.primary,
+          decoration: const InputDecoration(
+            hintText: 'Enter sub-task title',
+            hintStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(),
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.primary, width: 2)),
+            filled: true,
+            fillColor: Colors.white,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final newTitle = controller.text.trim();
+              if (newTitle.isNotEmpty) {
+                final updatedSubtasks = _currentTask.subtasks.map((st) {
+                  if (st.id == subtask.id) {
+                    return st.copyWith(title: newTitle);
+                  }
+                  return st;
+                }).toList();
+                final updatedTask = _currentTask.copyWith(subtasks: updatedSubtasks);
+                ref.read(notesProvider.notifier).updateNote(updatedTask);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteSubTask(String subTaskId) {
+    final updatedSubtasks = _currentTask.subtasks.where((st) => st.id != subTaskId).toList();
+    final updatedTask = _currentTask.copyWith(subtasks: updatedSubtasks);
+    ref.read(notesProvider.notifier).updateNote(updatedTask);
+  }
+
   void _editTitle() {
     final currentTask = _currentTask;
     final controller = TextEditingController(text: currentTask.title);
@@ -386,9 +440,39 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
           onPressed: () => Navigator.pop(context),
+        ),
+        title: GestureDetector(
+          onTap: _toggleTaskCompletion,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF5372F6),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  task.isCompleted ? Icons.check_circle : Icons.circle_outlined,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  task.isCompleted ? 'Task Completed' : 'Complete Task',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         actions: [
           PopupMenuButton<String>(
@@ -420,7 +504,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         duration: const Duration(milliseconds: 300),
         opacity: _isDeleting ? 0.0 : 1.0,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -624,15 +708,25 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Text(
-                                subtask.title,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: subtask.isCompleted ? const Color(0xFF9CA3AF) : const Color(0xFF374151),
-                                  decoration: subtask.isCompleted ? TextDecoration.lineThrough : null,
-                                  decorationColor: const Color(0xFF9CA3AF),
+                              child: GestureDetector(
+                                onTap: () => _editSubTask(subtask),
+                                behavior: HitTestBehavior.opaque,
+                                child: Text(
+                                  subtask.title,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: subtask.isCompleted ? const Color(0xFF9CA3AF) : const Color(0xFF374151),
+                                    decoration: subtask.isCompleted ? TextDecoration.lineThrough : null,
+                                    decorationColor: const Color(0xFF9CA3AF),
+                                  ),
                                 ),
                               ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                              onPressed: () => _deleteSubTask(subtask.id),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                           ],
                         ),
@@ -713,23 +807,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _toggleTaskCompletion,
-        backgroundColor: const Color(0xFF5372F6),
-        icon: Icon(
-          task.isCompleted ? Icons.check_circle : Icons.circle_outlined, 
-          color: Colors.white
-        ),
-        label: Text(
-          task.isCompleted ? 'Task Completed' : 'Complete Task',
-          style: const TextStyle(
-            fontSize: 16, 
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

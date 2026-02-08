@@ -294,7 +294,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                  child: SlideTransition(
                    position: _slideAnimation,
                    child: SingleChildScrollView(
-                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                  child: Column(
                    crossAxisAlignment: CrossAxisAlignment.start,
                    children: [
@@ -437,7 +437,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                        maxLines: null,
                      ),
                      
-                     const SizedBox(height: 100), // Spacing for bottom bar
+                     
                    ],
                  ),
                ),

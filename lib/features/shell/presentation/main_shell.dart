@@ -56,6 +56,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
+        resizeToAvoidBottomInset: true,
         // Use IndexedStack with independent Navigators for each tab
         body: IndexedStack(
           index: currentIndex,
@@ -66,7 +67,9 @@ class _MainShellState extends ConsumerState<MainShell> {
             _buildTabNavigator(3, const PlaceholderScreen(title: 'Settings')),
           ],
         ),
-        bottomNavigationBar: Container(
+        bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0 
+          ? null 
+          : Container(
           height: 80,
           decoration: BoxDecoration(
             color: Colors.white,
