@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,6 +21,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late TextEditingController _subTaskController;
   late TextEditingController _descriptionController;
   late FocusNode _subTaskFocusNode;
+  Timer? _debounceTimer;
   bool _isAddingSubTask = false;
 
   Note get _currentTask {
@@ -31,11 +34,25 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     super.initState();
     _subTaskController = TextEditingController();
     _descriptionController = TextEditingController(text: widget.task.body);
+    _descriptionController.addListener(_onDescriptionChanged);
     _subTaskFocusNode = FocusNode();
+  }
+
+  void _onDescriptionChanged() {
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      final newBody = _descriptionController.text.trim();
+      final currentTask = _currentTask;
+      if (newBody != (currentTask.body ?? '')) {
+        final updatedTask = currentTask.copyWith(body: newBody);
+        ref.read(notesProvider.notifier).updateNote(updatedTask);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _subTaskController.dispose();
     _descriptionController.dispose();
     _subTaskFocusNode.dispose();
@@ -192,8 +209,16 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           ),
           TextButton(
             onPressed: () {
-              ref.read(notesProvider.notifier).deleteNote(_currentTask.id);
-              Navigator.pop(context);
+              final taskId = _currentTask.id;
+              
+              // Close dialog and return to home screen
+              if (Navigator.canPop(context)) Navigator.pop(context);
+              if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+              
+              // Perform deletion in background
+              ref.read(notesProvider.notifier).deleteNote(taskId).catchError((e) {
+                debugPrint('Error deleting task: $e');
+              });
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
@@ -207,20 +232,46 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   Widget build(BuildContext context) {
     // Listen to changes to the specific task
     final notesAsync = ref.watch(notesProvider);
-    final taskOrNull = notesAsync.value?.firstWhere(
-      (n) => n.id == widget.task.id, 
-      orElse: () => widget.task
-    );
     
-    // If task was deleted, pop
-    if (taskOrNull == null) {
+    // Only consider the task "deleted" if notes have loaded successfully and it's missing
+    final bool isTaskMissing = notesAsync.hasValue && 
+        notesAsync.value?.any((n) => n.id == widget.task.id) == false;
+
+    if (isTaskMissing) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) Navigator.pop(context);
+          if (mounted && Navigator.canPop(context)) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
       });
-      return const SizedBox.shrink(); 
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
+          title: const Text('Task Removed', style: TextStyle(color: Colors.black, fontSize: 16)),
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.check_circle_outline, size: 48, color: Colors.green),
+              SizedBox(height: 16),
+              Text('Task was deleted successfully.', style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        ),
+      ); 
     }
     
-    final task = taskOrNull;
+    // Use data from provider if available, otherwise fallback to widget data
+    final task = notesAsync.value?.firstWhere(
+      (n) => n.id == widget.task.id,
+      orElse: () => widget.task,
+    ) ?? widget.task;
     final completedSubtasks = task.subtasks.where((s) => s.isCompleted).length;
     final totalSubtasks = task.subtasks.length;
     final progress = totalSubtasks > 0 ? completedSubtasks / totalSubtasks : 0.0;
@@ -345,27 +396,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       isDense: true,
                       filled: false,
                       fillColor: Colors.transparent,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                          final newBody = _descriptionController.text.trim();
-                          if (newBody != (task.body ?? '')) {
-                            final updatedTask = task.copyWith(body: newBody);
-                            ref.read(notesProvider.notifier).updateNote(updatedTask);
-                          }
-                          FocusScope.of(context).unfocus();
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: const Color(0xFFE0E7FF), // Light indigo bg
-                        foregroundColor: const Color(0xFF4F46E5), // Indigo text
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      ),
-                      child: const Text('Done', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -590,6 +620,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           ),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

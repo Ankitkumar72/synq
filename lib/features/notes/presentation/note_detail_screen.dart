@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -38,6 +40,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
   final MediaService _mediaService = MediaService();
 
   bool _hasUnsavedChanges = false;
+  Timer? _debounceTimer;
+  bool _isDeleting = false;
   
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -92,10 +96,18 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
     if (!_hasUnsavedChanges) {
       setState(() => _hasUnsavedChanges = true);
     }
+    
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (_hasUnsavedChanges) {
+        _handleSave();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _titleController.dispose();
     _bodyController.dispose();
     _animationController.dispose();
@@ -162,6 +174,43 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
   @override
   Widget build(BuildContext context) {
     final foldersAsync = ref.watch(foldersProvider);
+    final notesAsync = ref.watch(notesProvider);
+
+    // Only check for "missing" if we are editing an existing note
+    final bool isNoteMissing = widget.noteToEdit != null && 
+        notesAsync.hasValue && 
+        notesAsync.value?.any((n) => n.id == widget.noteToEdit!.id) == false;
+
+    if (isNoteMissing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && Navigator.canPop(context)) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
+      });
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
+          title: const Text('Note Removed', style: TextStyle(color: Colors.black, fontSize: 16)),
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.check_circle_outline, size: 48, color: Colors.green),
+              SizedBox(height: 16),
+              Text('Note was deleted successfully.', style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        ),
+      ); 
+    }
+
     final folderName = foldersAsync.when(
       data: (folders) => folders.firstWhere((f) => f.id == _selectedFolderId, orElse: () => Folder(id: '', name: 'Uncategorized', iconCodePoint: 0, colorValue: 0, createdAt: DateTime(2024))).name,
       loading: () => 'Loading...',
@@ -172,7 +221,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
       canPop: false,
       onPopInvokedWithResult: (bool didPop, dynamic result) async {
         if (didPop) return;
-        if (_hasUnsavedChanges) {
+        if (_hasUnsavedChanges && !_isDeleting) {
           await _handleSave();
         }
         if (context.mounted) Navigator.pop(context);
@@ -185,7 +234,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () async {
-               if (_hasUnsavedChanges) await _handleSave();
+               if (_hasUnsavedChanges && !_isDeleting) await _handleSave();
                if (context.mounted) Navigator.pop(context);
             },
           ),
@@ -200,26 +249,41 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
           ),
           centerTitle: true,
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: TextButton(
-                onPressed: () async {
-                  await _handleSave();
-                  if (context.mounted) Navigator.pop(context);
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  backgroundColor: Colors.transparent, 
-                ),
-                child: Text(
-                  'Save',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Note'),
+                    content: const Text('Are you sure you want to delete this note?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          final noteId = widget.noteToEdit?.id;
+                          setState(() => _isDeleting = true);
+                          
+                          // Close dialog and return to home screen
+                          if (Navigator.canPop(context)) Navigator.pop(context);
+                          if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+                          
+                          if (noteId != null) {
+                            ref.read(notesProvider.notifier).deleteNote(noteId).catchError((e) {
+                              debugPrint('Error deleting note: $e');
+                            });
+                          }
+                        },
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: const Text('Delete'),
+                      ),
+                    ],
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),
