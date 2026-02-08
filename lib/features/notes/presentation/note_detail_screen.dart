@@ -196,15 +196,43 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
             icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
-          title: const Text('Note Removed', style: TextStyle(color: Colors.black, fontSize: 16)),
+          title: Text('Note Removed', style: GoogleFonts.inter(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
-        body: const Center(
+        body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.check_circle_outline, size: 48, color: Colors.green),
-              SizedBox(height: 16),
-              Text('Note was deleted successfully.', style: TextStyle(color: Colors.grey)),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_outline, size: 48, color: AppColors.success),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Note was deleted successfully.',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: 200,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text('Back to Home', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                ),
+              ),
             ],
           ),
         ),
@@ -251,45 +279,16 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
           actions: [
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Colors.red),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Delete Note'),
-                    content: const Text('Are you sure you want to delete this note?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          final noteId = widget.noteToEdit?.id;
-                          setState(() => _isDeleting = true);
-                          
-                          // Close dialog and return to home screen
-                          if (Navigator.canPop(context)) Navigator.pop(context);
-                          if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
-                          
-                          if (noteId != null) {
-                            ref.read(notesProvider.notifier).deleteNote(noteId).catchError((e) {
-                              debugPrint('Error deleting note: $e');
-                            });
-                          }
-                        },
-                        style: TextButton.styleFrom(foregroundColor: Colors.red),
-                        child: const Text('Delete'),
-                      ),
-                    ],
-                  ),
-                );
-              },
+            onPressed: _showDeleteConfirmation,
             ),
           ],
         ),
-        body: Column(
-          children: [
-             Expanded(
+        body: AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: _isDeleting ? 0.0 : 1.0,
+          child: Column(
+            children: [
+               Expanded(
                child: FadeTransition(
                  opacity: _fadeAnimation,
                  child: SlideTransition(
@@ -380,8 +379,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                           ),
                         ),
                         const SizedBox(height: 24),
-                     ] else ...[
-                        // Placeholder hidden
                      ],
 
                      // Title
@@ -444,90 +441,92 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                    ],
                  ),
                ),
+               ),
+               ),
               ), // End FadeTransition
-            )), // End Expanded
-             
-             // Bottom Quick Actions Bar
-             Container(
-               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-               decoration: BoxDecoration(
-                 color: Colors.grey[50],
-                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                 boxShadow: [
-                     BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0,-2)),
-                 ],
-               ),
-               child: Row(
-                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                 children: [
-                    // Quick Actions Group
-                    Row(
-                      children: [
-                         _buildQuickActionBtn(Icons.auto_awesome, 'Quick\nActions', isLabel: true),
-                         const SizedBox(width: 12),
-                         _buildQuickActionBtn(
-                           _isTask ? Icons.check_box : Icons.check_box_outline_blank, 
-                           'Make Task', 
-                           isActive: _isTask,
-                           onTap: () {
-                             setState(() {
-                               _isTask = !_isTask;
-                               _hasUnsavedChanges = true;
-                             });
-                             ScaffoldMessenger.of(context).clearSnackBars();
-                             ScaffoldMessenger.of(context).showSnackBar(
-                               SnackBar(
-                                 content: Text(
-                                   _isTask ? 'Converted to Task' : 'Reverted to Note',
-                                   style: const TextStyle(color: Colors.white),
+              
+               // Bottom Quick Actions Bar
+               Container(
+                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                 decoration: BoxDecoration(
+                   color: Colors.grey[50],
+                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                   boxShadow: [
+                       BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0,-2)),
+                   ],
+                 ),
+                 child: Row(
+                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                   children: [
+                      // Quick Actions Group
+                      Row(
+                        children: [
+                           _buildQuickActionBtn(Icons.auto_awesome, 'Quick\nActions', isLabel: true),
+                           const SizedBox(width: 12),
+                           _buildQuickActionBtn(
+                             _isTask ? Icons.check_box : Icons.check_box_outline_blank, 
+                             'Make Task', 
+                             isActive: _isTask,
+                             onTap: () {
+                               setState(() {
+                                 _isTask = !_isTask;
+                                 _hasUnsavedChanges = true;
+                               });
+                               ScaffoldMessenger.of(context).clearSnackBars();
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                 SnackBar(
+                                   content: Text(
+                                     _isTask ? 'Converted to Task' : 'Reverted to Note',
+                                     style: const TextStyle(color: Colors.white),
+                                   ),
+                                   backgroundColor: Colors.black87,
+                                   behavior: SnackBarBehavior.floating,
+                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                   duration: const Duration(seconds: 2),
                                  ),
-                                 backgroundColor: Colors.black87,
-                                 behavior: SnackBarBehavior.floating,
-                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                 duration: const Duration(seconds: 2),
-                               ),
-                             );
-                           },
-                         ), // Make Task
-                         const SizedBox(width: 8),
-                         _buildQuickActionBtn(
-                           Icons.calendar_today, 
-                           'Calendar',
-                           isActive: _scheduledTime != null,
-                           onTap: () async {
-                              final pickedDate = await showDatePicker(
-                                context: context,
-                                initialDate: _scheduledTime ?? DateTime.now(),
-                                firstDate: DateTime.now(),
-                                lastDate: DateTime.now().add(const Duration(days: 365)),
-                              );
-                              if (pickedDate != null) {
-                                setState(() {
-                                  _scheduledTime = pickedDate;
-                                  _isTask = true; // Auto-make task if scheduled?
-                                  _hasUnsavedChanges = true;
-                                });
-                              }
-                           },
-                         ),
-                      ],
-                    ),
-                    
-                    // More / Edit FAB equivalent
-                    Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.black, // Dark FAB
-                        shape: BoxShape.circle,
+                               );
+                             },
+                           ), // Make Task
+                           const SizedBox(width: 8),
+                           _buildQuickActionBtn(
+                             Icons.calendar_today, 
+                             'Calendar',
+                             isActive: _scheduledTime != null,
+                             onTap: () async {
+                                final pickedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: _scheduledTime ?? DateTime.now(),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                                );
+                                if (pickedDate != null) {
+                                  setState(() {
+                                    _scheduledTime = pickedDate;
+                                    _isTask = true; // Auto-make task if scheduled?
+                                    _hasUnsavedChanges = true;
+                                  });
+                                }
+                             },
+                           ),
+                        ],
                       ),
-                      child: IconButton(
-                        icon: const Icon(Icons.image, color: Colors.white, size: 20),
-                        onPressed: _pickImage,
+                      
+                      // More / Edit FAB equivalent
+                      Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.black, // Dark FAB
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.image, color: Colors.white, size: 20),
+                          onPressed: _pickImage,
+                        ),
                       ),
-                    ),
-                 ],
+                   ],
+                 ),
                ),
-             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -744,5 +743,115 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
           });
        }
     });
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? const Color(0xFF1C1C1E) 
+                : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_outline, color: Colors.red, size: 32),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Delete Note',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Are you sure you want to delete this note? This action cannot be undone.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  color: Colors.grey,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final noteId = widget.noteToEdit?.id;
+                        Navigator.pop(context); // Close dialog
+                        
+                        final navigator = Navigator.of(context);
+                        setState(() => _isDeleting = true);
+                        
+                        // Wait for fade animation
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          if (mounted) {
+                            navigator.popUntil((route) => route.isFirst);
+                            if (noteId != null) {
+                              ref.read(notesProvider.notifier).deleteNote(noteId).catchError((e) {
+                                debugPrint('Error deleting note: $e');
+                              });
+                            }
+                          }
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        'Delete',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

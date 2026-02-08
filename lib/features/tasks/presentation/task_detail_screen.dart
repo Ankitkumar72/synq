@@ -23,6 +23,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late FocusNode _subTaskFocusNode;
   Timer? _debounceTimer;
   bool _isAddingSubTask = false;
+  bool _isDeleting = false;
 
   Note get _currentTask {
     final notes = ref.read(notesProvider).value;
@@ -199,31 +200,107 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   void _deleteTask() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Task'),
-        content: const Text('Are you sure you want to delete this task?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? const Color(0xFF1C1C1E) 
+                : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              final taskId = _currentTask.id;
-              
-              // Close dialog and return to home screen
-              if (Navigator.canPop(context)) Navigator.pop(context);
-              if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
-              
-              // Perform deletion in background
-              ref.read(notesProvider.notifier).deleteNote(taskId).catchError((e) {
-                debugPrint('Error deleting task: $e');
-              });
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_outline, color: Colors.red, size: 32),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Delete Task',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Are you sure you want to delete this task? This action cannot be undone.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  color: Colors.grey,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final taskId = _currentTask.id;
+                        Navigator.pop(context); // Close dialog
+                        
+                        final navigator = Navigator.of(context);
+                        setState(() => _isDeleting = true);
+                        
+                        // Wait for fade animation
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          if (mounted) {
+                            navigator.popUntil((route) => route.isFirst);
+                            ref.read(notesProvider.notifier).deleteNote(taskId).catchError((e) {
+                              debugPrint('Error deleting task: $e');
+                            });
+                          }
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        'Delete',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -252,15 +329,43 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
-          title: const Text('Task Removed', style: TextStyle(color: Colors.black, fontSize: 16)),
+          title: Text('Task Removed', style: GoogleFonts.inter(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
-        body: const Center(
+        body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.check_circle_outline, size: 48, color: Colors.green),
-              SizedBox(height: 16),
-              Text('Task was deleted successfully.', style: TextStyle(color: Colors.grey)),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_outline, size: 48, color: AppColors.success),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Task was deleted successfully.',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: 200,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text('Back to Home', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                ),
+              ),
             ],
           ),
         ),
@@ -311,154 +416,69 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title
-            GestureDetector(
-              onTap: _editTitle,
-              child: Text(
-                task.title,
-                style: GoogleFonts.inter(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  height: 1.2,
+      body: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: _isDeleting ? 0.0 : 1.0,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              GestureDetector(
+                onTap: _editTitle,
+                child: Text(
+                  task.title,
+                  style: GoogleFonts.inter(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    height: 1.2,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Date & Time Row
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  GestureDetector(
-                    onTap: _pickDate,
-                    behavior: HitTestBehavior.opaque,
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF5372F6)),
-                        const SizedBox(width: 8),
-                        _DateDisplay(scheduledTime: task.scheduledTime),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _pickTime,
-                      behavior: HitTestBehavior.opaque,
-                    child: Row(
-                      children: [
-                        const Icon(Icons.access_time, size: 18, color: Color(0xFF5372F6)),
-                        const SizedBox(width: 8),
-                        _TimeDisplay(scheduledTime: task.scheduledTime),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Description - Persistent Card
-            const _SectionTitle(title: 'DESCRIPTION'),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _descriptionController,
-                    maxLines: null,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF1F2937),
-                        height: 1.5,
-                      ),
-                    decoration: const InputDecoration(
-                      hintText: 'Add details or notes...',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      isDense: true,
-                      filled: false,
-                      fillColor: Colors.transparent,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Tags
-            if (task.tags.isNotEmpty) ...[
-              const _SectionTitle(title: 'TAGS'),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: task.tags.map((tag) => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    tag,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF4B5563),
-                    ),
-                  ),
-                )).toList(),
               ),
               const SizedBox(height: 24),
-            ],
 
-            // Sub-tasks Section
-            const _SectionTitle(title: 'SUB-TASKS'),
-            const SizedBox(height: 12),
-            
-            if (task.subtasks.isEmpty && !_isAddingSubTask)
-              GestureDetector(
-                onTap: () => setState(() => _isAddingSubTask = true),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.playlist_add, color: Color(0xFF5372F6), size: 24),
-                      SizedBox(width: 12),
-                      Text(
-                        'Add Sub-tasks',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1F2937),
-                        ),
-                      ),
-                    ],
-                  ),
+              // Date & Time Row
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              )
-            else
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: _pickDate,
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF5372F6)),
+                          const SizedBox(width: 8),
+                          _DateDisplay(scheduledTime: task.scheduledTime),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _pickTime,
+                        behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time, size: 18, color: Color(0xFF5372F6)),
+                          const SizedBox(width: 8),
+                          _TimeDisplay(scheduledTime: task.scheduledTime),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Description - Persistent Card
+              const _SectionTitle(title: 'DESCRIPTION'),
+              const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -466,142 +486,231 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Progress
-                    if (totalSubtasks > 0) ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: LinearProgressIndicator(
-                                  value: progress,
-                                  backgroundColor: Colors.grey[200],
-                                  valueColor: const AlwaysStoppedAnimation(Color(0xFF4AC299)),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                '${(progress * 100).toInt()}%',
-                                style: const TextStyle(
-                                  color: Color(0xFF4AC299),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                    ],
-
-                    // Existing Subtasks
-                    ...task.subtasks.map((subtask) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => _toggleSubTask(subtask.id),
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: subtask.isCompleted ? const Color(0xFF6B8AFD) : Colors.transparent, 
-                                borderRadius: BorderRadius.circular(12), // Circle
-                                border: subtask.isCompleted ? null : Border.all(color: Colors.grey[300]!, width: 2),
-                              ),
-                              child: subtask.isCompleted 
-                                  ? const Icon(Icons.check, size: 14, color: Colors.white) 
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              subtask.title,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: subtask.isCompleted ? const Color(0xFF9CA3AF) : const Color(0xFF374151),
-                                decoration: subtask.isCompleted ? TextDecoration.lineThrough : null,
-                                decorationColor: const Color(0xFF9CA3AF),
-                              ),
-                            ),
-                          ),
-                        ],
+                    TextField(
+                      controller: _descriptionController,
+                      maxLines: null,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF1F2937),
+                          height: 1.5,
+                        ),
+                      decoration: const InputDecoration(
+                        hintText: 'Add details or notes...',
+                        hintStyle: TextStyle(color: Colors.grey),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isDense: true,
+                        filled: false,
+                        fillColor: Colors.transparent,
                       ),
-                    )),
-
-                    // Add Subtask Row - Simplified for "List" feel
-                    Row(
-                      children: [
-                        Container(
-                          width: 24, 
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.grey[300]!, width: 2),
-                          ),
-                          child: const Icon(Icons.add, size: 14, color: Colors.grey),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: _subTaskController,
-                            focusNode: _subTaskFocusNode,
-                            autofocus: true,
-                            textInputAction: TextInputAction.done, 
-                            style: const TextStyle(fontSize: 15, color: Colors.black),
-                            cursorColor: AppColors.primary,
-                            decoration: const InputDecoration(
-                              hintText: 'Add a sub-task...',
-                              hintStyle: TextStyle(color: Colors.black54),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              isDense: true,
-                              filled: true,
-                              fillColor: Colors.transparent,
-                              contentPadding: EdgeInsets.symmetric(vertical: 8),
-                            ),
-                            onSubmitted: (_) => _addSubTask(),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add_circle_outline, color: Color(0xFF5372F6), size: 24),
-                          onPressed: _addSubTask,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
 
-            // Attachments
-            // Force rebuild
-            if (task.attachments.isNotEmpty) ...[
-              const _SectionTitle(title: 'ATTACHMENTS'),
+              // Tags
+              if (task.tags.isNotEmpty) ...[
+                const _SectionTitle(title: 'TAGS'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: task.tags.map((tag) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      tag,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4B5563),
+                      ),
+                    ),
+                  )).toList(),
+                ),
+                const SizedBox(height: 24),
+              ],
+
+              // Sub-tasks Section
+              const _SectionTitle(title: 'SUB-TASKS'),
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                      ...task.attachments.map((url) => Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(url, width: 80, height: 80, fit: BoxFit.cover),
+              
+              if (task.subtasks.isEmpty && !_isAddingSubTask)
+                GestureDetector(
+                  onTap: () => setState(() => _isAddingSubTask = true),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.playlist_add, color: Color(0xFF5372F6), size: 24),
+                        SizedBox(width: 12),
+                        Text(
+                          'Add Sub-tasks',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1F2937),
+                          ),
                         ),
-                      ))
-                  ],
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Progress
+                      if (totalSubtasks > 0) ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    backgroundColor: Colors.grey[200],
+                                    valueColor: const AlwaysStoppedAnimation(Color(0xFF4AC299)),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  '${(progress * 100).toInt()}%',
+                                  style: const TextStyle(
+                                    color: Color(0xFF4AC299),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                      ],
+
+                      // Existing Subtasks
+                      ...task.subtasks.map((subtask) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _toggleSubTask(subtask.id),
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: subtask.isCompleted ? const Color(0xFF6B8AFD) : Colors.transparent, 
+                                  borderRadius: BorderRadius.circular(12), // Circle
+                                  border: subtask.isCompleted ? null : Border.all(color: Colors.grey[300]!, width: 2),
+                                ),
+                                child: subtask.isCompleted 
+                                    ? const Icon(Icons.check, size: 14, color: Colors.white) 
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                subtask.title,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: subtask.isCompleted ? const Color(0xFF9CA3AF) : const Color(0xFF374151),
+                                  decoration: subtask.isCompleted ? TextDecoration.lineThrough : null,
+                                  decorationColor: const Color(0xFF9CA3AF),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+
+                      // Add Subtask Row - Simplified for "List" feel
+                      Row(
+                        children: [
+                          Container(
+                            width: 24, 
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey[300]!, width: 2),
+                            ),
+                            child: const Icon(Icons.add, size: 14, color: Colors.grey),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _subTaskController,
+                              focusNode: _subTaskFocusNode,
+                              autofocus: true,
+                              textInputAction: TextInputAction.done, 
+                              style: const TextStyle(fontSize: 15, color: Colors.black),
+                              cursorColor: AppColors.primary,
+                              decoration: const InputDecoration(
+                                hintText: 'Add a sub-task...',
+                                hintStyle: TextStyle(color: Colors.black54),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                isDense: true,
+                                filled: true,
+                                fillColor: Colors.transparent,
+                                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                              ),
+                              onSubmitted: (_) => _addSubTask(),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline, color: Color(0xFF5372F6), size: 24),
+                            onPressed: _addSubTask,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+
+              // Attachments
+              // Force rebuild
+              if (task.attachments.isNotEmpty) ...[
+                const _SectionTitle(title: 'ATTACHMENTS'),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                        ...task.attachments.map((url) => Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(url, width: 80, height: 80, fit: BoxFit.cover),
+                          ),
+                        ))
+                    ],
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
