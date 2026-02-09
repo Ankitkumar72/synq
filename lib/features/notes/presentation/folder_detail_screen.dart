@@ -4,9 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../domain/models/folder.dart';
 import '../data/notes_provider.dart';
 import '../../../../core/navigation/fade_page_route.dart';
-import 'note_detail_screen.dart'; 
-// We will need to update creation sheets to accept a pre-selected folderId
-// For now, let's list items.
+import 'note_detail_screen.dart';
 
 class FolderDetailScreen extends ConsumerWidget {
   final Folder folder;
@@ -50,8 +48,11 @@ class FolderDetailScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   Icon(
-                    IconData(folder.iconCodePoint, fontFamily: folder.iconFontFamily ?? 'MaterialIcons'),
+                  Icon(
+                    IconData(
+                      folder.iconCodePoint,
+                      fontFamily: folder.iconFontFamily ?? 'MaterialIcons',
+                    ),
                     size: 64,
                     color: Color(folder.colorValue).withValues(alpha: 0.5),
                   ),
@@ -59,8 +60,8 @@ class FolderDetailScreen extends ConsumerWidget {
                   Text(
                     'No items yet',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -72,11 +73,16 @@ class FolderDetailScreen extends ConsumerWidget {
                 final note = folderNotes[index];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                   color: AppColors.surface,
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     leading: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -84,7 +90,9 @@ class FolderDetailScreen extends ConsumerWidget {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        note.isTask ? Icons.check_circle_outlined : Icons.description_outlined,
+                        note.isTask
+                            ? Icons.check_circle_outlined
+                            : Icons.description_outlined,
                         color: Color(folder.colorValue),
                         size: 20,
                       ),
@@ -93,12 +101,18 @@ class FolderDetailScreen extends ConsumerWidget {
                       note.title,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                    subtitle: note.body != null && note.body!.isNotEmpty 
-                        ? Text(note.body!, maxLines: 1, overflow: TextOverflow.ellipsis) 
+                    subtitle: note.body != null && note.body!.isNotEmpty
+                        ? Text(
+                            note.body!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
                         : null,
                     trailing: Text(
                       _formatDate(note.createdAt),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 );
@@ -106,13 +120,12 @@ class FolderDetailScreen extends ConsumerWidget {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-            // Open crate note sheet with pre-selected folder
-            // We need to update CreateNoteSheet to accept initialFolderId
-            // For now just open it
-            Navigator.push(
-              context,
-              FadePageRoute(builder: (_) => NoteDetailScreen(initialFolderId: folder.id)),
-            );
+          Navigator.push(
+            context,
+            FadePageRoute(
+              builder: (_) => NoteDetailScreen(initialFolderId: folder.id),
+            ),
+          );
         },
         backgroundColor: Color(folder.colorValue),
         child: const Icon(Icons.add, color: Colors.white),
@@ -124,7 +137,5 @@ class FolderDetailScreen extends ConsumerWidget {
     return '${dt.day}/${dt.month}';
   }
 
-  void _showOptions(BuildContext context, WidgetRef ref) {
-    // TODO: Implement Edit/Delete
-  }
+  void _showOptions(BuildContext context, WidgetRef ref) {}
 }

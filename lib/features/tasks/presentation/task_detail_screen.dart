@@ -475,27 +475,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           ),
         ),
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_horiz, color: Colors.black),
-            onSelected: (value) {
-              if (value == 'delete') {
-                _deleteTask();
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                      SizedBox(width: 8),
-                      Text('Delete Task', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ];
-            },
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.black),
+            onPressed: _deleteTask,
+            tooltip: 'Delete Task',
           ),
           const SizedBox(width: 8),
         ],
