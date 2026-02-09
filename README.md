@@ -29,9 +29,19 @@ Synq is a powerful and intuitive task and note management application built with
 
 - **UI/UX**
   - **Premium Design**: Polished UI with custom themes (Light & Dark mode).
+  - **Dynamic Dashboard**: Enhanced "Next Up" card that intelligently shows upcoming tasks, today's all-day events, or a summary of remaining work.
   - **Fluid Navigation**: Persistent bottom navigation with smooth transitions.
-  - **Gestures**: Double-tap back to exit, swipe actions.
-  - **Animations**: Subtle micro-interactions and transitions using `FadePageRoute`.
+  - **Gestures**: Double-tap back to exit, styled SnackBar feedback.
+  - **Animations**: Subtle micro-interactions, custom `CircularTimer`, and `WaveformGraph` for Focus mode.
+
+## ✨ Recent Updates
+
+- **Dynamic Focus Experience**: Fully functional timer and task tracking in Focus Mode. Support for both scheduled countdowns and elapsed time tracking.
+- **Intelligent Dashboard**: The "Next Up" section now prioritizes today's tasks and provides fallback summaries (e.g., "5 Tasks Left") when no specific timed event is coming up.
+- **Enhanced Task Detail**: Improved sub-task persistence, scrolling stability, and auto-loading states.
+- **Styled Headers**: Professional, bold hierarchy for "TASK TITLE" and "DESCRIPTION" across create and detail screens.
+- **Independent Categories**: Separated state management for task and note categories for more modular organization.
+
 
 ## 🏗 Architecture
 
