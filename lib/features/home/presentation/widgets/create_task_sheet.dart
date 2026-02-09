@@ -294,14 +294,21 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100], 
+                      color: Colors.white, 
                       borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: TextField(
                       controller: _titleController,
                       autofocus: false,
                       style: const TextStyle(
-                         fontSize: 24,
+                         fontSize: 16, // Reduced from 24
                          fontWeight: FontWeight.w600,
                          color: Colors.black87, 
                       ),
@@ -311,7 +318,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
                         hintText: 'What needs to be done?',
-                        hintStyle: TextStyle(color: Color(0xFF9AA0A6), fontSize: 24, fontWeight: FontWeight.w600),
+                        hintStyle: TextStyle(color: Color(0xFF9AA0A6), fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -362,8 +369,15 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                     height: 140, // Maximized height
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100], // Explicit standard light grey
+                      color: Colors.white, // Changed from grey[100]
                       borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: TextField(
                       controller: _descriptionController,
@@ -448,7 +462,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
       style: const TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF8A9099),
+        color: Colors.black, // Changed from Color(0xFF8A9099)
         letterSpacing: 1.0,
       ),
     );
@@ -468,8 +482,15 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
         height: 100, // Matched to design screenshot
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,8 +544,15 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
         height: 100, // Match neighbors
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -560,8 +588,15 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
           height: 100, // Match neighbors
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
