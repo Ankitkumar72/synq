@@ -25,6 +25,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   Timer? _debounceTimer;
   bool _isAddingSubTask = false;
   bool _isDeleting = false;
+  bool _isSubTasksExpanded = false;
 
   Note get _currentTask {
     final notes = ref.read(notesProvider).value;
@@ -39,6 +40,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _descriptionController.addListener(_onDescriptionChanged);
     _subTaskFocusNode = FocusNode();
     _scrollController = ScrollController();
+    _isSubTasksExpanded = widget.task.subtasks.isNotEmpty;
   }
 
   void _onDescriptionChanged() {
@@ -99,12 +101,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       });
     });
 
-    // A small delay ensures the keyboard doesn't dismiss after the 'done/none' action
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        _subTaskFocusNode.requestFocus();
-      }
-    });
+    // Request focus immediately to prevent keyboard flicker
+    if (mounted) {
+      _subTaskFocusNode.requestFocus();
+    }
   }
 
   void _toggleSubTask(String subTaskId) {
@@ -622,12 +622,29 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               ],
 
               // Sub-tasks Section
-              const _SectionTitle(title: 'SUB-TASKS'),
+              GestureDetector(
+                onTap: () => setState(() => _isSubTasksExpanded = !_isSubTasksExpanded),
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: [
+                    const _SectionTitle(title: 'SUB-TASKS'),
+                    const SizedBox(width: 8),
+                    Icon(
+                      _isSubTasksExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: const Color(0xFF9CA3AF),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 12),
               
               if (task.subtasks.isEmpty && !_isAddingSubTask)
                 GestureDetector(
-                  onTap: () => setState(() => _isAddingSubTask = true),
+                  onTap: () => setState(() {
+                    _isAddingSubTask = true;
+                    _isSubTasksExpanded = true;
+                  }),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     decoration: BoxDecoration(
@@ -650,7 +667,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     ),
                   ),
                 )
-              else
+              else if (_isSubTasksExpanded || _isAddingSubTask)
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -751,8 +768,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                             child: TextField(
                               controller: _subTaskController,
                               focusNode: _subTaskFocusNode,
-                              autofocus: true,
-                              textInputAction: TextInputAction.none, 
+                              autofocus: false,
+                              textInputAction: TextInputAction.next, 
                               style: const TextStyle(fontSize: 15, color: Colors.black),
                               cursorColor: AppColors.primary,
                               decoration: const InputDecoration(
