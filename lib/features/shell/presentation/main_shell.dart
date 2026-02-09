@@ -9,10 +9,10 @@ import '../../notes/presentation/folders_screen.dart';
 import '../../notes/presentation/note_detail_screen.dart';
 import '../../../../core/navigation/fade_page_route.dart';
 
-/// Provider to track the current navigation index
+
 final currentNavIndexProvider = StateProvider<int>((ref) => 0);
 
-/// Main shell that provides persistent bottom navigation across all screens
+
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
 
