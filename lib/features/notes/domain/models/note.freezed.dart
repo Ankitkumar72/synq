@@ -114,7 +114,8 @@ class __$$SubTaskImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
+@JsonSerializable(explicitToJson: true)
 class _$SubTaskImpl implements _SubTask {
   const _$SubTaskImpl(
       {required this.id, required this.title, this.isCompleted = false});
@@ -198,29 +199,20 @@ mixin _$Note {
   DateTime? get scheduledTime => throw _privateConstructorUsedError;
   DateTime? get endTime => throw _privateConstructorUsedError;
   DateTime? get reminderTime => throw _privateConstructorUsedError;
-  RecurrenceRule? get recurrenceRule =>
-      throw _privateConstructorUsedError; // For defining recurrence
-  String? get parentRecurringId =>
-      throw _privateConstructorUsedError; // ID of the parent/original task
-  DateTime? get originalScheduledTime =>
-      throw _privateConstructorUsedError; // The original date this instance was generated for
+  RecurrenceRule? get recurrenceRule => throw _privateConstructorUsedError;
+  String? get parentRecurringId => throw _privateConstructorUsedError;
+  DateTime? get originalScheduledTime => throw _privateConstructorUsedError;
   DateTime? get completedAt => throw _privateConstructorUsedError;
   TaskPriority get priority => throw _privateConstructorUsedError;
-  bool get isTask =>
-      throw _privateConstructorUsedError; // true = task, false = note
-  bool get isAllDay =>
-      throw _privateConstructorUsedError; // true = all day event (no specific time)
-  bool get isRecurringInstance =>
-      throw _privateConstructorUsedError; // true if generated from recurrence
+  bool get isTask => throw _privateConstructorUsedError;
+  bool get isAllDay => throw _privateConstructorUsedError;
+  bool get isRecurringInstance => throw _privateConstructorUsedError;
   bool get isCompleted => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
-  List<String> get attachments =>
-      throw _privateConstructorUsedError; // URLs of uploaded images/media
-  List<String> get links => throw _privateConstructorUsedError; // Embedded URLs
-  List<SubTask> get subtasks =>
-      throw _privateConstructorUsedError; // Sub-tasks for this note
-  String? get folderId =>
-      throw _privateConstructorUsedError; // ID of the folder this note belongs to
+  List<String> get attachments => throw _privateConstructorUsedError;
+  List<String> get links => throw _privateConstructorUsedError;
+  List<SubTask> get subtasks => throw _privateConstructorUsedError;
+  String? get folderId => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -575,7 +567,8 @@ class __$$NoteImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
+@JsonSerializable(explicitToJson: true)
 class _$NoteImpl extends _Note {
   const _$NoteImpl(
       {required this.id,
@@ -628,13 +621,10 @@ class _$NoteImpl extends _Note {
   final DateTime? reminderTime;
   @override
   final RecurrenceRule? recurrenceRule;
-// For defining recurrence
   @override
   final String? parentRecurringId;
-// ID of the parent/original task
   @override
   final DateTime? originalScheduledTime;
-// The original date this instance was generated for
   @override
   final DateTime? completedAt;
   @override
@@ -643,15 +633,12 @@ class _$NoteImpl extends _Note {
   @override
   @JsonKey()
   final bool isTask;
-// true = task, false = note
   @override
   @JsonKey()
   final bool isAllDay;
-// true = all day event (no specific time)
   @override
   @JsonKey()
   final bool isRecurringInstance;
-// true if generated from recurrence
   @override
   @JsonKey()
   final bool isCompleted;
@@ -673,9 +660,7 @@ class _$NoteImpl extends _Note {
     return EqualUnmodifiableListView(_attachments);
   }
 
-// URLs of uploaded images/media
   final List<String> _links;
-// URLs of uploaded images/media
   @override
   @JsonKey()
   List<String> get links {
@@ -684,9 +669,7 @@ class _$NoteImpl extends _Note {
     return EqualUnmodifiableListView(_links);
   }
 
-// Embedded URLs
   final List<SubTask> _subtasks;
-// Embedded URLs
   @override
   @JsonKey()
   List<SubTask> get subtasks {
@@ -695,10 +678,8 @@ class _$NoteImpl extends _Note {
     return EqualUnmodifiableListView(_subtasks);
   }
 
-// Sub-tasks for this note
   @override
   final String? folderId;
-// ID of the folder this note belongs to
   @override
   final DateTime? updatedAt;
 
@@ -842,33 +823,33 @@ abstract class _Note extends Note {
   DateTime? get reminderTime;
   @override
   RecurrenceRule? get recurrenceRule;
-  @override // For defining recurrence
+  @override
   String? get parentRecurringId;
-  @override // ID of the parent/original task
+  @override
   DateTime? get originalScheduledTime;
-  @override // The original date this instance was generated for
+  @override
   DateTime? get completedAt;
   @override
   TaskPriority get priority;
   @override
   bool get isTask;
-  @override // true = task, false = note
+  @override
   bool get isAllDay;
-  @override // true = all day event (no specific time)
+  @override
   bool get isRecurringInstance;
-  @override // true if generated from recurrence
+  @override
   bool get isCompleted;
   @override
   List<String> get tags;
   @override
   List<String> get attachments;
-  @override // URLs of uploaded images/media
+  @override
   List<String> get links;
-  @override // Embedded URLs
+  @override
   List<SubTask> get subtasks;
-  @override // Sub-tasks for this note
+  @override
   String? get folderId;
-  @override // ID of the folder this note belongs to
+  @override
   DateTime? get updatedAt;
   @override
   @JsonKey(ignore: true)

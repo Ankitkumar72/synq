@@ -82,7 +82,7 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'scheduledTime': instance.scheduledTime?.toIso8601String(),
       'endTime': instance.endTime?.toIso8601String(),
       'reminderTime': instance.reminderTime?.toIso8601String(),
-      'recurrenceRule': instance.recurrenceRule,
+      'recurrenceRule': instance.recurrenceRule?.toJson(),
       'parentRecurringId': instance.parentRecurringId,
       'originalScheduledTime':
           instance.originalScheduledTime?.toIso8601String(),
@@ -95,7 +95,7 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'tags': instance.tags,
       'attachments': instance.attachments,
       'links': instance.links,
-      'subtasks': instance.subtasks,
+      'subtasks': instance.subtasks.map((e) => e.toJson()).toList(),
       'folderId': instance.folderId,
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };

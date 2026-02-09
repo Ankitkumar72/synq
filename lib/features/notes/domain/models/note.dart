@@ -12,6 +12,8 @@ enum TaskPriority { low, medium, high }
 
 @freezed
 class SubTask with _$SubTask {
+  // ignore: invalid_annotation_target
+  @JsonSerializable(explicitToJson: true)
   const factory SubTask({
     required String id,
     required String title,
@@ -23,9 +25,10 @@ class SubTask with _$SubTask {
 
 @freezed
 class Note with _$Note {
-
   const Note._();
 
+  // ignore: invalid_annotation_target
+  @JsonSerializable(explicitToJson: true)
   const factory Note({
     required String id,
     required String title,

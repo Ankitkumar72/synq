@@ -21,6 +21,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late TextEditingController _subTaskController;
   late TextEditingController _descriptionController;
   late FocusNode _subTaskFocusNode;
+  late ScrollController _scrollController;
   Timer? _debounceTimer;
   bool _isAddingSubTask = false;
   bool _isDeleting = false;
@@ -37,6 +38,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _descriptionController = TextEditingController(text: widget.task.body);
     _descriptionController.addListener(_onDescriptionChanged);
     _subTaskFocusNode = FocusNode();
+    _scrollController = ScrollController();
   }
 
   void _onDescriptionChanged() {
@@ -57,6 +59,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _subTaskController.dispose();
     _descriptionController.dispose();
     _subTaskFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -83,14 +86,25 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     // Clear the controller to prepare for the next item
     _subTaskController.clear();
     
-    // Keep the UI in adding mode and ensure focus stays on the input
-    // effectively creating a "new line" in the list
-    setState(() {
-      // Logic relies on state update to reflect the new item in the list above
+    // Scroll to the bottom and re-request focus
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     });
 
-    // Request focus back to the text field to continue typing immediately
-    _subTaskFocusNode.requestFocus();
+    // A small delay ensures the keyboard doesn't dismiss after the 'done/none' action
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _subTaskFocusNode.requestFocus();
+      }
+    });
   }
 
   void _toggleSubTask(String subTaskId) {
@@ -483,11 +497,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: _isDeleting ? 0.0 : 1.0,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      body: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: _isDeleting ? 0.0 : 1.0,
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -646,6 +663,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       // Progress
                       if (totalSubtasks > 0) ...[
                             Row(
+                              key: const ValueKey('subtask_progress_row'),
                               children: [
                                 Expanded(
                                   child: LinearProgressIndicator(
@@ -717,6 +735,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
                       // Add Subtask Row - Simplified for "List" feel
                       Row(
+                        key: const ValueKey('add_subtask_input_row'),
                         children: [
                           Container(
                             width: 24, 
@@ -733,7 +752,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               controller: _subTaskController,
                               focusNode: _subTaskFocusNode,
                               autofocus: true,
-                              textInputAction: TextInputAction.done, 
+                              textInputAction: TextInputAction.none, 
                               style: const TextStyle(fontSize: 15, color: Colors.black),
                               cursorColor: AppColors.primary,
                               decoration: const InputDecoration(
@@ -790,6 +809,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
