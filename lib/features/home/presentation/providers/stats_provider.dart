@@ -13,25 +13,20 @@ class TaskStats {
   });
 }
 
-final taskStatsProvider = FutureProvider<TaskStats>((ref) async {
-  final notes = await ref.watch(notesProvider.future);
-  final now = DateTime.now();
-  final todayStart = DateTime(now.year, now.month, now.day);
+final taskStatsProvider = Provider<AsyncValue<TaskStats>>((ref) {
+  final notesAsync = ref.watch(notesProvider);
   
-  // Filter for today's TASKS
-  final todayTasks = notes.where((n) => 
-    n.isTask &&
-    (n.scheduledTime != null &&
-     n.scheduledTime!.isAfter(todayStart) &&
-     n.scheduledTime!.isBefore(todayStart.add(const Duration(days: 1))))
-  ).toList();
-  
-  final completed = todayTasks.where((t) => t.isCompleted).length;
-  final total = todayTasks.length;
-  
-  return TaskStats(
-    completed: completed,
-    total: total,
-    percentage: total > 0 ? (completed / total * 100).round() : 0,
-  );
+  return notesAsync.whenData((notes) {
+    // Filter for ALL TASKS
+    final allTasks = notes.where((n) => n.isTask).toList();
+    
+    final completed = allTasks.where((t) => t.isCompleted).length;
+    final total = allTasks.length;
+    
+    return TaskStats(
+      completed: completed,
+      total: total,
+      percentage: total > 0 ? (completed / total * 100).round() : 0,
+    );
+  });
 });

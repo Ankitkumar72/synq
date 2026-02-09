@@ -8,8 +8,7 @@ final currentFocusProvider = StreamProvider<Note?>((ref) async* {
   await for (final _ in Stream.periodic(const Duration(seconds: 1))) {
     final notes = await ref.watch(notesProvider.future);
     
-    // Find active task (scheduled time <= now < end time)
-    // Note: n.isActive uses DateTime.now() internally
+    
     final activeTask = notes.firstWhereOrNull((n) => n.isActive && !n.isCompleted);
       
     yield activeTask;
@@ -30,10 +29,6 @@ final currentFocusProgressProvider = Provider<double>((ref) {
       final remaining = focus.endTime!.difference(now).inSeconds;
       
       if (total == 0) return 0.0;
-      
-      // Calculate progress as fraction of time remaining (Full -> Empty)
-      // If just started (remaining == total), progress is 1.0 (Full bar)
-      // If finished (remaining == 0), progress is 0.0 (Empty bar)
       return (remaining / total).clamp(0.0, 1.0);
     },
     loading: () => 0.0,
