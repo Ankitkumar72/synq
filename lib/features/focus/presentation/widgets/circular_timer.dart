@@ -3,13 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class CircularTimer extends StatelessWidget {
-  final Duration duration;
-  final Duration remaining;
+  final String formattedTime;
+  final double progress;
 
   const CircularTimer({
     super.key,
-    required this.duration,
-    required this.remaining,
+    required this.formattedTime,
+    this.progress = 0.0,
   });
 
   @override
@@ -24,14 +24,25 @@ class CircularTimer extends StatelessWidget {
             color: AppColors.background,
           ),
         ),
+        // Progress Ring
+        if (progress > 0)
+          SizedBox.expand(
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 8,
+              backgroundColor: Colors.transparent,
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+            ),
+          ),
         // Timer Text
         Text(
-          "${remaining.inMinutes}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}",
+          formattedTime,
           style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontSize: 64,
                 fontWeight: FontWeight.normal,
                 fontFamily: GoogleFonts.robotoMono().fontFamily, // Monospace for numbers
                 letterSpacing: -2,
+                color: Colors.black,
               ),
         ),
       ],

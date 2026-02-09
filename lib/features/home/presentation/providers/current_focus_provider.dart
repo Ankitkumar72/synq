@@ -8,8 +8,8 @@ final currentFocusProvider = StreamProvider<Note?>((ref) async* {
   await for (final _ in Stream.periodic(const Duration(seconds: 1))) {
     final notes = await ref.watch(notesProvider.future);
     
-    
-    final activeTask = notes.firstWhereOrNull((n) => n.isActive && !n.isCompleted);
+    // Only look for an active task (within its scheduled time)
+    Note? activeTask = notes.firstWhereOrNull((n) => n.isActive && !n.isCompleted);
       
     yield activeTask;
   }

@@ -27,11 +27,11 @@ class NextUpCard extends StatelessWidget {
               Text(
                 "NEXT",
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
               ),
-              const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textSecondary),
+              const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.black),
             ],
           ),
           const Spacer(),
@@ -49,6 +49,7 @@ class NextUpCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
+                  color: Colors.black,
                 ),
           ),
           Text(
@@ -56,7 +57,7 @@ class NextUpCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Colors.black54,
                 ),
           ),
         ],

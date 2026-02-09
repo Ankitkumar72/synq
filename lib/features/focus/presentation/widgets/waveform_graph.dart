@@ -1,8 +1,31 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 
-class WaveformGraph extends StatelessWidget {
+class WaveformGraph extends StatefulWidget {
   const WaveformGraph({super.key});
+
+  @override
+  State<WaveformGraph> createState() => _WaveformGraphState();
+}
+
+class _WaveformGraphState extends State<WaveformGraph> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,9 +71,14 @@ class WaveformGraph extends StatelessWidget {
             ],
           ),
           Expanded(
-            child: CustomPaint(
-              painter: WavePainter(),
-              child: Container(),
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: WavePainter(animationValue: _controller.value),
+                  child: Container(),
+                );
+              },
             ),
           ),
         ],
@@ -60,29 +88,46 @@ class WaveformGraph extends StatelessWidget {
 }
 
 class WavePainter extends CustomPainter {
+  final double animationValue;
+  WavePainter({required this.animationValue});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = const Color(0xFF66C2A5) // Soft Green/Teal
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
 
+    final paintOverlay = Paint()
+      ..color = const Color(0xFF66C2A5).withValues(alpha: 0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+
+    _drawWave(canvas, size, paint, 1.0, 0.0);
+    _drawWave(canvas, size, paintOverlay, 0.8, 0.5); // Second slightly offset wave
+  }
+
+  void _drawWave(Canvas canvas, Size size, Paint paint, double amplitudeFactor, double phaseShift) {
     final path = Path();
-    path.moveTo(0, size.height * 0.8);
+    final midY = size.height * 0.7;
     
-    // Simple sine wave simulation
-    path.quadraticBezierTo(
-      size.width * 0.25, size.height * 0.6,
-      size.width * 0.5, size.height * 0.8,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.75, size.height,
-      size.width, size.height * 0.4,
-    );
+    path.moveTo(0, midY);
+
+    for (double x = 0; x <= size.width; x += 2) {
+      // Multiple sine waves combined for "random" look
+      final wave1 = math.sin((x / size.width * 2 * math.pi) + (animationValue * 2 * math.pi) + phaseShift);
+      final wave2 = math.sin((x / size.width * 4 * math.pi) - (animationValue * 3 * math.pi));
+      
+      final y = midY + (wave1 * 15 * amplitudeFactor) + (wave2 * 10 * amplitudeFactor);
+      path.lineTo(x, y);
+    }
 
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant WavePainter oldDelegate) => 
+      oldDelegate.animationValue != animationValue;
 }

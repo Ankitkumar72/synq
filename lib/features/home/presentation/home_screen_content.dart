@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../timeline/presentation/pages/daily_timeline_page.dart';
 import '../../notes/domain/models/note.dart';
 import 'providers/next_task_provider.dart';
 import '../../profile/presentation/profile_screen.dart';
@@ -10,6 +9,7 @@ import '../../../../core/navigation/fade_page_route.dart';
 import 'widgets/current_focus_widget.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
+import '../../focus/presentation/focus_screen.dart';
 
 import '../../notes/presentation/note_detail_screen.dart';
 import '../../notes/data/notes_provider.dart';
@@ -74,9 +74,8 @@ class HomeScreenContent extends ConsumerWidget {
             // Current Focus Section (Dynamic)
             // Current Focus Section (Dynamic)
             GestureDetector(
-              onTap: () => Navigator.push(
-                context, 
-                FadePageRoute(builder: (_) => const DailyTimelinePage()),
+              onTap: () => Navigator.of(context, rootNavigator: true).push(
+                FadePageRoute(builder: (_) => const FocusScreen()),
               ),
               child: const CurrentFocusWidget(),
             ),
@@ -91,16 +90,39 @@ class HomeScreenContent extends ConsumerWidget {
                      builder: (context, ref, _) {
                        final nextTask = ref.watch(nextTaskProvider).value;
                        final timeUntil = ref.watch(nextTaskTimeUntilProvider);
+                       final counts = ref.watch(taskCountsProvider).value;
+                       
+                       String title;
+                       String subtitle;
+                       String time;
+
+                       if (nextTask != null) {
+                         title = nextTask.title;
+                         subtitle = nextTask.body ?? (nextTask.isAllDay ? 'All day task' : 'Upcoming Task');
+                         time = timeUntil;
+                       } else {
+                         final remaining = counts?['remaining'] ?? 0;
+                         if (remaining > 0) {
+                           title = '$remaining ${remaining == 1 ? 'Task' : 'Tasks'}';
+                           subtitle = 'Left for today';
+                           time = 'TODAY';
+                         } else {
+                           title = 'All Caught Up';
+                           subtitle = 'No more events';
+                           time = '--:--';
+                         }
+                       }
                        
                        return Expanded(
                         child: NextUpCard(
-                          title: nextTask?.title ?? 'All Caught Up',
-                          subtitle: nextTask?.body ?? 'No upcoming events',
-                          time: nextTask != null ? timeUntil : '--:--',
+                          title: title,
+                          subtitle: subtitle,
+                          time: time,
                         ),
                       );
                      }
                    ),
+
                   const SizedBox(width: 16),
                   const Expanded(
                     child: StatsCard(),
