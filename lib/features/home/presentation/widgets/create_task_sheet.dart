@@ -8,8 +8,9 @@ import '../../../notes/presentation/widgets/tag_manage_dialog.dart';
 class CreateTaskSheet extends ConsumerStatefulWidget {
   final Note? taskToEdit;
   final String? initialFolderId;
+  final DateTime? initialDate;
 
-  const CreateTaskSheet({super.key, this.taskToEdit, this.initialFolderId});
+  const CreateTaskSheet({super.key, this.taskToEdit, this.initialFolderId, this.initialDate});
 
   @override
   ConsumerState<CreateTaskSheet> createState() => _CreateTaskSheetState();
@@ -48,8 +49,10 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
       _selectedTags = List.from(task.tags);
     } else {
       _selectedFolderId = widget.initialFolderId;
-      // Default to null (no date/time) for new tasks as requested
-      // _taskDueDate = DateTime.now(); 
+      _taskDueDate = widget.initialDate;
+      if (_taskDueDate != null) {
+        _isTaskAllDay = true; // Default to all day for just date selection
+      }
     }
   }
 
@@ -679,13 +682,13 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
   }
 }
 
-void showCreateTaskSheet(BuildContext context, {Note? taskToEdit, String? initialFolderId}) {
+void showCreateTaskSheet(BuildContext context, {Note? taskToEdit, String? initialFolderId, DateTime? initialDate}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true, 
     // allow transparent background so our Container decoration shows nicely
     backgroundColor: Colors.transparent,
-    builder: (context) => CreateTaskSheet(taskToEdit: taskToEdit, initialFolderId: initialFolderId),
+    builder: (context) => CreateTaskSheet(taskToEdit: taskToEdit, initialFolderId: initialFolderId, initialDate: initialDate),
   );
 }

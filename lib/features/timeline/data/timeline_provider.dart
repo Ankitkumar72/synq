@@ -8,6 +8,25 @@ final minuteProvider = StreamProvider<int>((ref) {
   return Stream.periodic(const Duration(seconds: 30), (i) => i); // Refresh every 30s for accuracy
 });
 
+final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
+
+/// true if monthly, false if weekly
+final calendarViewProvider = StateProvider<bool>((ref) => false);
+
+final datesWithTasksProvider = Provider<Set<DateTime>>((ref) {
+  final notesAsync = ref.watch(notesProvider);
+  final notes = notesAsync.value ?? [];
+  
+  return notes
+      .where((n) => n.isTask && n.scheduledTime != null)
+      .map((n) => DateTime(
+            n.scheduledTime!.year,
+            n.scheduledTime!.month,
+            n.scheduledTime!.day,
+          ))
+      .toSet();
+});
+
 final timelineEventsProvider = NotifierProvider<TimelineEventsNotifier, List<TimelineEvent>>(() {
   return TimelineEventsNotifier();
 });
@@ -22,10 +41,15 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     final meetings = ref.watch(meetingsProvider);
     final notesAsync = ref.watch(notesProvider);
     final notes = notesAsync.value ?? [];
+    final selectedDate = ref.watch(selectedDateProvider);
     
     final allEvents = <TimelineEvent>[];
 
-    // 2. Process Meetings
+    // 2. Process Meetings (assuming for now meetings are also filtered by date if they had dates, but currently they seem to be a static list from meetingsProvider)
+    // For now, let's assume meetings are for today or handle them simply.
+    // If meetings had dates, we'd filter here. 
+    // In many task apps, meetings are separate, but if we want them on the timeline, they should ideally be date-aware.
+    // Checking meetingsProvider for date awareness...
     for (final meeting in meetings) {
       // Parse time range string "10:30 AM - 11:30 AM"
       final parts = meeting.timeRange.split('-');
@@ -40,19 +64,19 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
         endTime: end,
         type: TimelineEventType.admin,
         tag: 'MEETING',
-        isCompleted: false, // Meetings don't have completed state yet
+        isCompleted: false,
       ));
     }
 
     // 3. Process Tasks (Notes where isTask = true and has scheduledTime)
-    final now = DateTime.now();
     final tasks = notes.where((n) => 
       n.isTask && 
       n.scheduledTime != null && 
-      n.scheduledTime!.year == now.year &&
-      n.scheduledTime!.month == now.month &&
-      n.scheduledTime!.day == now.day
+      n.scheduledTime!.year == selectedDate.year &&
+      n.scheduledTime!.month == selectedDate.month &&
+      n.scheduledTime!.day == selectedDate.day
     ).toList();
+
     for (final task in tasks) {
       // Format time from scheduledTime or default
       final date = task.scheduledTime ?? DateTime.now();
@@ -78,20 +102,21 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     allEvents.sort((a, b) => _parseToMinutes(a.startTime).compareTo(_parseToMinutes(b.startTime)));
 
     // Calculate isCurrent
-    // reuse 'now' from above
+    final now = DateTime.now();
+    final isSelectedDateToday = selectedDate.year == now.year && 
+                               selectedDate.month == now.month && 
+                               selectedDate.day == now.day;
+    
     final currentMinutes = now.hour * 60 + now.minute;
 
-    // Use a mappable list to update isCurrent
-    final processedEvents = allEvents.map((e) {
+    return allEvents.map((e) {
+      if (!isSelectedDateToday) return e.copyWith(isCurrent: false);
+      
       final start = _parseToMinutes(e.startTime);
       final end = _parseToMinutes(e.endTime);
       final isNow = currentMinutes >= start && currentMinutes < end;
-      // Also check if it's actually today (simplified for daily view assumption)
-      // real app would need date check too, but assuming daily view = today
       return e.copyWith(isCurrent: isNow);
     }).toList();
-
-    return processedEvents;
   }
 
   Future<void> toggleEventCompletion(String eventId) async {
@@ -99,7 +124,6 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
 
     final noteId = eventId.replaceFirst('task_', '');
     if (noteId.isEmpty || noteId == eventId) {
-       // Invalid ID format
        return;
     }
     
@@ -117,20 +141,17 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
 
   int _parseToMinutes(String timeStr) {
     try {
-      // Expected format "10:30 AM"
-      // Remove spaces and normalize
       timeStr = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase();
       final format = DateFormat("h:mm a");
       final date = format.parse(timeStr);
       return date.hour * 60 + date.minute;
     } catch (e) {
-      return 0; // Fallback
+      return 0;
     }
   }
 
   void addTask(TimelineEvent event) {
-    // This might be deprecated if we strictly drive from other providers,
-    // but useful for manual mock additions.
     state = [...state, event];
   }
 }
+
