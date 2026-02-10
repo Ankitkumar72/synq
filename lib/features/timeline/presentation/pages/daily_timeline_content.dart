@@ -121,7 +121,7 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${events.length} tasks scheduled • 3.5h focus time', // Mocked focus time for design
+                                      '${events.length} tasks scheduled',
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         color: AppColors.textSecondary,
