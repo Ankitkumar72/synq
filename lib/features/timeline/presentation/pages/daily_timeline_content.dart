@@ -11,13 +11,65 @@ import '../../domain/models/timeline_event.dart';
 
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
-class DailyTimelineContent extends ConsumerWidget {
+class DailyTimelineContent extends ConsumerStatefulWidget {
   const DailyTimelineContent({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DailyTimelineContent> createState() => _DailyTimelineContentState();
+}
+
+class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _currentHourKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToCurrentHour();
+    });
+  }
+
+  void _scrollToCurrentHour() {
+    if (_currentHourKey.currentContext != null) {
+      Scrollable.ensureVisible(
+        _currentHourKey.currentContext!,
+        alignment: 0.1, // Near the top
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final events = ref.watch(timelineEventsProvider);
     final selectedDate = ref.watch(selectedDateProvider);
+    
+    // Auto-scroll to current hour when switching to today
+    ref.listen(selectedDateProvider, (previous, next) {
+      final now = DateTime.now();
+      if (next.year == now.year && next.month == now.month && next.day == now.day) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToCurrentHour();
+        });
+      }
+    });
+
+    // Auto-scroll when switching from monthly to daily view
+    ref.listen(calendarViewProvider, (previous, next) {
+      if (next == false) { // Switched to daily
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToCurrentHour();
+        });
+      }
+    });
     
     final isMonthly = ref.watch(calendarViewProvider);
     
@@ -39,38 +91,47 @@ class DailyTimelineContent extends ConsumerWidget {
               isMonthly ? const Expanded(child: CalendarSelector()) : const CalendarSelector(),
               if (!isMonthly)
                 Expanded(
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
+                  child: GestureDetector(
+                    onTap: _scrollToCurrentHour,
+                    behavior: HitTestBehavior.translucent, // Allow taps on empty space to trigger scroll
+                    child: CustomScrollView(
+                      controller: _scrollController,
+                      cacheExtent: 3000, // Ensure current hour block is built even if off-screen
+                      physics: const BouncingScrollPhysics(),
                     slivers: [
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                         sliver: SliverToBoxAdapter(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _formatSelectedDate(selectedDate),
-                                    style: GoogleFonts.inter(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
+                          child: GestureDetector(
+                            onTap: _scrollToCurrentHour,
+                            behavior: HitTestBehavior.opaque,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _formatSelectedDate(selectedDate),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${events.length} tasks scheduled • 3.5h focus time', // Mocked focus time for design
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      color: AppColors.textSecondary,
-                                      fontWeight: FontWeight.w500,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${events.length} tasks scheduled • 3.5h focus time', // Mocked focus time for design
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -111,7 +172,22 @@ class DailyTimelineContent extends ConsumerWidget {
                                   return startMins >= hourStartMinutes && startMins < hourEndMinutes;
                                 }).firstOrNull;
 
+                                // Logic to determine if this is the block that should be focused for "now"
+                                bool isFocusBlock = false;
+                                if (isSelectedDateToday) {
+                                  if (hour == currentHour) {
+                                    isFocusBlock = !isCoveredByPreviousTask;
+                                  } else if (taskStartingNow != null) {
+                                    // If a task starts now and spans over the actual current hour
+                                    final endMins = _parseMinutes(taskStartingNow.endTime);
+                                    if (currentHour * 60 >= hourStartMinutes && currentHour * 60 < endMins) {
+                                      isFocusBlock = true;
+                                    }
+                                  }
+                                }
+
                                 return IntrinsicHeight(
+                                  key: isFocusBlock ? _currentHourKey : null,
                                   child: Row(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
@@ -177,7 +253,8 @@ class DailyTimelineContent extends ConsumerWidget {
                             ),
                           ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
             ],
