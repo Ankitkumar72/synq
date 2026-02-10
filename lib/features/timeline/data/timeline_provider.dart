@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../agenda/data/meetings_provider.dart';
 import '../../notes/data/notes_provider.dart';
 import '../domain/models/timeline_event.dart';
 
@@ -38,37 +37,13 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     ref.watch(minuteProvider);
 
     // 1. Fetch real data sources
-    final meetings = ref.watch(meetingsProvider);
     final notesAsync = ref.watch(notesProvider);
     final notes = notesAsync.value ?? [];
     final selectedDate = ref.watch(selectedDateProvider);
     
     final allEvents = <TimelineEvent>[];
 
-    // 2. Process Meetings (assuming for now meetings are also filtered by date if they had dates, but currently they seem to be a static list from meetingsProvider)
-    // For now, let's assume meetings are for today or handle them simply.
-    // If meetings had dates, we'd filter here. 
-    // In many task apps, meetings are separate, but if we want them on the timeline, they should ideally be date-aware.
-    // Checking meetingsProvider for date awareness...
-    for (final meeting in meetings) {
-      // Parse time range string "10:30 AM - 11:30 AM"
-      final parts = meeting.timeRange.split('-');
-      String start = parts.isNotEmpty ? parts[0].trim() : "09:00 AM";
-      String end = parts.length > 1 ? parts[1].trim() : "10:00 AM";
-
-      allEvents.add(TimelineEvent(
-        id: 'meeting_${meeting.hashCode}',
-        title: meeting.title,
-        subtitle: meeting.items.isNotEmpty ? "${meeting.items.length} agenda items" : "No agenda",
-        startTime: start,
-        endTime: end,
-        type: TimelineEventType.admin,
-        tag: 'MEETING',
-        isCompleted: false,
-      ));
-    }
-
-    // 3. Process Tasks (Notes where isTask = true and has scheduledTime)
+    // 2. Process Tasks (Notes where isTask = true and has scheduledTime)
     final tasks = notes.where((n) => 
       n.isTask && 
       n.scheduledTime != null && 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/navigation/fade_page_route.dart';
-import '../../../agenda/presentation/meeting_agenda_screen.dart';
 
 enum TaskType { strategy, active, rest, standard, admin, design }
 
@@ -127,17 +126,8 @@ class TimelineTaskCard extends StatelessWidget {
                         letterSpacing: 1.2,
                       ),
                 ),
-                 Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.videocam, color: AppColors.primary, size: 20),
-                 ),
-              ],
-            ),
+            ],
+          ),
             const SizedBox(height: 8),
             Text(
               title,
@@ -153,57 +143,7 @@ class TimelineTaskCard extends StatelessWidget {
                       color: AppColors.textSecondary,
                     ),
               ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        FadePageRoute(builder: (_) => const MeetingAgendaScreen()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.surface,
-                      foregroundColor: AppColors.textPrimary,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.description_outlined, size: 20),
-                          const SizedBox(width: 8),
-                          const Text('View Agenda'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {},
-                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accentPurple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text('Join Call'),
-                  ),
-                ),
-              ],
-            ),
+            const SizedBox(height: 8),
           ],
         ),
       );

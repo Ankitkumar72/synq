@@ -194,10 +194,14 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                       // Time Column
                                       SizedBox(
                                         width: 60,
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(top: 0.0),
-                                            child: Text(
-                                              _formatHour(hour),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              taskStartingNow != null 
+                                                  ? taskStartingNow.startTime.toLowerCase() 
+                                                  : _formatHour(hour),
                                               style: GoogleFonts.inter(
                                                 fontSize: 13,
                                                 fontWeight: (isSelectedDateToday && currentHour == hour) 
@@ -208,7 +212,21 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                                     : AppColors.textSecondary,
                                               ),
                                             ),
-                                          ),
+                                            if (taskStartingNow != null)
+                                              Text(
+                                                taskStartingNow.endTime.toLowerCase(),
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 13,
+                                                  fontWeight: (isSelectedDateToday && currentHour == hour) 
+                                                      ? FontWeight.bold 
+                                                      : FontWeight.w500,
+                                                  color: (isSelectedDateToday && currentHour == hour)
+                                                      ? AppColors.primary
+                                                      : AppColors.textSecondary,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
                                       ),
 
                                       // Timeline Connector Area (Vertical Line)
