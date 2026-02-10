@@ -66,8 +66,8 @@ class FocusScreen extends ConsumerWidget {
                           ? "${task.category.name.toUpperCase()} FOCUS" 
                           : "No Active Task",
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
                             ),
                       ),
                     ],
@@ -81,6 +81,7 @@ class FocusScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: Colors.black,
                       ),
                 ),
                 const Spacer(),
