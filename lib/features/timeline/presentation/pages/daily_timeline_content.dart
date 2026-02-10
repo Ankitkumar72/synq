@@ -5,9 +5,9 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
 import '../widgets/calendar_selector.dart';
-import '../widgets/timeline_connector.dart';
 import '../widgets/timeline_task_card.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
+import '../../domain/models/timeline_event.dart';
 
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
@@ -22,7 +22,7 @@ class DailyTimelineContent extends ConsumerWidget {
     final isMonthly = ref.watch(calendarViewProvider);
     
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.background,
       floatingActionButton: isMonthly 
           ? null 
           : FloatingActionButton(
@@ -70,52 +70,46 @@ class DailyTimelineContent extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 10,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(Icons.calendar_today_outlined, size: 20),
-                              ),
                             ],
                           ),
                         ),
                       ),
-                      if (events.isEmpty)
-                        SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.beach_access, size: 64, color: Colors.grey.shade300),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No tasks today — enjoy your free time!',
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
                         SliverPadding(
                           padding: const EdgeInsets.symmetric(horizontal: 24.0),
                           sliver: SliverList(
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
-                                final event = events[index];
-                                final isLast = index == events.length - 1;
+                                final hour = index;
+                                final now = DateTime.now();
+                                final isSelectedDateToday = selectedDate.year == now.year && 
+                                                         selectedDate.month == now.month && 
+                                                         selectedDate.day == now.day;
+                                final currentHour = now.hour;
+
+                                // Find tasks that start in this hour or overlap it
+                                // We'll only render a task in the hour it STARTS.
+                                // If it spans multiple hours, it will be taller.
+                                final hourStartMinutes = hour * 60;
+                                final hourEndMinutes = (hour + 1) * 60;
+
+                                // Check if this hour is covered by a task that started previously
+                                bool isCoveredByPreviousTask = false;
+                                for (final event in events) {
+                                  final startMins = _parseMinutes(event.startTime);
+                                  final endMins = _parseMinutes(event.endTime);
+                                  if (startMins < hourStartMinutes && endMins > hourStartMinutes) {
+                                    isCoveredByPreviousTask = true;
+                                    break;
+                                  }
+                                }
+
+                                if (isCoveredByPreviousTask) return const SizedBox.shrink();
+
+                                // Find task starting in this specific hour
+                                final taskStartingNow = events.where((e) {
+                                  final startMins = _parseMinutes(e.startTime);
+                                  return startMins >= hourStartMinutes && startMins < hourEndMinutes;
+                                }).firstOrNull;
 
                                 return IntrinsicHeight(
                                   child: Row(
@@ -124,60 +118,62 @@ class DailyTimelineContent extends ConsumerWidget {
                                       // Time Column
                                       SizedBox(
                                         width: 60,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(top: 8.0),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                event.startTime.split(' ')[0],
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: event.isCurrent ? AppColors.primary : AppColors.textPrimary,
-                                                ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(top: 0.0),
+                                            child: Text(
+                                              _formatHour(hour),
+                                              style: GoogleFonts.inter(
+                                                fontSize: 13,
+                                                fontWeight: (isSelectedDateToday && currentHour == hour) 
+                                                    ? FontWeight.bold 
+                                                    : FontWeight.w500,
+                                                color: (isSelectedDateToday && currentHour == hour)
+                                                    ? AppColors.primary
+                                                    : AppColors.textSecondary,
                                               ),
-                                              Text(
-                                                event.startTime.split(' ').length > 1 ? event.startTime.split(' ')[1] : '',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: AppColors.textSecondary,
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
-                                        ),
                                       ),
 
-                                      // Timeline Connector
-                                      TimelineConnector(
-                                        isLast: isLast,
-                                        isActive: event.isCurrent,
+                                      // Timeline Connector Area (Vertical Line)
+                                      Container(
+                                        width: 2,
+                                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                                        color: Colors.grey.shade100,
+                                        child: (isSelectedDateToday && currentHour == hour)
+                                            ? Stack(
+                                                children: [
+                                                  Positioned(
+                                                    top: 18,
+                                                    left: -4,
+                                                    child: Container(
+                                                      width: 10,
+                                                      height: 10,
+                                                      decoration: const BoxDecoration(
+                                                        color: AppColors.primary,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            : null,
                                       ),
 
-                                      // Task Card
+                                      // Task Content
                                       Expanded(
                                         child: Padding(
-                                          padding: const EdgeInsets.only(left: 16.0, bottom: 16.0),
-                                          child: TimelineTaskCard(
-                                            title: event.title,
-                                            subtitle: event.subtitle,
-                                            timeRange: '${event.startTime} - ${event.endTime}',
-                                            type: TaskType.values.byName(event.type.name),
-                                            tag: event.tag,
-                                            isCompleted: event.isCompleted,
-                                            onToggleCompletion: (_) {
-                                              ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
-                                            },
-                                          ),
+                                          padding: const EdgeInsets.only(bottom: 24.0),
+                                          child: taskStartingNow != null
+                                              ? _buildTaskBlock(context, taskStartingNow, ref)
+                                              : _buildEmptyBlock(),
                                         ),
                                       ),
                                     ],
                                   ),
                                 );
                               },
-                              childCount: events.length,
+                              childCount: 24,
                             ),
                           ),
                         ),
@@ -197,6 +193,53 @@ class DailyTimelineContent extends ConsumerWidget {
       return DateFormat("EEEE, d'th'").format(date); // Simplified suffix logic for design
     }
     return DateFormat("EEEE, d'th'").format(date);
+  }
+
+  Widget _buildTaskBlock(BuildContext context, TimelineEvent event, WidgetRef ref) {
+    final durationMins = _parseMinutes(event.endTime) - _parseMinutes(event.startTime);
+    final heightFactor = (durationMins / 60.0).clamp(1.0, 5.0);
+
+    return Container(
+      constraints: BoxConstraints(minHeight: 70 * heightFactor),
+      child: TimelineTaskCard(
+        title: event.title,
+        subtitle: event.subtitle,
+        timeRange: '${event.startTime} - ${event.endTime}',
+        type: TaskType.values.byName(event.type.name),
+        tag: event.tag,
+        isCompleted: event.isCompleted,
+        onToggleCompletion: (_) {
+          ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyBlock() {
+    return Container(
+      height: 70,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF555555)),
+      ),
+    );
+  }
+
+  String _formatHour(int hour) {
+    final amPm = hour < 12 ? 'am' : 'pm';
+    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    return '$displayHour $amPm';
+  }
+
+  int _parseMinutes(String timeStr) {
+    try {
+      final format = DateFormat("h:mm a");
+      final date = format.parse(timeStr.trim().toUpperCase());
+      return date.hour * 60 + date.minute;
+    } catch (e) {
+      return 0;
+    }
   }
 }
 
