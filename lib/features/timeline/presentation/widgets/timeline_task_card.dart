@@ -10,6 +10,7 @@ class TimelineTaskCard extends StatelessWidget {
   final TaskType type;
   final String? tag;
   final bool isCompleted;
+  final bool compact;
   final VoidCallback? onTap;
   final ValueChanged<bool?>? onToggleCompletion;
 
@@ -21,6 +22,7 @@ class TimelineTaskCard extends StatelessWidget {
     required this.type,
     this.tag,
     this.isCompleted = false,
+    this.compact = false,
     this.onTap,
     this.onToggleCompletion,
   });
@@ -31,6 +33,66 @@ class TimelineTaskCard extends StatelessWidget {
   }
 
   Widget _buildCard(BuildContext context) {
+    if (compact) {
+      Color? bgColor;
+      Color? textColor;
+      
+      if (type == TaskType.strategy) {
+        bgColor = AppColors.tagStrategy;
+        textColor = AppColors.textStrategy;
+      } else if (type == TaskType.design) {
+        bgColor = AppColors.tagDesign;
+        textColor = AppColors.textDesign;
+      } else if (type == TaskType.admin) {
+        bgColor = AppColors.tagAdmin;
+        textColor = AppColors.textAdmin;
+      } else if (type == TaskType.rest) {
+        bgColor = AppColors.restGreenBg;
+        textColor = AppColors.restGreen;
+      } else if (type == TaskType.active) {
+        bgColor = AppColors.activeCardBg;
+        textColor = AppColors.primary;
+      } else {
+        bgColor = AppColors.surface;
+        textColor = AppColors.textPrimary;
+      }
+
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: isCompleted ? bgColor.withAlpha(100) : bgColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isCompleted ? Colors.transparent : textColor.withAlpha(50),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isCompleted) ...[
+                const Icon(Icons.check_circle, size: 14, color: AppColors.textSecondary),
+                const SizedBox(width: 4),
+              ],
+              Flexible(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isCompleted ? AppColors.textSecondary : textColor,
+                        decoration: isCompleted ? TextDecoration.lineThrough : null,
+                      ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (type == TaskType.rest) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

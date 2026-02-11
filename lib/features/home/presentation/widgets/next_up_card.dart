@@ -24,22 +24,22 @@ class NextUpCard extends ConsumerWidget {
                 const Spacer(),
                 Text(
                   "--:--",
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   "All Caught Up",
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                 ),
                 Text(
                   "No more events",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.black54,
                       ),
                 ),
@@ -47,53 +47,43 @@ class NextUpCard extends ConsumerWidget {
             );
           }
 
+          final task = tasks.first;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView.separated(
-                  padding: EdgeInsets.zero,
-                  physics: const NeverScrollableScrollPhysics(), // Card has fixed height
-                  itemCount: tasks.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final task = tasks[index];
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "UPCOMING TASK",
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10,
-                                letterSpacing: 0.5,
-                              ),
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "UPCOMING TASK",
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                          letterSpacing: 0.5,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          task.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    task.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
-                        Text(
-                          _formatTime(task.scheduledTime!),
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
+                  ),
+                  Text(
+                    _formatTime(task.scheduledTime!),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
-                      ],
-                    );
-                  },
-                ),
+                  ),
+                ],
               ),
             ],
           );

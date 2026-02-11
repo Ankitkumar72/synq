@@ -166,22 +166,25 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
 
                                 if (isCoveredByPreviousTask) return const SizedBox.shrink();
 
-                                // Find task starting in this specific hour
-                                final taskStartingNow = events.where((e) {
+                                // Find tasks starting in this specific hour
+                                final tasksStartingNow = events.where((e) {
                                   final startMins = _parseMinutes(e.startTime);
                                   return startMins >= hourStartMinutes && startMins < hourEndMinutes;
-                                }).firstOrNull;
+                                }).toList();
 
                                 // Logic to determine if this is the block that should be focused for "now"
                                 bool isFocusBlock = false;
                                 if (isSelectedDateToday) {
                                   if (hour == currentHour) {
                                     isFocusBlock = !isCoveredByPreviousTask;
-                                  } else if (taskStartingNow != null) {
+                                  } else if (tasksStartingNow.isNotEmpty) {
                                     // If a task starts now and spans over the actual current hour
-                                    final endMins = _parseMinutes(taskStartingNow.endTime);
-                                    if (currentHour * 60 >= hourStartMinutes && currentHour * 60 < endMins) {
-                                      isFocusBlock = true;
+                                    for (final task in tasksStartingNow) {
+                                      final endMins = _parseMinutes(task.endTime);
+                                      if (currentHour * 60 >= hourStartMinutes && currentHour * 60 < endMins) {
+                                        isFocusBlock = true;
+                                        break;
+                                      }
                                     }
                                   }
                                 }
@@ -199,8 +202,8 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              taskStartingNow != null 
-                                                  ? taskStartingNow.startTime.toLowerCase() 
+                                              tasksStartingNow.isNotEmpty 
+                                                  ? tasksStartingNow.first.startTime.toLowerCase() 
                                                   : _formatHour(hour),
                                               style: GoogleFonts.inter(
                                                 fontSize: 13,
@@ -212,9 +215,9 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                                     : AppColors.textSecondary,
                                               ),
                                             ),
-                                            if (taskStartingNow != null)
+                                            if (tasksStartingNow.isNotEmpty)
                                               Text(
-                                                taskStartingNow.endTime.toLowerCase(),
+                                                tasksStartingNow.last.endTime.toLowerCase(),
                                                 style: GoogleFonts.inter(
                                                   fontSize: 13,
                                                   fontWeight: (isSelectedDateToday && currentHour == hour) 
@@ -258,8 +261,8 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                       Expanded(
                                         child: Padding(
                                           padding: const EdgeInsets.only(bottom: 24.0),
-                                          child: taskStartingNow != null
-                                              ? _buildTaskBlock(context, taskStartingNow, ref)
+                                          child: tasksStartingNow.isNotEmpty
+                                              ? _buildTaskBlocks(context, tasksStartingNow, ref)
                                               : _buildEmptyBlock(),
                                         ),
                                       ),
@@ -290,23 +293,26 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
     return DateFormat("EEEE, d'th'").format(date);
   }
 
-  Widget _buildTaskBlock(BuildContext context, TimelineEvent event, WidgetRef ref) {
-    final durationMins = _parseMinutes(event.endTime) - _parseMinutes(event.startTime);
-    final heightFactor = (durationMins / 60.0).clamp(1.0, 5.0);
+  Widget _buildTaskBlocks(BuildContext context, List<TimelineEvent> events, WidgetRef ref) {
+    if (events.isEmpty) return _buildEmptyBlock();
 
-    return Container(
-      constraints: BoxConstraints(minHeight: 70 * heightFactor),
-      child: TimelineTaskCard(
-        title: event.title,
-        subtitle: event.subtitle,
-        timeRange: '${event.startTime} - ${event.endTime}',
-        type: TaskType.values.byName(event.type.name),
-        tag: event.tag,
-        isCompleted: event.isCompleted,
-        onToggleCompletion: (_) {
-          ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
-        },
-      ),
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: events.map((event) {
+        return TimelineTaskCard(
+          title: event.title,
+          subtitle: event.subtitle,
+          timeRange: '${event.startTime} - ${event.endTime}',
+          type: TaskType.values.byName(event.type.name),
+          tag: event.tag,
+          isCompleted: event.isCompleted,
+          compact: true, // Use compact "box" style
+          onToggleCompletion: (_) {
+            ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
+          },
+        );
+      }).toList(),
     );
   }
 

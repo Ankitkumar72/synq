@@ -9,21 +9,12 @@ final nextTaskProvider = FutureProvider<List<Note>>((ref) async {
   
   // Find upcoming incomplete tasks
   final upcomingTasks = notes.where((n) {
-    if (n.isCompleted) return false;
+    // Basic criteria
+    if (!n.isTask || n.isCompleted || n.isAllDay) return false;
     if (n.scheduledTime == null) return false;
 
-    // If it's a timed task and it's in the future
-    if (!n.isAllDay && n.scheduledTime!.isAfter(now)) return true;
-
-    // If it's an all-day task for today or future
-    if (n.isAllDay) {
-      final scheduledDate = DateTime(n.scheduledTime!.year, n.scheduledTime!.month, n.scheduledTime!.day);
-      final todayDate = DateTime(now.year, now.month, now.day);
-      if (scheduledDate.isAtSameMomentAs(todayDate)) return true;
-      if (scheduledDate.isAfter(todayDate)) return true;
-    }
-
-    return false;
+    // Must be in the future
+    return n.scheduledTime!.isAfter(now);
   }).toList()
     ..sort((a, b) => a.scheduledTime!.compareTo(b.scheduledTime!));
     

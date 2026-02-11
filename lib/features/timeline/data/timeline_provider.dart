@@ -46,6 +46,7 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     // 2. Process Tasks (Notes where isTask = true and has scheduledTime)
     final tasks = notes.where((n) => 
       n.isTask && 
+      !n.isAllDay && // Exclude all-day tasks from hourly blocks
       n.scheduledTime != null && 
       n.scheduledTime!.year == selectedDate.year &&
       n.scheduledTime!.month == selectedDate.month &&

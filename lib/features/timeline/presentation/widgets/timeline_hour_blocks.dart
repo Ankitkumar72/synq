@@ -75,11 +75,11 @@ class _TimelineHourBlocksState extends ConsumerState<TimelineHourBlocks> {
 
           if (isCoveredByPreviousTask) return const SizedBox.shrink();
 
-          // Find task starting in this specific hour
-          final taskStartingNow = events.where((e) {
+          // Find tasks starting in this specific hour
+          final tasksStartingNow = events.where((e) {
             final startMins = _parseToMinutes(e.startTime);
             return startMins >= hourStartMinutes && startMins < hourEndMinutes;
-          }).firstOrNull;
+          }).toList();
 
           return IntrinsicHeight(
             key: (isSelectedDateToday && currentHour == hour) ? _currentHourKey : null,
@@ -94,8 +94,8 @@ class _TimelineHourBlocksState extends ConsumerState<TimelineHourBlocks> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        taskStartingNow != null 
-                            ? taskStartingNow.startTime.toLowerCase() 
+                        tasksStartingNow.isNotEmpty 
+                            ? tasksStartingNow.first.startTime.toLowerCase() 
                             : _formatHour(hour),
                         style: GoogleFonts.inter(
                           fontSize: 13,
@@ -107,9 +107,9 @@ class _TimelineHourBlocksState extends ConsumerState<TimelineHourBlocks> {
                               : AppColors.textSecondary,
                         ),
                       ),
-                      if (taskStartingNow != null)
+                      if (tasksStartingNow.isNotEmpty)
                         Text(
-                          taskStartingNow.endTime.toLowerCase(),
+                          tasksStartingNow.last.endTime.toLowerCase(),
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: (isSelectedDateToday && currentHour == hour) 
@@ -154,8 +154,8 @@ class _TimelineHourBlocksState extends ConsumerState<TimelineHourBlocks> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 24.0),
-                    child: taskStartingNow != null
-                        ? _buildTaskBlock(context, taskStartingNow, ref)
+                    child: tasksStartingNow.isNotEmpty
+                        ? _buildTaskBlocks(context, tasksStartingNow, ref)
                         : _buildEmptyBlock(),
                   ),
                 ),
@@ -166,23 +166,26 @@ class _TimelineHourBlocksState extends ConsumerState<TimelineHourBlocks> {
       ),
     );
   }
-  Widget _buildTaskBlock(BuildContext context, TimelineEvent event, WidgetRef ref) {
-    final durationMins = _parseToMinutes(event.endTime) - _parseToMinutes(event.startTime);
-    final heightFactor = (durationMins / 60.0).clamp(1.0, 5.0);
+  Widget _buildTaskBlocks(BuildContext context, List<TimelineEvent> events, WidgetRef ref) {
+    if (events.isEmpty) return _buildEmptyBlock();
 
-    return Container(
-      constraints: BoxConstraints(minHeight: 70 * heightFactor),
-      child: TimelineTaskCard(
-        title: event.title,
-        subtitle: event.subtitle,
-        timeRange: '${event.startTime} - ${event.endTime}',
-        type: TaskType.values.byName(event.type.name),
-        tag: event.tag,
-        isCompleted: event.isCompleted,
-        onToggleCompletion: (_) {
-          ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
-        },
-      ),
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: events.map((event) {
+        return TimelineTaskCard(
+          title: event.title,
+          subtitle: event.subtitle,
+          timeRange: '${event.startTime} - ${event.endTime}',
+          type: TaskType.values.byName(event.type.name),
+          tag: event.tag,
+          isCompleted: event.isCompleted,
+          compact: true, // Use compact "box" style
+          onToggleCompletion: (_) {
+            ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
+          },
+        );
+      }).toList(),
     );
   }
 
