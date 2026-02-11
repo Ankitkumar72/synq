@@ -1,14 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:collection/collection.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../notes/domain/models/note.dart';
 
-final nextTaskProvider = FutureProvider<Note?>((ref) async {
+final nextTaskProvider = FutureProvider<List<Note>>((ref) async {
   // Re-fetch when notes change
   final notes = await ref.watch(notesProvider.future);
   final now = DateTime.now();
   
-  // Find next scheduled task that hasn't started yet
+  // Find upcoming incomplete tasks
   final upcomingTasks = notes.where((n) {
     if (n.isCompleted) return false;
     if (n.scheduledTime == null) return false;
@@ -16,7 +15,7 @@ final nextTaskProvider = FutureProvider<Note?>((ref) async {
     // If it's a timed task and it's in the future
     if (!n.isAllDay && n.scheduledTime!.isAfter(now)) return true;
 
-    // If it's an all-day task for today
+    // If it's an all-day task for today or future
     if (n.isAllDay) {
       final scheduledDate = DateTime(n.scheduledTime!.year, n.scheduledTime!.month, n.scheduledTime!.day);
       final todayDate = DateTime(now.year, now.month, now.day);
@@ -26,14 +25,9 @@ final nextTaskProvider = FutureProvider<Note?>((ref) async {
 
     return false;
   }).toList()
-    ..sort((a, b) {
-      // Prioritize timed tasks over all-day tasks if they are close?
-      // For now, just sort by scheduled time. All-day tasks will be "earlier" (midnight)
-      // but we might want them to be "fallback" if no timed tasks are coming soon.
-      return a.scheduledTime!.compareTo(b.scheduledTime!);
-    });
+    ..sort((a, b) => a.scheduledTime!.compareTo(b.scheduledTime!));
     
-  return upcomingTasks.firstOrNull;
+  return upcomingTasks.take(5).toList();
 });
 
 final taskCountsProvider = FutureProvider<Map<String, int>>((ref) async {
@@ -57,11 +51,12 @@ final taskCountsProvider = FutureProvider<Map<String, int>>((ref) async {
 });
 
 final nextTaskTimeUntilProvider = Provider<String>((ref) {
-  final nextTaskAsync = ref.watch(nextTaskProvider);
+  final nextTasksAsync = ref.watch(nextTaskProvider);
   
-  return nextTaskAsync.when(
-    data: (nextTask) {
-      if (nextTask == null) return '';
+  return nextTasksAsync.when(
+    data: (tasks) {
+      if (tasks.isEmpty) return '';
+      final nextTask = tasks.first;
       if (nextTask.isAllDay) return 'All Day';
       if (nextTask.scheduledTime == null) return '';
       

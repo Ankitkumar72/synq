@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/navigation/fade_page_route.dart';
 
 enum TaskType { strategy, active, rest, standard, admin, design }
 

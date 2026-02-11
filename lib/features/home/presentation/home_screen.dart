@@ -6,7 +6,6 @@ import '../../../../core/navigation/fade_page_route.dart';
 import 'widgets/current_focus_widget.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
-import 'providers/next_task_provider.dart';
 import '../../timeline/presentation/pages/daily_timeline_page.dart';
 import 'widgets/create_task_sheet.dart';
 import '../../notes/data/notes_provider.dart';
@@ -78,20 +77,9 @@ class HomeScreen extends ConsumerWidget {
                   height: 160,
                   child: Row(
                     children: [
-                       Consumer(
-                         builder: (context, ref, _) {
-                           final nextTask = ref.watch(nextTaskProvider).value;
-                           final timeUntil = ref.watch(nextTaskTimeUntilProvider);
-                           
-                           return Expanded(
-                            child: NextUpCard(
-                              title: nextTask?.title ?? 'All Caught Up',
-                              subtitle: nextTask?.body ?? 'No upcoming events',
-                              time: nextTask != null ? timeUntil : '--:--',
-                            ),
-                          );
-                         }
-                       ),
+                      const Expanded(
+                        child: NextUpCard(),
+                      ),
                       const SizedBox(width: 16),
                       const Expanded(
                         child: StatsCard(),

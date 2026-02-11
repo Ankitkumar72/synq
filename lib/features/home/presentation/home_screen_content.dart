@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../notes/domain/models/note.dart';
-import 'providers/next_task_provider.dart';
 import '../../profile/presentation/profile_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -86,42 +85,9 @@ class HomeScreenContent extends ConsumerWidget {
               height: 160,
               child: Row(
                 children: [
-                   Consumer(
-                     builder: (context, ref, _) {
-                       final nextTask = ref.watch(nextTaskProvider).value;
-                       final timeUntil = ref.watch(nextTaskTimeUntilProvider);
-                       final counts = ref.watch(taskCountsProvider).value;
-                       
-                       String title;
-                       String subtitle;
-                       String time;
-
-                       if (nextTask != null) {
-                         title = nextTask.title;
-                         subtitle = nextTask.body ?? (nextTask.isAllDay ? 'All day task' : 'Upcoming Task');
-                         time = timeUntil;
-                       } else {
-                         final remaining = counts?['remaining'] ?? 0;
-                         if (remaining > 0) {
-                           title = '$remaining ${remaining == 1 ? 'Task' : 'Tasks'}';
-                           subtitle = 'Left for today';
-                           time = 'TODAY';
-                         } else {
-                           title = 'All Caught Up';
-                           subtitle = 'No more events';
-                           time = '--:--';
-                         }
-                       }
-                       
-                       return Expanded(
-                        child: NextUpCard(
-                          title: title,
-                          subtitle: subtitle,
-                          time: time,
-                        ),
-                      );
-                     }
-                   ),
+                    const Expanded(
+                      child: NextUpCard(),
+                    ),
 
                   const SizedBox(width: 16),
                   const Expanded(
