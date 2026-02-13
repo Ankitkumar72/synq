@@ -5,9 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
 import '../widgets/calendar_selector.dart';
-import '../widgets/timeline_task_card.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
-import '../../domain/models/timeline_event.dart';
+import '../widgets/timeline_hour_row.dart';
 
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
@@ -189,85 +188,12 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                   }
                                 }
 
-                                return IntrinsicHeight(
-                                  key: isFocusBlock ? _currentHourKey : null,
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      // Time Column
-                                      SizedBox(
-                                        width: 60,
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              tasksStartingNow.isNotEmpty 
-                                                  ? tasksStartingNow.first.startTime.toLowerCase() 
-                                                  : _formatHour(hour),
-                                              style: GoogleFonts.inter(
-                                                fontSize: 13,
-                                                fontWeight: (isSelectedDateToday && currentHour == hour) 
-                                                    ? FontWeight.bold 
-                                                    : FontWeight.w500,
-                                                color: (isSelectedDateToday && currentHour == hour)
-                                                    ? AppColors.primary
-                                                    : AppColors.textSecondary,
-                                              ),
-                                            ),
-                                            if (tasksStartingNow.isNotEmpty)
-                                              Text(
-                                                tasksStartingNow.last.endTime.toLowerCase(),
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 13,
-                                                  fontWeight: (isSelectedDateToday && currentHour == hour) 
-                                                      ? FontWeight.bold 
-                                                      : FontWeight.w500,
-                                                  color: (isSelectedDateToday && currentHour == hour)
-                                                      ? AppColors.primary
-                                                      : AppColors.textSecondary,
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-
-                                      // Timeline Connector Area (Vertical Line)
-                                      Container(
-                                        width: 2,
-                                        margin: const EdgeInsets.symmetric(horizontal: 16),
-                                        color: Colors.grey.shade100,
-                                        child: (isSelectedDateToday && currentHour == hour)
-                                            ? Stack(
-                                                children: [
-                                                  Positioned(
-                                                    top: 18,
-                                                    left: -4,
-                                                    child: Container(
-                                                      width: 10,
-                                                      height: 10,
-                                                      decoration: const BoxDecoration(
-                                                        color: AppColors.primary,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              )
-                                            : null,
-                                      ),
-
-                                      // Task Content
-                                      Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(bottom: 24.0),
-                                          child: tasksStartingNow.isNotEmpty
-                                              ? _buildTaskBlocks(context, tasksStartingNow, ref)
-                                              : _buildEmptyBlock(),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                return TimelineHourRow(
+                                  hour: hour,
+                                  tasksStartingNow: tasksStartingNow,
+                                  isSelectedDateToday: isSelectedDateToday,
+                                  currentHour: currentHour,
+                                  focusKey: isFocusBlock ? _currentHourKey : null,
                                 );
                               },
                               childCount: 24,
@@ -291,46 +217,6 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
       return DateFormat("EEEE, d'th'").format(date); // Simplified suffix logic for design
     }
     return DateFormat("EEEE, d'th'").format(date);
-  }
-
-  Widget _buildTaskBlocks(BuildContext context, List<TimelineEvent> events, WidgetRef ref) {
-    if (events.isEmpty) return _buildEmptyBlock();
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: events.map((event) {
-        return TimelineTaskCard(
-          title: event.title,
-          subtitle: event.subtitle,
-          timeRange: '${event.startTime} - ${event.endTime}',
-          type: TaskType.values.byName(event.type.name),
-          tag: event.tag,
-          isCompleted: event.isCompleted,
-          compact: true, // Use compact "box" style
-          onToggleCompletion: (_) {
-            ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildEmptyBlock() {
-    return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF555555)),
-      ),
-    );
-  }
-
-  String _formatHour(int hour) {
-    final amPm = hour < 12 ? 'am' : 'pm';
-    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-    return '$displayHour $amPm';
   }
 
   int _parseMinutes(String timeStr) {

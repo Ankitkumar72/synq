@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../notes/domain/models/note.dart';
-import '../../notes/data/notes_provider.dart';
+import '../domain/models/note.dart';
+import '../data/notes_provider.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
   final Note task;

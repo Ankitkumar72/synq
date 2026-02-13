@@ -11,6 +11,7 @@ class TimelineTaskCard extends StatelessWidget {
   final String? tag;
   final bool isCompleted;
   final bool compact;
+  final bool isActive;
   final VoidCallback? onTap;
   final ValueChanged<bool?>? onToggleCompletion;
 
@@ -23,6 +24,7 @@ class TimelineTaskCard extends StatelessWidget {
     this.tag,
     this.isCompleted = false,
     this.compact = false,
+    this.isActive = false,
     this.onTap,
     this.onToggleCompletion,
   });
@@ -37,21 +39,9 @@ class TimelineTaskCard extends StatelessWidget {
       Color? bgColor;
       Color? textColor;
       
-      if (type == TaskType.strategy) {
-        bgColor = AppColors.tagStrategy;
-        textColor = AppColors.textStrategy;
-      } else if (type == TaskType.design) {
-        bgColor = AppColors.tagDesign;
-        textColor = AppColors.textDesign;
-      } else if (type == TaskType.admin) {
-        bgColor = AppColors.tagAdmin;
-        textColor = AppColors.textAdmin;
-      } else if (type == TaskType.rest) {
-        bgColor = AppColors.restGreenBg;
-        textColor = AppColors.restGreen;
-      } else if (type == TaskType.active) {
+      if (isActive) {
         bgColor = AppColors.activeCardBg;
-        textColor = AppColors.primary;
+        textColor = AppColors.textPrimary;
       } else {
         bgColor = AppColors.surface;
         textColor = AppColors.textPrimary;
@@ -60,14 +50,21 @@ class TimelineTaskCard extends StatelessWidget {
       return GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: isCompleted ? bgColor.withAlpha(100) : bgColor,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isCompleted ? Colors.transparent : textColor.withAlpha(50),
-              width: 1,
+              color: isActive ? AppColors.primary : Colors.grey.shade300,
+              width: isActive ? 2 : 1,
             ),
+            boxShadow: isActive ? [
+              BoxShadow(
+                color: AppColors.primary.withAlpha(80),
+                blurRadius: 8,
+                spreadRadius: 1,
+              )
+            ] : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -79,7 +76,7 @@ class TimelineTaskCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   title,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isCompleted ? AppColors.textSecondary : textColor,
                         decoration: isCompleted ? TextDecoration.lineThrough : null,
@@ -214,12 +211,9 @@ class TimelineTaskCard extends StatelessWidget {
     Color? tagBg;
     Color? tagText;
     
-    if (type == TaskType.strategy) {
-      tagBg = AppColors.tagStrategy;
-      tagText = AppColors.textStrategy;
-    } else if (type == TaskType.design) {
-      tagBg = AppColors.tagDesign;
-      tagText = AppColors.textDesign;
+    if (type == TaskType.strategy || type == TaskType.design) {
+      tagBg = AppColors.tagPurple;
+      tagText = AppColors.textPurple;
     } else if (type == TaskType.admin) {
       tagBg = AppColors.tagAdmin;
       tagText = AppColors.textAdmin;

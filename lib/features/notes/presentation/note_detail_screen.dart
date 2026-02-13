@@ -350,9 +350,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                      if (_attachments.isNotEmpty) ...[
                         GestureDetector(
                           onTap: _pickImage,
-                          child: Hero(
-                            tag: 'note_cover_${widget.noteToEdit?.id ?? "new"}',
-                            child: ClipRRect(
+                          child: ClipRRect(
                               borderRadius: BorderRadius.circular(20),
                               child: Image.network(
                                 _attachments.first,
@@ -376,7 +374,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                                 ),
                               ),
                             ),
-                          ),
                         ),
                         const SizedBox(height: 24),
                      ],
