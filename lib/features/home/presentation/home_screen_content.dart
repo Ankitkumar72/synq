@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../notes/domain/models/note.dart';
-import '../../profile/presentation/profile_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/navigation/fade_page_route.dart';
@@ -30,40 +29,24 @@ class HomeScreenContent extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _formatDateHeader(),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                    ),
-                    Text(
-                      'Synq.',
-                      style: GoogleFonts.playfairDisplay(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF555555),
-                          letterSpacing: -0.5,
-                        ),
-                    ),
-                  ],
+                Text(
+                  _formatDateHeader(),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
                 ),
-                GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    FadePageRoute(builder: (_) => const ProfileScreen()),
-                  ),
-                  child: const CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, color: Colors.white),
+                Text(
+                  'Synq.',
+                  style: GoogleFonts.playfairDisplay(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF555555),
+                      letterSpacing: -0.5,
                   ),
                 ),
               ],
@@ -354,6 +337,12 @@ class HomeScreenContent extends ConsumerWidget {
   }
 
   Widget _buildNoteItem(BuildContext context, WidgetRef ref, Note note) {
+    final body = note.body ?? '';
+    final firstBodyLine = body
+        .split(RegExp(r'\r?\n'))
+        .map((line) => line.trim())
+        .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+
     return Dismissible(
       key: Key(note.id),
       direction: DismissDirection.endToStart,
@@ -389,18 +378,20 @@ class HomeScreenContent extends ConsumerWidget {
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: Colors.black,
                         ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            if (note.body != null && note.body!.isNotEmpty) ...[
+            if (firstBodyLine.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                note.body!,
+                firstBodyLine,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.black87,
                     ),
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ],

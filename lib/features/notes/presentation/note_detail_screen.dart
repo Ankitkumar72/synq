@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +11,7 @@ import '../domain/models/note.dart';
 import '../domain/models/folder.dart';
 import '../data/notes_provider.dart';
 import '../data/folder_provider.dart';
+import '../data/note_editor_draft_store.dart';
 import 'folders_screen.dart';
 import '../presentation/widgets/tag_manage_dialog.dart';
 
@@ -42,9 +42,10 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
   
   final MediaService _mediaService = MediaService();
 
+  late final String _draftKey;
+  String? _draftNoteId;
   bool _hasUnsavedChanges = false;
-  Timer? _debounceTimer;
-  bool _isDeleting = false;
+  bool _isSaving = false;
   
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -53,6 +54,11 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
   @override
   void initState() {
     super.initState();
+    _draftKey = widget.noteToEdit != null
+        ? 'edit:${widget.noteToEdit!.id}'
+        : 'new:${widget.initialFolderId ?? 'none'}';
+    _draftNoteId = widget.noteToEdit?.id;
+
     if (widget.noteToEdit != null) {
       final note = widget.noteToEdit!;
       _titleController.text = note.title;
@@ -71,6 +77,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
       _titleController.text = ''; // Start empty
       _editingNote = null;
     }
+
+    _restoreDraftIfAvailable();
     
     
     _titleController.addListener(_onTextChanged);
@@ -97,22 +105,64 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
     _animationController.forward();
   }
 
-  void _onTextChanged() {
+  void _restoreDraftIfAvailable() {
+    final draft = NoteEditorDraftStore.read(_draftKey);
+    if (draft == null) return;
+
+    _draftNoteId = draft.noteId ?? _draftNoteId;
+    _titleController.text = draft.title;
+    _bodyController.text = draft.body;
+    _selectedFolderId = draft.selectedFolderId;
+    _tags
+      ..clear()
+      ..addAll(draft.tags);
+    _links
+      ..clear()
+      ..addAll(draft.links);
+    _attachments
+      ..clear()
+      ..addAll(draft.attachments);
+    _isTask = draft.isTask;
+    _scheduledTime = draft.scheduledTime;
+    _lastEdited = draft.lastEdited;
+    _hasUnsavedChanges = true;
+  }
+
+  void _persistDraft() {
+    NoteEditorDraftStore.write(
+      _draftKey,
+      NoteEditorDraft(
+        noteId: _draftNoteId,
+        title: _titleController.text,
+        body: _bodyController.text,
+        selectedFolderId: _selectedFolderId,
+        tags: List<String>.from(_tags),
+        links: List<String>.from(_links),
+        attachments: List<String>.from(_attachments),
+        isTask: _isTask,
+        scheduledTime: _scheduledTime,
+        lastEdited: DateTime.now(),
+      ),
+    );
+  }
+
+  void _markUnsaved({bool notify = true}) {
     if (!_hasUnsavedChanges) {
-      setState(() => _hasUnsavedChanges = true);
-    }
-    
-    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      if (_hasUnsavedChanges) {
-        _handleSave();
+      if (notify && mounted) {
+        setState(() => _hasUnsavedChanges = true);
+      } else {
+        _hasUnsavedChanges = true;
       }
-    });
+    }
+    _persistDraft();
+  }
+
+  void _onTextChanged() {
+    _markUnsaved();
   }
 
   @override
   void dispose() {
-    _debounceTimer?.cancel();
     _titleController.dispose();
     _bodyController.dispose();
     _animationController.dispose();
@@ -120,12 +170,15 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
   }
 
   Future<void> _handleSave() async {
+    if (_isSaving) return;
+
     final title = _titleController.text.trim();
     final body = _bodyController.text.trim();
     
     if (title.isEmpty && body.isEmpty) return; // Don't save empty
     
     final now = DateTime.now();
+    final noteId = _editingNote?.id ?? _draftNoteId ?? DateTime.now().millisecondsSinceEpoch.toString();
     
     final note = (_editingNote?.copyWith(
           title: title.isEmpty ? 'Untitled' : title,
@@ -139,7 +192,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
           scheduledTime: _scheduledTime,
         ) ??
         Note(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          id: noteId,
           title: title.isEmpty ? 'Untitled' : title,
           body: body,
           category: NoteCategory.work, // Default or derived from folder?
@@ -153,18 +206,41 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
           scheduledTime: _scheduledTime,
         ));
 
-    // Optimistic UI update handled by provider usually, but we verify
-    if (_editingNote == null) {
-       await ref.read(notesProvider.notifier).addNote(note);
-    } else {
-       await ref.read(notesProvider.notifier).updateNote(note);
+    setState(() => _isSaving = true);
+
+    try {
+      if (_editingNote == null) {
+        await ref.read(notesProvider.notifier).addNote(note);
+      } else {
+        await ref.read(notesProvider.notifier).updateNote(note);
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _hasUnsavedChanges = false;
+        _lastEdited = now;
+        _editingNote = note;
+        _draftNoteId = note.id;
+      });
+      NoteEditorDraftStore.remove(_draftKey);
+    } catch (_) {
+      _persistDraft();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not save right now. Draft kept locally.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      } else {
+        _isSaving = false;
+      }
     }
-    
-    setState(() {
-      _hasUnsavedChanges = false;
-      _lastEdited = now;
-      _editingNote = note;
-    });
   }
   
   Future<void> _pickImage() async {
@@ -174,6 +250,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
         _attachments.add(path);
         _hasUnsavedChanges = true;
       });
+      _persistDraft();
     }
   }
 
@@ -250,13 +327,14 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
       loading: () => 'Loading...',
       error: (_, __) => 'Error',
     );
+    final isUncategorized = folderName.trim().toLowerCase() == 'uncategorized';
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didPop, dynamic result) async {
         if (didPop) return;
-        if (_hasUnsavedChanges && !_isDeleting) {
-          await _handleSave();
+        if (_hasUnsavedChanges) {
+          _persistDraft();
         }
         if (context.mounted) Navigator.pop(context);
       },
@@ -265,33 +343,44 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
+          toolbarHeight: 84,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () async {
-               if (_hasUnsavedChanges && !_isDeleting) await _handleSave();
+               if (_hasUnsavedChanges) _persistDraft();
                if (context.mounted) Navigator.pop(context);
             },
           ),
           title: Text(
-            folderName.toUpperCase(),
+            folderName,
+            textAlign: TextAlign.center,
+            softWrap: true,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 12,
+              fontSize: isUncategorized ? 20 : 24,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[400],
-              letterSpacing: 1.2,
+              color: isUncategorized ? Colors.black54 : Colors.black,
             ),
           ),
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-            onPressed: _showDeleteConfirmation,
+            TextButton(
+              onPressed: _isSaving ? null : _handleSave,
+              child: Text(
+                _isSaving ? 'Saving...' : 'Save',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
             ),
           ],
         ),
         body: AnimatedOpacity(
           duration: const Duration(milliseconds: 300),
-          opacity: _isDeleting ? 0.0 : 1.0,
+          opacity: 1.0,
           child: Column(
             children: [
                Expanded(
@@ -339,6 +428,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                                         _tags.addAll(tags);
                                         _hasUnsavedChanges = true;
                                       });
+                                      _persistDraft();
                                     },
                                   ),
                                 );
@@ -475,13 +565,14 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                              'Make Task', 
                              isActive: _isTask,
                              onTap: () {
-                               setState(() {
-                                 _isTask = !_isTask;
-                                 _hasUnsavedChanges = true;
-                               });
-                               ScaffoldMessenger.of(context).clearSnackBars();
-                               ScaffoldMessenger.of(context).showSnackBar(
-                                 SnackBar(
+                                setState(() {
+                                  _isTask = !_isTask;
+                                  _hasUnsavedChanges = true;
+                                });
+                                _persistDraft();
+                                ScaffoldMessenger.of(context).clearSnackBars();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
                                    content: Text(
                                      _isTask ? 'Converted to Task' : 'Reverted to Note',
                                      style: const TextStyle(color: Colors.white),
@@ -506,15 +597,16 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                                   firstDate: DateTime.now(),
                                   lastDate: DateTime.now().add(const Duration(days: 365)),
                                 );
-                                if (pickedDate != null) {
-                                  setState(() {
-                                    _scheduledTime = pickedDate;
-                                    _isTask = true; // Auto-make task if scheduled?
-                                    _hasUnsavedChanges = true;
-                                  });
-                                }
-                             },
-                           ),
+                                 if (pickedDate != null) {
+                                   setState(() {
+                                     _scheduledTime = pickedDate;
+                                     _isTask = true; // Auto-make task if scheduled?
+                                     _hasUnsavedChanges = true;
+                                   });
+                                   _persistDraft();
+                                 }
+                              },
+                            ),
                         ],
                       ),
                       
@@ -575,6 +667,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                                       _links.removeAt(index);
                                       _hasUnsavedChanges = true;
                                     });
+                                    _persistDraft();
                                   });
                                 },
                               ),
@@ -596,6 +689,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                                   _links.add(textController.text.trim());
                                   _hasUnsavedChanges = true;
                                 });
+                                _persistDraft();
                                 textController.clear();
                               });
                             }
@@ -609,6 +703,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                                _links.add(value.trim());
                                _hasUnsavedChanges = true;
                              });
+                             _persistDraft();
                              textController.clear();
                            });
                          }
@@ -713,115 +808,5 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
     if (DateTime.now().difference(dt).inMinutes < 60) return '${DateTime.now().difference(dt).inMinutes}m ago';
     if (DateTime.now().difference(dt).inHours < 24) return '${DateTime.now().difference(dt).inHours}h ago';
     return DateFormat('MMM d').format(dt);
-  }
-  
-  void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? const Color(0xFF1C1C1E) 
-                : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.delete_outline, color: Colors.red, size: 32),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Delete Note',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Are you sure you want to delete this note? This action cannot be undone.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  color: Colors.grey,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final noteId = widget.noteToEdit?.id;
-                        Navigator.pop(context); // Close dialog
-                        
-                        final navigator = Navigator.of(context);
-                        setState(() => _isDeleting = true);
-                        
-                        // Wait for fade animation
-                        Future.delayed(const Duration(milliseconds: 300), () {
-                          if (mounted) {
-                            navigator.popUntil((route) => route.isFirst);
-                            if (noteId != null) {
-                              ref.read(notesProvider.notifier).deleteNote(noteId).catchError((e) {
-                                debugPrint('Error deleting note: $e');
-                              });
-                            }
-                          }
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Text(
-                        'Delete',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

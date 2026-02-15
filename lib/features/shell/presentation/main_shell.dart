@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../home/presentation/home_screen_content.dart';
 import '../../timeline/presentation/pages/daily_timeline_content.dart';
 import '../../notes/presentation/note_detail_screen.dart';
+import '../../profile/presentation/profile_screen.dart';
 import '../../../../core/navigation/fade_page_route.dart';
 
 
@@ -26,8 +27,10 @@ class _MainShellState extends ConsumerState<MainShell> {
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
   ];
+  static const double _navIconSize = 26;
 
   DateTime? _lastPressedAt;
+  bool _isNoteEditorOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +47,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         if (isFirstRouteInCurrentTab) {
           // If we are at the root of the tab
           if (currentIndex != 0) {
-            // If on any other tab (Calendar, Search, Settings), go back to Home first
+            // If on any other tab, go back to Home first
             ref.read(currentNavIndexProvider.notifier).state = 0;
           } else {
             // On Home Tab root -> Double back to exit
@@ -61,7 +64,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           children: [
             _buildTabNavigator(0, const HomeScreenContent()),
             _buildTabNavigator(1, const DailyTimelineContent()),
-            _buildTabNavigator(2, const PlaceholderScreen(title: 'Settings')),
+            _buildTabNavigator(2, const ProfileScreen()),
           ],
         ),
         bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0 
@@ -89,23 +92,17 @@ class _MainShellState extends ConsumerState<MainShell> {
               // Add Note Button
               IconButton(
                 onPressed: () {
-                  // Push to current tab's nested navigator to keep navbar visible
-                  _navigatorKeys[currentIndex].currentState?.push(
-                    FadePageRoute(builder: (_) => const NoteDetailScreen()),
-                  );
+                  _openNoteEditor(currentIndex);
                 },
-                icon: Container(
-                   padding: const EdgeInsets.all(8),
-                   decoration: BoxDecoration(
-                     color: Colors.purple.withValues(alpha: 0.1),
-                     shape: BoxShape.circle,
-                   ),
-                   child: const Icon(Icons.note_add_outlined, color: Colors.purple),
+                icon: Icon(
+                  Icons.note_add_outlined,
+                  size: _navIconSize,
+                  color: _isNoteEditorOpen ? Colors.black : Colors.grey,
                 ),
                 tooltip: 'Add Note',
               ),
               
-              _buildNavButton(ref, currentIndex, 2, Icons.settings),
+              _buildNavButton(ref, currentIndex, 2, Icons.person_outline),
             ],
           ),
         ),
@@ -163,20 +160,66 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 
   Widget _buildNavButton(WidgetRef ref, int currentIndex, int index, IconData icon) {
+    final isCurrentTabActive = currentIndex == index && !_isNoteEditorOpen;
     return IconButton(
       icon: Icon(
         icon,
-        color: currentIndex == index ? Colors.black : Colors.grey,
+        size: _navIconSize,
+        color: isCurrentTabActive ? Colors.black : Colors.grey,
       ),
       onPressed: () {
+        final currentNavigator = _navigatorKeys[currentIndex].currentState;
+
         if (currentIndex == index) {
           // If tapping active tab, pop to root
-          _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+          currentNavigator?.popUntil((route) => route.isFirst);
+          if (_isNoteEditorOpen) {
+            setState(() => _isNoteEditorOpen = false);
+          }
         } else {
+          // If switching tabs, clear source stack then switch.
+          // Avoid extra target-stack work here to keep tab switching snappy.
+          currentNavigator?.popUntil((route) => route.isFirst);
+          if (_isNoteEditorOpen) {
+            setState(() => _isNoteEditorOpen = false);
+          }
           ref.read(currentNavIndexProvider.notifier).state = index;
         }
       },
     );
+  }
+
+  void _openNoteEditor(int currentIndex) {
+    final navigator = _navigatorKeys[currentIndex].currentState;
+    setState(() => _isNoteEditorOpen = true);
+
+    void onComplete() {
+      if (mounted) {
+        setState(() => _isNoteEditorOpen = false);
+      } else {
+        _isNoteEditorOpen = false;
+      }
+    }
+
+    if (navigator == null) {
+      // Rare case: navigator not ready right after a tab switch.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final retryNavigator = _navigatorKeys[currentIndex].currentState;
+        if (retryNavigator == null) {
+          setState(() => _isNoteEditorOpen = false);
+          return;
+        }
+        retryNavigator.push(
+          FadePageRoute(builder: (_) => const NoteDetailScreen()),
+        ).whenComplete(onComplete);
+      });
+      return;
+    }
+
+    navigator.push(
+      FadePageRoute(builder: (_) => const NoteDetailScreen()),
+    ).whenComplete(onComplete);
   }
 }
 

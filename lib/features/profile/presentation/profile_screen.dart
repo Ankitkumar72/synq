@@ -8,15 +8,18 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final canPop = Navigator.canPop(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: canPop
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: const Text(
           'Profile',
           style: TextStyle(
@@ -187,7 +190,9 @@ class ProfileScreen extends StatelessWidget {
                       return GestureDetector(
                         onTap: () {
                            ref.read(authProvider.notifier).logout();
-                           Navigator.pop(context); // Close profile screen
+                           if (Navigator.canPop(context)) {
+                             Navigator.pop(context); // Close profile screen
+                           }
                         },
                         child: const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),

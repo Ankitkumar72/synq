@@ -1,21 +1,55 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../data/folder_search_engine.dart';
 import '../data/folder_provider.dart';
 import '../data/notes_provider.dart';
+import '../domain/models/folder.dart';
+import '../domain/models/note.dart';
 import 'widgets/folder_card.dart';
 import 'widgets/add_folder_sheet.dart';
 import 'folder_detail_screen.dart';
 import '../../../../core/navigation/fade_page_route.dart';
 
-class FoldersScreen extends ConsumerWidget {
+final folderSearchEngineProvider = Provider<FolderSearchEngine>((ref) {
+  final folders = ref.watch(foldersProvider).value ?? const <Folder>[];
+  final notes = ref.watch(notesProvider).value ?? const <Note>[];
+  return FolderSearchEngine(
+    folders: folders,
+    notes: notes,
+  );
+});
+
+class FoldersScreen extends ConsumerStatefulWidget {
   const FoldersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FoldersScreen> createState() => _FoldersScreenState();
+}
+
+class _FoldersScreenState extends ConsumerState<FoldersScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  String _searchQuery = '';
+  static const double _gridSpacing = 12;
+  static const double _gridAspectRatio = 1.78;
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final foldersAsync = ref.watch(foldersProvider);
     final notesAsync = ref.watch(notesProvider);
+    final searchEngine = ref.watch(folderSearchEngineProvider);
+    final isSearching = _searchQuery.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -24,10 +58,34 @@ class FoldersScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text('Error: $err')),
           data: (folders) {
-            final allNotes = notesAsync.value ?? [];
+            final allNotes = notesAsync.value ?? const <Note>[];
+            final noteCountByFolderId = <String, int>{};
+            for (final note in allNotes) {
+              final folderId = note.folderId;
+              if (folderId == null || folderId.isEmpty) continue;
+              noteCountByFolderId[folderId] =
+                  (noteCountByFolderId[folderId] ?? 0) + 1;
+            }
+            final folderById = {
+              for (final folder in folders) folder.id: folder,
+            };
+
+            final matchedFolderIds = searchEngine.searchFolderIds(_searchQuery);
+            final visibleFolders = matchedFolderIds
+                .map((id) => folderById[id])
+                .whereType<Folder>()
+                .toList(growable: false);
             
-            // Favorites
-            final favorites = folders.where((f) => f.isFavorite).toList();
+            // Favorites (filtered by search when query exists)
+            final favorites = visibleFolders.where((f) => f.isFavorite).toList();
+            final contentWidth = MediaQuery.sizeOf(context).width - 48;
+            final itemWidth = (contentWidth - _gridSpacing) / 2;
+            final itemHeight = itemWidth / _gridAspectRatio;
+            final favoriteRowCount = (favorites.length / 2).ceil();
+            final favoriteGridHeight = favoriteRowCount == 0
+                ? 0.0
+                : (favoriteRowCount * itemHeight) +
+                    ((favoriteRowCount - 1) * _gridSpacing);
             
             return CustomScrollView(
               slivers: [
@@ -37,23 +95,16 @@ class FoldersScreen extends ConsumerWidget {
                     delegate: SliverChildListDelegate([
                       // Header
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.menu),
-                            onPressed: () {}, // Drawer or Menu?
-                          ),
                           Text(
                             'FOLDERS',
                             style: GoogleFonts.inter(
-                              fontSize: 16,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.0,
+                              color: Colors.black,
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.settings),
-                            onPressed: () {},
                           ),
                         ],
                       ),
@@ -66,11 +117,48 @@ class FoldersScreen extends ConsumerWidget {
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const TextField(
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (value) {
+                            _searchDebounce?.cancel();
+                            _searchDebounce = Timer(
+                              const Duration(milliseconds: 120),
+                              () {
+                                if (!mounted) return;
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                              },
+                            );
+                          },
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                          ),
                           decoration: InputDecoration(
-                            icon: Icon(Icons.search, color: Colors.grey),
-                            hintText: 'Search Folders...',
+                            icon: const Icon(Icons.search, color: Colors.grey),
+                            hintText: 'Search folders, notes, tags...',
+                            hintStyle: const TextStyle(color: AppColors.textSecondary),
+                            filled: false,
+                            fillColor: Colors.transparent,
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                            suffixIcon: isSearching
+                                ? IconButton(
+                                    icon: const Icon(Icons.close, color: Colors.grey),
+                                    onPressed: () {
+                                      _searchDebounce?.cancel();
+                                      _searchController.clear();
+                                      setState(() {
+                                        _searchQuery = '';
+                                      });
+                                    },
+                                  )
+                                : null,
                           ),
                         ),
                       ),
@@ -88,16 +176,16 @@ class FoldersScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
-                          height: 160, // Fixed height for cards?
+                          height: favoriteGridHeight,
                           child: GridView.count(
                              crossAxisCount: 2,
-                             mainAxisSpacing: 16,
-                             crossAxisSpacing: 16,
-                             childAspectRatio: 1.1,
+                             mainAxisSpacing: _gridSpacing,
+                             crossAxisSpacing: _gridSpacing,
+                             childAspectRatio: _gridAspectRatio,
                              shrinkWrap: true,
                              physics: const NeverScrollableScrollPhysics(),
                              children: favorites.map((folder) {
-                               final count = allNotes.where((n) => n.folderId == folder.id).length;
+                               final count = noteCountByFolderId[folder.id] ?? 0;
                                return FolderCard(
                                  folder: folder,
                                  itemCount: count,
@@ -125,7 +213,9 @@ class FoldersScreen extends ConsumerWidget {
                                 ),
                           ),
                           Text(
-                            '${folders.length} Total',
+                            isSearching
+                                ? '${visibleFolders.length} Results'
+                                : '${folders.length} Total',
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   color: AppColors.textSecondary,
                                 ),
@@ -136,51 +226,60 @@ class FoldersScreen extends ConsumerWidget {
                     ]),
                   ),
                 ),
+
+                if (isSearching && visibleFolders.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Text(
+                        'No matching folders found',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                      ),
+                    ),
+                  ),
                 
                 // All Folders Grid
-                SliverPadding(
-                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                   sliver: SliverGrid(
-                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                       crossAxisCount: 2,
-                       mainAxisSpacing: 16,
-                       crossAxisSpacing: 16,
-                       childAspectRatio: 1.0,
+                if (!isSearching || visibleFolders.isNotEmpty)
+                  SliverPadding(
+                     padding: const EdgeInsets.symmetric(horizontal: 24),
+                     sliver: SliverGrid(
+                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                         crossAxisCount: 2,
+                         mainAxisSpacing: _gridSpacing,
+                         crossAxisSpacing: _gridSpacing,
+                         childAspectRatio: _gridAspectRatio,
+                       ),
+                       delegate: SliverChildBuilderDelegate(
+                         (context, index) {
+                           if (!isSearching && index == visibleFolders.length) {
+                             // Add New Folder Card only on default list
+                             return _buildAddNewFolderCard(context);
+                           }
+                           final folder = visibleFolders[index];
+                           final count = noteCountByFolderId[folder.id] ?? 0;
+                           return FolderCard(
+                             folder: folder,
+                             itemCount: count,
+                             onTap: () => Navigator.push(
+                               context,
+                               FadePageRoute(builder: (_) => FolderDetailScreen(folder: folder)),
+                             ),
+                           );
+                         },
+                         childCount: isSearching
+                             ? visibleFolders.length
+                             : visibleFolders.length + 1, // +1 for Add New
+                       ),
                      ),
-                     delegate: SliverChildBuilderDelegate(
-                       (context, index) {
-                         if (index == folders.length) {
-                           // Add New Folder Card
-                           return _buildAddNewFolderCard(context);
-                         }
-                         final folder = folders[index];
-                         final count = allNotes.where((n) => n.folderId == folder.id).length;
-                         return FolderCard(
-                           folder: folder,
-                           itemCount: count,
-                           onTap: () => Navigator.push(
-                             context,
-                             FadePageRoute(builder: (_) => FolderDetailScreen(folder: folder)),
-                           ),
-                         );
-                       },
-                       childCount: folders.length + 1, // +1 for Add New
-                     ),
-                   ),
-                ),
-                 const SliverPadding(padding: EdgeInsets.only(bottom: 100)), // Space for FAB/Dock
+                  ),
+                 const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
               ],
             );
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showAddFolderSheet(context),
-        label: const Text('Add Folder'),
-        icon: const Icon(Icons.create_new_folder),
-        backgroundColor: Colors.black, // Dark FAB
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -189,35 +288,51 @@ class FoldersScreen extends ConsumerWidget {
       onTap: () => showAddFolderSheet(context),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.transparent, // Or slight grey?
-          borderRadius: BorderRadius.circular(20),
-             border: Border.all(
-               color: Colors.grey.withAlpha(80), 
-               width: 2,
-             ),
-          // Using DottedBorder package is better but let's stick to standard
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
         ),
-        // Let's use standard border with Dotted illusion via CustomPainter or just a light solid border
-        child: Container(
-          decoration: BoxDecoration(
-             color: Colors.white,
-             borderRadius: BorderRadius.circular(20),
-             border: Border.all(color: Colors.grey.shade300, width: 1), // Dashed preferred but solid for now
-          ),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add, size: 32, color: Colors.grey),
-              SizedBox(height: 8),
-              Text(
-                'New',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w600,
-                ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(10),
               ),
-            ],
-          ),
+              child: const Icon(Icons.add, size: 20, color: Colors.grey),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'New Folder',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Create',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
