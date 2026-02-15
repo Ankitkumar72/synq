@@ -30,6 +30,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
   
   late String? _selectedFolderId;
   late DateTime _lastEdited;
+  Note? _editingNote;
   final List<String> _tags = [];
   final List<String> _links = [];
   final List<String> _attachments = [];
@@ -61,10 +62,12 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
       _attachments.addAll(note.attachments);
       _isTask = note.isTask;
       _scheduledTime = note.scheduledTime;
+      _editingNote = note;
     } else {
       _selectedFolderId = widget.initialFolderId;
       _lastEdited = DateTime.now();
       _titleController.text = ''; // Start empty
+      _editingNote = null;
     }
     
     
@@ -122,7 +125,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
     
     final now = DateTime.now();
     
-    final note = (widget.noteToEdit?.copyWith(
+    final note = (_editingNote?.copyWith(
           title: title.isEmpty ? 'Untitled' : title,
           body: body,
           folderId: _selectedFolderId,
@@ -149,7 +152,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
         ));
 
     // Optimistic UI update handled by provider usually, but we verify
-    if (widget.noteToEdit == null) {
+    if (_editingNote == null) {
        await ref.read(notesProvider.notifier).addNote(note);
     } else {
        await ref.read(notesProvider.notifier).updateNote(note);
@@ -158,6 +161,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
     setState(() {
       _hasUnsavedChanges = false;
       _lastEdited = now;
+      _editingNote = note;
     });
   }
   
@@ -177,9 +181,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
     final notesAsync = ref.watch(notesProvider);
 
     // Only check for "missing" if we are editing an existing note
-    final bool isNoteMissing = widget.noteToEdit != null && 
+    final bool isNoteMissing = _editingNote != null && 
         notesAsync.hasValue && 
-        notesAsync.value?.any((n) => n.id == widget.noteToEdit!.id) == false;
+        notesAsync.value?.any((n) => n.id == _editingNote!.id) == false;
 
     if (isNoteMissing) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -458,8 +462,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                       // Quick Actions Group
                       Row(
                         children: [
-                           _buildQuickActionBtn(Icons.auto_awesome, 'Quick\nActions', isLabel: true),
-                           const SizedBox(width: 12),
+
                            _buildQuickActionBtn(
                              _isTask ? Icons.check_box : Icons.check_box_outline_blank, 
                              'Make Task', 

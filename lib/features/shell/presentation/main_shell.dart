@@ -91,10 +91,12 @@ class _MainShellState extends ConsumerState<MainShell> {
 
               // Add Note Button
               IconButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  FadePageRoute(builder: (_) => const NoteDetailScreen()),
-                ),
+                onPressed: () {
+                  // Push to current tab's nested navigator to keep navbar visible
+                  _navigatorKeys[currentIndex].currentState?.push(
+                    FadePageRoute(builder: (_) => const NoteDetailScreen()),
+                  );
+                },
                 icon: Container(
                    padding: const EdgeInsets.all(8),
                    decoration: BoxDecoration(
