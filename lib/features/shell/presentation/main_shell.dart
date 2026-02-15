@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../home/presentation/home_screen_content.dart';
 import '../../timeline/presentation/pages/daily_timeline_content.dart';
-import '../../notes/presentation/folders_screen.dart';
 import '../../notes/presentation/note_detail_screen.dart';
 import '../../../../core/navigation/fade_page_route.dart';
 
@@ -23,7 +22,6 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell> {
   // Keys for each tab's navigator
   final _navigatorKeys = [
-    GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
@@ -63,8 +61,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           children: [
             _buildTabNavigator(0, const HomeScreenContent()),
             _buildTabNavigator(1, const DailyTimelineContent()),
-            _buildTabNavigator(2, const FoldersScreen()),
-            _buildTabNavigator(3, const PlaceholderScreen(title: 'Settings')),
+            _buildTabNavigator(2, const PlaceholderScreen(title: 'Settings')),
           ],
         ),
         bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0 
@@ -108,8 +105,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                 tooltip: 'Add Note',
               ),
               
-              _buildNavButton(ref, currentIndex, 2, Icons.folder_open_rounded),
-              _buildNavButton(ref, currentIndex, 3, Icons.settings),
+              _buildNavButton(ref, currentIndex, 2, Icons.settings),
             ],
           ),
         ),

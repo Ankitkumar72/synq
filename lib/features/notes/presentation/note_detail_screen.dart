@@ -7,10 +7,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/media_service.dart';
+import '../../../../core/navigation/fade_page_route.dart';
 import '../domain/models/note.dart';
 import '../domain/models/folder.dart';
 import '../data/notes_provider.dart';
 import '../data/folder_provider.dart';
+import 'folders_screen.dart';
 import '../presentation/widgets/tag_manage_dialog.dart';
 
 
@@ -313,7 +315,12 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                              label: 'PROJECT',
                              value: folderName,
                              color: Colors.blue,
-                             onTap: () => _showFolderPicker(context),
+                             onTap: () {
+                               Navigator.push(
+                                 context,
+                                 FadePageRoute(builder: (_) => const FoldersScreen()),
+                               );
+                             },
                            ),
                            const SizedBox(width: 12),
                            _buildMetaCard(
@@ -708,43 +715,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
     return DateFormat('MMM d').format(dt);
   }
   
-  Future<void> _showFolderPicker(BuildContext context) async {
-    final foldersAsync = ref.read(foldersProvider);
-    foldersAsync.whenData((folders) async {
-      final pickedId = await showModalBottomSheet<String>(
-              context: context,
-              backgroundColor: Colors.transparent,
-              builder: (ctx) => Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                     Text('Select Project/Folder', style: Theme.of(context).textTheme.titleLarge),
-                     const SizedBox(height: 10),
-                     const Divider(),
-                     ...folders.map((f) => ListTile(
-                       leading: Icon(IconData(f.iconCodePoint, fontFamily: f.iconFontFamily ?? 'MaterialIcons'), color: Color(f.colorValue)),
-                       title: Text(f.name),
-                       trailing: f.id == _selectedFolderId ? const Icon(Icons.check, color: Colors.blue) : null,
-                       onTap: () => Navigator.pop(ctx, f.id),
-                     )),
-                  ],
-                ),
-              ),
-            );
-       if (pickedId != null) {
-          setState(() {
-             _selectedFolderId = pickedId;
-             _hasUnsavedChanges = true;
-          });
-       }
-    });
-  }
-
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
