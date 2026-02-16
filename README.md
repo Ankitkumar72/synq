@@ -23,23 +23,28 @@ Synq is a powerful and intuitive task and note management application built with
 
 - **Timeline & Planning**
   - **Daily Timeline**: Visual representation of tasks for the day.
-  - **Agenda View**: Quick overview of upcoming items.
   - **Focus Mode**: Dedicated interface for distraction-free work.
   - **Review System**: Weekly/Daily review flows to stay on track.
 
+- **Profile & Subscription**
+  - **User Profile**: Manage account settings and view productivity stats.
+  - **Subscription Plans**: Upgrade to Synq Pro for cloud sync, unlimited devices, and advanced analytics.
+  - **Secure Data**: End-to-end encryption for all user data.
+
 - **UI/UX**
   - **Premium Design**: Polished UI with custom themes (Light & Dark mode).
-  - **Dynamic Dashboard**: Enhanced "Next Up" card that intelligently shows upcoming tasks, today's all-day events, or a summary of remaining work.
+  - **Dynamic Dashboard**: Enhanced "Next Up" card that intelligently shows upcoming tasks or a summary of remaining work.
   - **Fluid Navigation**: Persistent bottom navigation with smooth transitions.
   - **Gestures**: Double-tap back to exit, styled SnackBar feedback.
   - **Animations**: Subtle micro-interactions, custom `CircularTimer`, and `WaveformGraph` for Focus mode.
 
 ## ✨ Recent Updates
 
+- **Subscription Page**: Added a comprehensive subscription page showcasing Free vs Pro plans with secure payment integration points.
 - **Dynamic Focus Experience**: Fully functional timer and task tracking in Focus Mode. Support for both scheduled countdowns and elapsed time tracking.
-- **Intelligent Dashboard**: The "Next Up" section now prioritizes today's tasks and provides fallback summaries (e.g., "5 Tasks Left") when no specific timed event is coming up.
+- **Intelligent Dashboard**: The "Next Up" section now prioritizes today's tasks and provides fallback summaries when no specific timed event is coming up.
 - **Enhanced Task Detail**: Improved sub-task persistence, scrolling stability, and auto-loading states.
-- **Styled Headers**: Professional, bold hierarchy for "TASK TITLE" and "DESCRIPTION" across create and detail screens.
+- **Styled Headers**: Professional, bold hierarchy for "TASK TITLE" and "DESCRIPTION".
 - **Independent Categories**: Separated state management for task and note categories for more modular organization.
 
 
@@ -62,13 +67,10 @@ lib/
 │   ├── auth/               # Authentication logic & UI
 │   ├── home/               # Home screen dashboard
 │   ├── notes/              # Note taking & management
-│   ├── tasks/              # Task management logic
 │   ├── timeline/           # Daily timeline view
-│   ├── review/             # Review system logic
 │   ├── shell/              # Main app shell (Bottom Nav)
-│   ├── list/               # List handling logic
-│   ├── agenda/             # Agenda view
-│   └── focus/              # Focus mode
+│   ├── focus/              # Focus mode
+│   └── profile/            # User profile & Subscription
 │
 └── main.dart               # Entry point & App initialization
 ```
