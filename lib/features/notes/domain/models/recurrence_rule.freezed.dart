@@ -25,6 +25,7 @@ mixin _$RecurrenceRule {
   RecurrenceEndType get endType => throw _privateConstructorUsedError;
   DateTime? get endDate => throw _privateConstructorUsedError;
   int? get occurrenceCount => throw _privateConstructorUsedError;
+  List<int>? get daysOfWeek => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -43,7 +44,8 @@ abstract class $RecurrenceRuleCopyWith<$Res> {
       RecurrenceUnit unit,
       RecurrenceEndType endType,
       DateTime? endDate,
-      int? occurrenceCount});
+      int? occurrenceCount,
+      List<int>? daysOfWeek});
 }
 
 /// @nodoc
@@ -64,6 +66,7 @@ class _$RecurrenceRuleCopyWithImpl<$Res, $Val extends RecurrenceRule>
     Object? endType = null,
     Object? endDate = freezed,
     Object? occurrenceCount = freezed,
+    Object? daysOfWeek = freezed,
   }) {
     return _then(_value.copyWith(
       interval: null == interval
@@ -86,6 +89,10 @@ class _$RecurrenceRuleCopyWithImpl<$Res, $Val extends RecurrenceRule>
           ? _value.occurrenceCount
           : occurrenceCount // ignore: cast_nullable_to_non_nullable
               as int?,
+      daysOfWeek: freezed == daysOfWeek
+          ? _value.daysOfWeek
+          : daysOfWeek // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
     ) as $Val);
   }
 }
@@ -103,7 +110,8 @@ abstract class _$$RecurrenceRuleImplCopyWith<$Res>
       RecurrenceUnit unit,
       RecurrenceEndType endType,
       DateTime? endDate,
-      int? occurrenceCount});
+      int? occurrenceCount,
+      List<int>? daysOfWeek});
 }
 
 /// @nodoc
@@ -122,6 +130,7 @@ class __$$RecurrenceRuleImplCopyWithImpl<$Res>
     Object? endType = null,
     Object? endDate = freezed,
     Object? occurrenceCount = freezed,
+    Object? daysOfWeek = freezed,
   }) {
     return _then(_$RecurrenceRuleImpl(
       interval: null == interval
@@ -144,6 +153,10 @@ class __$$RecurrenceRuleImplCopyWithImpl<$Res>
           ? _value.occurrenceCount
           : occurrenceCount // ignore: cast_nullable_to_non_nullable
               as int?,
+      daysOfWeek: freezed == daysOfWeek
+          ? _value._daysOfWeek
+          : daysOfWeek // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
     ));
   }
 }
@@ -156,7 +169,9 @@ class _$RecurrenceRuleImpl implements _RecurrenceRule {
       required this.unit,
       required this.endType,
       this.endDate,
-      this.occurrenceCount});
+      this.occurrenceCount,
+      final List<int>? daysOfWeek})
+      : _daysOfWeek = daysOfWeek;
 
   factory _$RecurrenceRuleImpl.fromJson(Map<String, dynamic> json) =>
       _$$RecurrenceRuleImplFromJson(json);
@@ -171,10 +186,19 @@ class _$RecurrenceRuleImpl implements _RecurrenceRule {
   final DateTime? endDate;
   @override
   final int? occurrenceCount;
+  final List<int>? _daysOfWeek;
+  @override
+  List<int>? get daysOfWeek {
+    final value = _daysOfWeek;
+    if (value == null) return null;
+    if (_daysOfWeek is EqualUnmodifiableListView) return _daysOfWeek;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'RecurrenceRule(interval: $interval, unit: $unit, endType: $endType, endDate: $endDate, occurrenceCount: $occurrenceCount)';
+    return 'RecurrenceRule(interval: $interval, unit: $unit, endType: $endType, endDate: $endDate, occurrenceCount: $occurrenceCount, daysOfWeek: $daysOfWeek)';
   }
 
   @override
@@ -188,13 +212,15 @@ class _$RecurrenceRuleImpl implements _RecurrenceRule {
             (identical(other.endType, endType) || other.endType == endType) &&
             (identical(other.endDate, endDate) || other.endDate == endDate) &&
             (identical(other.occurrenceCount, occurrenceCount) ||
-                other.occurrenceCount == occurrenceCount));
+                other.occurrenceCount == occurrenceCount) &&
+            const DeepCollectionEquality()
+                .equals(other._daysOfWeek, _daysOfWeek));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, interval, unit, endType, endDate, occurrenceCount);
+  int get hashCode => Object.hash(runtimeType, interval, unit, endType, endDate,
+      occurrenceCount, const DeepCollectionEquality().hash(_daysOfWeek));
 
   @JsonKey(ignore: true)
   @override
@@ -217,7 +243,8 @@ abstract class _RecurrenceRule implements RecurrenceRule {
       required final RecurrenceUnit unit,
       required final RecurrenceEndType endType,
       final DateTime? endDate,
-      final int? occurrenceCount}) = _$RecurrenceRuleImpl;
+      final int? occurrenceCount,
+      final List<int>? daysOfWeek}) = _$RecurrenceRuleImpl;
 
   factory _RecurrenceRule.fromJson(Map<String, dynamic> json) =
       _$RecurrenceRuleImpl.fromJson;
@@ -232,6 +259,8 @@ abstract class _RecurrenceRule implements RecurrenceRule {
   DateTime? get endDate;
   @override
   int? get occurrenceCount;
+  @override
+  List<int>? get daysOfWeek;
   @override
   @JsonKey(ignore: true)
   _$$RecurrenceRuleImplCopyWith<_$RecurrenceRuleImpl> get copyWith =>

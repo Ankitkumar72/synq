@@ -6,15 +6,19 @@ final nextTaskProvider = FutureProvider<List<Note>>((ref) async {
   // Re-fetch when notes change
   final notes = await ref.watch(notesProvider.future);
   final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
   
-  // Find upcoming incomplete tasks
+  // Find upcoming incomplete tasks for today only
   final upcomingTasks = notes.where((n) {
     // Basic criteria
     if (!n.isTask || n.isCompleted || n.isAllDay) return false;
     if (n.scheduledTime == null) return false;
 
-    // Must be in the future
-    return n.scheduledTime!.isAfter(now);
+    final scheduled = n.scheduledTime!;
+    final scheduledDate = DateTime(scheduled.year, scheduled.month, scheduled.day);
+
+    // Must be scheduled today and still upcoming
+    return scheduledDate.isAtSameMomentAs(today) && scheduled.isAfter(now);
   }).toList()
     ..sort((a, b) => a.scheduledTime!.compareTo(b.scheduledTime!));
     

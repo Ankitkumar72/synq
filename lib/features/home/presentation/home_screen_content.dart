@@ -99,7 +99,26 @@ class HomeScreenContent extends ConsumerWidget {
   Widget _buildYourTasksSection(BuildContext context, WidgetRef ref) {
     final notesAsync = ref.watch(notesProvider);
     final notes = notesAsync.value ?? [];
-    final tasks = notes.where((n) => n.isTask).toList();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final tasks = notes.where((n) {
+      if (!n.isTask) return false;
+      if (n.scheduledTime == null) return true;
+
+      final scheduledDate = DateTime(
+        n.scheduledTime!.year,
+        n.scheduledTime!.month,
+        n.scheduledTime!.day,
+      );
+      return scheduledDate.isAtSameMomentAs(today);
+    }).toList()
+      ..sort((a, b) {
+        if (a.scheduledTime == null && b.scheduledTime == null) return 0;
+        if (a.scheduledTime == null) return 1;
+        if (b.scheduledTime == null) return -1;
+        return a.scheduledTime!.compareTo(b.scheduledTime!);
+      });
     final notesOnly = notes.where((n) => !n.isTask).toList();
 
     if (notes.isEmpty) {

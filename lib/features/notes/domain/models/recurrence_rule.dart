@@ -24,6 +24,7 @@ class RecurrenceRule with _$RecurrenceRule {
     required RecurrenceEndType endType,
     DateTime? endDate,
     int? occurrenceCount,
+    List<int>? daysOfWeek,
   }) = _RecurrenceRule;
 
   factory RecurrenceRule.fromJson(Map<String, dynamic> json) => _$RecurrenceRuleFromJson(json);

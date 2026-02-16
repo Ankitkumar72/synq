@@ -52,15 +52,7 @@ class SubscriptionScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Securely access your workspace from anywhere. No limits, just pure productivity.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  height: 1.4,
-                ),
-              ),
+              const SizedBox(height: 40),
               
               const Spacer(),
 
