@@ -1,31 +1,19 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../auth/presentation/providers/auth_provider.dart';
 import '../domain/models/folder.dart';
-import 'firestore_folders_repository.dart';
+import 'folders_repository.dart';
+import 'repository_provider.dart';
 
 final foldersProvider = StreamNotifierProvider<FoldersNotifier, List<Folder>>(() {
   return FoldersNotifier();
 });
 
 class FoldersNotifier extends StreamNotifier<List<Folder>> {
-  late FirestoreFoldersRepository _repository;
+  late FoldersRepository _repository;
 
   @override
   Stream<List<Folder>> build() {
-    final authState = ref.watch(authProvider);
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (!authState.isAuthenticated || user == null) {
-      return Stream.value([]);
-    }
-
-    _repository = FirestoreFoldersRepository(
-      firestore: FirebaseFirestore.instance,
-      userId: user.uid,
-    );
-
+    ref.watch(syncCoordinatorProvider);
+    _repository = ref.watch(foldersRepositoryProvider);
     return _repository.watchFolders();
   }
 

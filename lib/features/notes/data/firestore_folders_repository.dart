@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/models/folder.dart';
+import 'folders_repository.dart';
 
-class FirestoreFoldersRepository {
+class FirestoreFoldersRepository implements FoldersRepository {
   final FirebaseFirestore firestore;
   final String userId;
 
@@ -10,6 +11,7 @@ class FirestoreFoldersRepository {
   CollectionReference<Map<String, dynamic>> get _foldersCollection =>
       firestore.collection('users').doc(userId).collection('folders');
 
+  @override
   Stream<List<Folder>> watchFolders() {
     return _foldersCollection
         .orderBy('createdAt', descending: true)
@@ -21,14 +23,17 @@ class FirestoreFoldersRepository {
     });
   }
 
+  @override
   Future<void> addFolder(Folder folder) async {
     await _foldersCollection.doc(folder.id).set(folder.toJson());
   }
 
+  @override
   Future<void> updateFolder(Folder folder) async {
     await _foldersCollection.doc(folder.id).update(folder.toJson());
   }
 
+  @override
   Future<void> deleteFolder(String folderId) async {
     await _foldersCollection.doc(folderId).delete();
   }

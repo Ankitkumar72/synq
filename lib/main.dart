@@ -8,6 +8,7 @@ import 'features/shell/presentation/main_shell.dart';
 
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/notes/data/sync_access_provider.dart';
 
 void main() async {
   String? firebaseError;
@@ -37,6 +38,11 @@ class SynqApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final firebaseError = ref.watch(firebaseErrorProvider);
+    final syncAccess = ref.watch(syncAccessProvider);
+    final requiresCloudAuth = syncAccess.cloudSyncEnabled;
+    final canEnterApp = !requiresCloudAuth || authState.isAuthenticated;
+    final shouldShowLoading =
+        syncAccess.isLoading || (requiresCloudAuth && authState.isLoading);
 
     return MaterialApp(
       title: 'Synq',
@@ -71,10 +77,10 @@ class SynqApp extends ConsumerWidget {
                 ),
               ),
             )
-          : authState.isLoading
+          : shouldShowLoading
               ? Scaffold(backgroundColor: AppColors.background, body: const Center(child: CircularProgressIndicator()))
-              : authState.isAuthenticated
-                  ? MainShell()
+              : canEnterApp
+                  ? const MainShell()
                   : const LoginScreen(),
     );
   }
