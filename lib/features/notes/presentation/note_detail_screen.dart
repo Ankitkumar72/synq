@@ -286,52 +286,90 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true, // Allow it to perform layout with constraints/scroll
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                leading: const Icon(Icons.folder_off_outlined),
-                title: const Text('Uncategorized'),
-                trailing: _selectedFolderId == null
-                    ? const Icon(Icons.check, color: Color(0xFF5473F7))
-                    : null,
-                onTap: () => Navigator.pop(context, uncategorizedValue),
-              ),
-              const Divider(height: 1),
-              ...folders.map((folder) {
-                final isSelected = _selectedFolderId == folder.id;
-                return ListTile(
-                  leading: Icon(
-                    IconData(
-                      folder.iconCodePoint,
-                      fontFamily: folder.iconFontFamily ?? 'MaterialIcons',
-                    ),
-                    color: Color(folder.colorValue),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  title: Text(folder.name),
-                  trailing: isSelected
-                      ? const Icon(Icons.check, color: Color(0xFF5473F7))
-                      : null,
-                  onTap: () => Navigator.pop(context, folder.id),
-                );
-              }),
-              const SizedBox(height: 8),
-            ],
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(
+                            Icons.folder_off_outlined,
+                            color: Colors.grey,
+                          ),
+                          title: const Text(
+                            'Uncategorized',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          trailing: _selectedFolderId == null
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Color(0xFF5473F7),
+                                )
+                              : null,
+                          onTap: () =>
+                              Navigator.pop(context, uncategorizedValue),
+                        ),
+                        const Divider(height: 1),
+                        ...folders.map((folder) {
+                          final isSelected = _selectedFolderId == folder.id;
+                          return ListTile(
+                            leading: Icon(
+                              IconData(
+                                folder.iconCodePoint,
+                                fontFamily:
+                                    folder.iconFontFamily ?? 'MaterialIcons',
+                              ),
+                              color: Color(folder.colorValue).withOpacity(1.0),
+                            ),
+                            title: Text(
+                              folder.name,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Color(0xFF5473F7),
+                                  )
+                                : null,
+                            onTap: () => Navigator.pop(context, folder.id),
+                          );
+                        }),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -512,6 +550,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           actions: [
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_horiz, color: Colors.black),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               onSelected: (value) {
                 switch (value) {
                   case 'move':
@@ -519,25 +560,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                     break;
                   case 'save':
                     _handleSave();
-                    break;
-                  case 'tags':
-                    showDialog(
-                      context: context,
-                      builder: (context) => TagManageDialog(
-                        initialTags: _tags,
-                        onTagsChanged: (tags) {
-                          setState(() {
-                            _tags.clear();
-                            _tags.addAll(tags);
-                            _hasUnsavedChanges = true;
-                          });
-                          _persistDraft();
-                        },
-                      ),
-                    );
-                    break;
-                  case 'image':
-                    _pickImage();
                     break;
                 }
               },
@@ -547,8 +569,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                   child: Text('Assign Folder'),
                 ),
                 const PopupMenuItem(value: 'save', child: Text('Save Now')),
-                const PopupMenuItem(value: 'tags', child: Text('Edit Tags')),
-                const PopupMenuItem(value: 'image', child: Text('Add Image')),
               ],
             ),
           ],
