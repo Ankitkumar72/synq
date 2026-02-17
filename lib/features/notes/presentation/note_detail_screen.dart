@@ -40,6 +40,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   final List<String> _attachments = [];
 
   bool _isTask = false;
+  bool _isReadOnly = false;
   DateTime? _scheduledTime;
 
   final MediaService _mediaService = MediaService();
@@ -286,7 +287,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
-      isScrollControlled: true, // Allow it to perform layout with constraints/scroll
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -385,6 +386,224 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     });
     _persistDraft();
   }
+
+  void _showNoteOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                   const SizedBox(height: 8),
+                   Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Group 1: Close
+                  _buildOptionGroup([
+                    _buildOptionItem(
+                      icon: Icons.close,
+                      label: 'Close',
+                      onTap: () {
+                        Navigator.pop(context); // Close sheet
+                        Navigator.pop(context); // Close screen
+                      },
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+                  // Group 2: Reading View
+                  _buildOptionGroup([
+                    _buildOptionItem(
+                      icon: _isReadOnly
+                          ? Icons.edit_outlined
+                          : Icons.chrome_reader_mode_outlined,
+                      label: _isReadOnly ? 'Edit view' : 'Reading view',
+                      onTap: () {
+                        setState(() {
+                          _isReadOnly = !_isReadOnly;
+                        });
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+                  // Group 3: Rename, Move, Find, Replace
+                  _buildOptionGroup([
+                    _buildOptionItem(
+                      icon: Icons.edit_outlined,
+                      label: 'Rename...',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _titleFocusNode.requestFocus();
+                      },
+                    ),
+                    _buildOptionItem(
+                      icon: Icons.drive_file_move_outlined,
+                      label: 'Move file to...',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _openFolderPicker();
+                      },
+                    ),
+                    _buildOptionItem(
+                      icon: Icons.search,
+                      label: 'Find...',
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Find not implemented')),
+                        );
+                      },
+                    ),
+                    _buildOptionItem(
+                      icon: Icons.find_replace,
+                      label: 'Replace...',
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Replace not implemented')),
+                        );
+                      },
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+                  // Group 5: Delete
+                  _buildOptionGroup([
+                    _buildOptionItem(
+                      icon: Icons.delete_outline,
+                      label: 'Delete file',
+                      textColor: Colors.red,
+                      iconColor: Colors.red,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _confirmDelete();
+                      },
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionGroup(List<Widget> children) {
+    if (children.isEmpty) return const SizedBox.shrink();
+
+    final List<Widget> dividedChildren = [];
+    for (int i = 0; i < children.length; i++) {
+        dividedChildren.add(children[i]);
+        if (i < children.length - 1) {
+            final indent = 16.0;
+            const endIndent = 16.0;
+            dividedChildren.add(
+                Divider(
+                    height: 1, 
+                    thickness: 0.5, 
+                    color: Colors.grey.shade300, 
+                    indent: indent, 
+                    endIndent: endIndent,
+                ),
+            );
+        }
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(28),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: dividedChildren,
+      ),
+    );
+  }
+
+  Widget _buildOptionItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color textColor = Colors.black,
+    Color iconColor = Colors.black54,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+                children: [
+                    Icon(icon, color: iconColor, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: Text(
+                            label,
+                            style: GoogleFonts.inter(
+                                color: textColor,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                            ),
+                        ),
+                    ),
+                ],
+            ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Note?'),
+        content: const Text('This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true && _editingNote != null) {
+      await ref.read(notesProvider.notifier).deleteNote(_editingNote!.id);
+      if (mounted) Navigator.pop(context);
+    } else if (shouldDelete == true && _draftNoteId != null) {
+      NoteEditorDraftStore.remove(_draftKey);
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -548,28 +767,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           ),
           centerTitle: true,
           actions: [
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_horiz, color: Colors.black),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              onSelected: (value) {
-                switch (value) {
-                  case 'move':
-                    _openFolderPicker();
-                    break;
-                  case 'save':
-                    _handleSave();
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'move',
-                  child: Text('Assign Folder'),
-                ),
-                const PopupMenuItem(value: 'save', child: Text('Save Now')),
-              ],
+            IconButton(
+              icon: const Icon(Icons.more_vert, color: Colors.black),
+              onPressed: () => _showNoteOptions(context),
             ),
           ],
         ),
@@ -601,6 +801,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                           child: TextField(
                             controller: _titleController,
                             focusNode: _titleFocusNode,
+                            readOnly: _isReadOnly,
                             textAlign: TextAlign.left,
                             decoration: InputDecoration(
                               hintText: 'Title',
@@ -631,6 +832,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                         TextField(
                           controller: _bodyController,
                           focusNode: _bodyFocusNode,
+                          readOnly: _isReadOnly,
                           textAlign: TextAlign.left,
                           decoration: InputDecoration(
                             hintText: 'Start writing...',
