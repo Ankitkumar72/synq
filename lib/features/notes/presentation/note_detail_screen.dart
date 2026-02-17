@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -46,6 +48,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
   String? _draftNoteId;
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
+  String _saveStatus = 'Saved';
+  Timer? _autoSaveTimer;
   
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -159,12 +163,23 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
 
   void _onTextChanged() {
     _markUnsaved();
+    
+    // Auto-save logic
+    setState(() {
+      _saveStatus = 'Saving...';
+    });
+    
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(const Duration(seconds: 2), () {
+      _handleSave();
+    });
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _bodyController.dispose();
+    _autoSaveTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -222,6 +237,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
         _lastEdited = now;
         _editingNote = note;
         _draftNoteId = note.id;
+        _saveStatus = 'Saved';
       });
       NoteEditorDraftStore.remove(_draftKey);
     } catch (_) {
@@ -327,7 +343,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
       loading: () => 'Loading...',
       error: (_, __) => 'Error',
     );
-    final isUncategorized = folderName.trim().toLowerCase() == 'uncategorized';
 
     return PopScope(
       canPop: false,
@@ -351,457 +366,254 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> with Single
                if (context.mounted) Navigator.pop(context);
             },
           ),
-          title: Text(
-            folderName,
-            textAlign: TextAlign.center,
-            softWrap: true,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: isUncategorized ? 20 : 24,
-              fontWeight: FontWeight.bold,
-              color: isUncategorized ? Colors.black54 : Colors.black,
-            ),
-          ),
-          centerTitle: true,
-          actions: [
-            TextButton(
-              onPressed: _isSaving ? null : _handleSave,
-              child: Text(
-                _isSaving ? 'Saving...' : 'Save',
+          title: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                folderName.toUpperCase(),
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: Colors.black,
                 ),
               ),
+              Text(
+                _saveStatus.toUpperCase(),
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF5473F7),
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          centerTitle: true,
+          actions: [
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_horiz, color: Colors.black),
+              onSelected: (value) {
+                switch (value) {
+                  case 'move':
+                    Navigator.push(
+                      context,
+                      FadePageRoute(builder: (_) => const FoldersScreen()),
+                    );
+                    break;
+                  case 'save':
+                    _handleSave();
+                    break;
+                  case 'tags':
+                    showDialog(
+                      context: context,
+                      builder: (context) => TagManageDialog(
+                        initialTags: _tags,
+                        onTagsChanged: (tags) {
+                          setState(() {
+                            _tags.clear();
+                            _tags.addAll(tags);
+                            _hasUnsavedChanges = true;
+                          });
+                          _persistDraft();
+                        },
+                      ),
+                    );
+                    break;
+                  case 'image':
+                    _pickImage();
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'move',
+                  child: Text('Move to Project'),
+                ),
+                const PopupMenuItem(
+                  value: 'save',
+                  child: Text('Save Now'),
+                ),
+                const PopupMenuItem(
+                  value: 'tags',
+                  child: Text('Edit Tags'),
+                ),
+                const PopupMenuItem(
+                  value: 'image',
+                  child: Text('Add Image'),
+                ),
+              ],
             ),
           ],
         ),
-        body: AnimatedOpacity(
-          duration: const Duration(milliseconds: 300),
-          opacity: 1.0,
-          child: Column(
-            children: [
-               Expanded(
-               child: FadeTransition(
-                 opacity: _fadeAnimation,
-                 child: SlideTransition(
-                   position: _slideAnimation,
-                   child: SingleChildScrollView(
-                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                 child: Column(
-                   crossAxisAlignment: CrossAxisAlignment.start,
-                   children: [
-                     // Metadata Cards Row
-                     SizedBox(
-                       height: 90,
-                       child: ListView(
-                         scrollDirection: Axis.horizontal,
-                         children: [
-                           _buildMetaCard(
-                             icon: Icons.folder_outlined,
-                             label: 'PROJECT',
-                             value: folderName,
-                             color: Colors.blue,
-                             onTap: () {
-                               Navigator.push(
-                                 context,
-                                 FadePageRoute(builder: (_) => const FoldersScreen()),
-                               );
-                             },
-                           ),
-                           const SizedBox(width: 12),
-                           _buildMetaCard(
-                             icon: Icons.tag,
-                             label: 'TAGS',
-                             value: _tags.isNotEmpty ? _tags.first : 'Add Tags',
-                             color: Colors.grey[700]!,
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => TagManageDialog(
-                                    initialTags: _tags,
-                                    onTagsChanged: (tags) {
-                                      setState(() {
-                                        _tags.clear();
-                                        _tags.addAll(tags);
-                                        _hasUnsavedChanges = true;
-                                      });
-                                      _persistDraft();
-                                    },
-                                  ),
-                                );
-                              },
-                           ),
-                             const SizedBox(width: 12),
-                           _buildMetaCard(
-                             icon: Icons.link,
-                             label: 'RESOURCE',
-                             value: _links.isNotEmpty ? '${_links.length} Links' : 'Add Links',
-                             color: Colors.blue,
-                             onTap: _showLinkManageDialog,
-                           ),
-                         ],
-                       ),
-                     ),
-                     const SizedBox(height: 24),
-
-                     // Cover Image
-                     if (_attachments.isNotEmpty) ...[
-                        GestureDetector(
-                          onTap: _pickImage,
-                          child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Image.network(
-                                _attachments.first,
-                                width: double.infinity,
-                                height: 220,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  width: double.infinity,
-                                  height: 220,
-                                  color: Colors.grey[100],
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.broken_image_outlined, color: Colors.grey[400], size: 32),
-                                        const SizedBox(height: 8),
-                                        Text('Image not found', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ),
-                        const SizedBox(height: 24),
-                     ],
-
-                     // Title
-                     TextField(
-                       controller: _titleController,
-                       decoration: InputDecoration(
-                         hintText: 'Title',
-                         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 32, fontWeight: FontWeight.bold),
-                         border: InputBorder.none,
-                         focusedBorder: InputBorder.none,
-                         enabledBorder: InputBorder.none,
-                         errorBorder: InputBorder.none,
-                         disabledBorder: InputBorder.none,
-                         contentPadding: EdgeInsets.zero,
-                         filled: false,
-                       ),
-                       style: GoogleFonts.inter(
-                         fontSize: 28,
-                         fontWeight: FontWeight.bold,
-                         color: Colors.black, // Dark text
-                         height: 1.2,
-                       ),
-                       maxLines: null,
-                     ),
-                     const SizedBox(height: 8),
-                     
-                     // Last Edited
-                     Text(
-                       'Last edited ${_formatLastEdited(_lastEdited)}', 
-                       style: GoogleFonts.inter(
-                         fontSize: 12,
-                         color: Colors.grey[400],
-                       ),
-                     ),
-                     const SizedBox(height: 24),
-                     
-                     // Body
-                     TextField(
-                       controller: _bodyController,
-                       decoration: InputDecoration(
-                          hintText: 'Start writing...',
-                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 16),
-                          border: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          errorBorder: InputBorder.none,
-                          disabledBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          filled: false,
-                       ),
-                       style: GoogleFonts.inter(
-                         fontSize: 16,
-                         color: AppColors.textPrimary, 
-                         height: 1.6,
-                       ),
-                       maxLines: null,
-                     ),
-                     
-                     
-                   ],
-                 ),
-               ),
-               ),
-               ),
-              ), // End FadeTransition
-              
-               // Bottom Quick Actions Bar
-               Container(
-                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                 decoration: BoxDecoration(
-                   color: Colors.grey[50],
-                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                   boxShadow: [
-                       BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0,-2)),
-                   ],
-                 ),
-                 child: Row(
-                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                   children: [
-                      // Quick Actions Group
-                      Row(
-                        children: [
-
-                           _buildQuickActionBtn(
-                             _isTask ? Icons.check_box : Icons.check_box_outline_blank, 
-                             'Make Task', 
-                             isActive: _isTask,
-                             onTap: () {
-                                setState(() {
-                                  _isTask = !_isTask;
-                                  _hasUnsavedChanges = true;
-                                });
-                                _persistDraft();
-                                ScaffoldMessenger.of(context).clearSnackBars();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                   content: Text(
-                                     _isTask ? 'Converted to Task' : 'Reverted to Note',
-                                     style: const TextStyle(color: Colors.white),
-                                   ),
-                                   backgroundColor: Colors.black87,
-                                   behavior: SnackBarBehavior.floating,
-                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                   duration: const Duration(seconds: 2),
-                                 ),
-                               );
-                             },
-                           ), // Make Task
-                           const SizedBox(width: 8),
-                           _buildQuickActionBtn(
-                             Icons.calendar_today, 
-                             'Calendar',
-                             isActive: _scheduledTime != null,
-                             onTap: () async {
-                                final pickedDate = await showDatePicker(
-                                  context: context,
-                                  initialDate: _scheduledTime ?? DateTime.now(),
-                                  firstDate: DateTime.now(),
-                                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                                );
-                                 if (pickedDate != null) {
-                                   setState(() {
-                                     _scheduledTime = pickedDate;
-                                     _isTask = true; // Auto-make task if scheduled?
-                                     _hasUnsavedChanges = true;
-                                   });
-                                   _persistDraft();
-                                 }
-                              },
-                            ),
-                        ],
-                      ),
-                      
-                      // More / Edit FAB equivalent
-                      Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.black, // Dark FAB
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.image, color: Colors.white, size: 20),
-                          onPressed: _pickImage,
-                        ),
-                      ),
-                   ],
-                 ),
-               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-
-  Future<void> _showLinkManageDialog() async {
-    final textController = TextEditingController();
-    await showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Manage Links'),
-              content: SizedBox(
-                width: double.maxFinite,
+        body: Stack(
+          children: [
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: 1.0,
+              child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (_links.isNotEmpty)
-                      Container(
-                        constraints: const BoxConstraints(maxHeight: 200),
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          itemCount: _links.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final link = _links[index];
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              dense: true,
-                              title: Text(link, maxLines: 1, overflow: TextOverflow.ellipsis),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.close, size: 16),
-                                onPressed: () {
-                                  setDialogState(() {
-                                    setState(() {
-                                      _links.removeAt(index);
-                                      _hasUnsavedChanges = true;
-                                    });
-                                    _persistDraft();
-                                  });
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    const SizedBox(height: 16),
+                    // Title
                     TextField(
-                      controller: textController,
+                      controller: _titleController,
                       decoration: InputDecoration(
-                        hintText: 'https://example.com',
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.add),
-                          onPressed: () {
-                            if (textController.text.isNotEmpty) {
-                              setDialogState(() {
-                                setState(() {
-                                  _links.add(textController.text.trim());
-                                  _hasUnsavedChanges = true;
-                                });
-                                _persistDraft();
-                                textController.clear();
-                              });
-                            }
-                          },
+                        hintText: 'Title',
+                        hintStyle: GoogleFonts.merriweather(
+                          color: Colors.grey.shade400,
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
                         ),
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                        filled: false,
                       ),
-                      onSubmitted: (value) {
-                         if (value.isNotEmpty) {
-                           setDialogState(() {
-                             setState(() {
-                               _links.add(value.trim());
-                               _hasUnsavedChanges = true;
-                             });
-                             _persistDraft();
-                             textController.clear();
-                           });
-                         }
-                      },
+                      style: GoogleFonts.merriweather(
+                        fontSize: 34,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        height: 1.2,
+                      ),
+                      maxLines: null,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Body
+                    TextField(
+                      controller: _bodyController,
+                      decoration: InputDecoration(
+                        hintText: 'Start writing...',
+                        hintStyle: GoogleFonts.inter(
+                          color: Colors.grey.shade400,
+                          fontSize: 16,
+                        ),
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                        filled: false,
+                      ),
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        color: AppColors.textPrimary, 
+                        height: 1.5,
+                      ),
+                      maxLines: null,
                     ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Done'),
+            ),
+          ),
+        ),
+            // Floating Formatting Toolbar (Pill Shape)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                _buildToolbarButton(Icons.format_bold, () => _formatText('**', '**')),
+                                _buildToolbarButton(Icons.format_italic, () => _formatText('*', '*')),
+                                _buildToolbarButton(Icons.format_underlined, () => _formatText('<u>', '</u>')),
+                                const SizedBox(width: 8),
+                                Container(width: 1, height: 24, color: Colors.grey[200]),
+                                const SizedBox(width: 8),
+                                _buildToolbarButton(Icons.text_fields, () => _formatText('# ', '')),
+                                _buildToolbarButton(Icons.format_list_bulleted, () => _formatText('- ', '')),
+                                _buildToolbarButton(Icons.format_quote, () => _formatText('> ', '')),
+                              ],
+                            ),
+                            _buildToolbarButton(Icons.keyboard_hide, () {
+                              FocusScope.of(context).unfocus();
+                            }),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ],
-            );
-          }
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMetaCard({required IconData icon, required String label, required String value, required Color color, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 140, // Fixed width card
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                 Icon(icon, size: 16, color: color),
-                 if (label == 'RESOURCE')
-                    Container(width: 6, height: 6, decoration: BoxDecoration(color: Colors.blue, shape: BoxShape.circle)),
-              ],
-            ),
-             const Spacer(),
-             Text(
-               label,
-               style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[400]),
-             ),
-             const SizedBox(height: 4),
-             Text(
-               value,
-               maxLines: 1,
-               overflow: TextOverflow.ellipsis,
-               style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
-             ),
-          ],
-        ),
-      ),
+  Widget _buildToolbarButton(IconData icon, VoidCallback onTap) {
+    return IconButton(
+      icon: Icon(icon, size: 20, color: Colors.grey[700]),
+      onPressed: onTap,
+      visualDensity: VisualDensity.compact,
+      padding: const EdgeInsets.all(8),
+      constraints: const BoxConstraints(),
     );
   }
-  
-  Widget _buildQuickActionBtn(IconData icon, String label, {bool isLabel = false, bool isActive = false, VoidCallback? onTap}) {
-    if (isLabel) {
-       return Row(
-         children: [
-           Icon(icon, color: Colors.blue, size: 20),
-           const SizedBox(width: 8),
-           Text(
-             label,
-             style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600], height: 1.1),
-           )
-         ],
-       );
-    }
+
+  void _formatText(String prefix, String suffix) {
+    final text = _bodyController.text;
+    final selection = _bodyController.selection;
     
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? Colors.black : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[200]!),
+    if (selection.isCollapsed) {
+      // Insert at cursor
+      final newText = text.replaceRange(selection.start, selection.end, '$prefix$suffix');
+      _bodyController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: selection.start + prefix.length),
+      );
+    } else {
+      // Wrap selected text
+      final selectedText = text.substring(selection.start, selection.end);
+      final newText = text.replaceRange(selection.start, selection.end, '$prefix$selectedText$suffix');
+      _bodyController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection(
+          baseOffset: selection.start,
+          extentOffset: selection.end + prefix.length + suffix.length,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: isActive ? Colors.white : Colors.black87),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w500, color: isActive ? Colors.white : Colors.black87),
-            ),
-          ],
-        ),
-      ),
-    );
+      );
+    }
   }
+
+
 
   String _formatLastEdited(DateTime dt) {
     if (DateTime.now().difference(dt).inMinutes < 1) return 'just now';

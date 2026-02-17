@@ -146,9 +146,7 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                                          selectedDate.day == now.day;
                                 final currentHour = now.hour;
 
-                                // Find tasks that start in this hour or overlap it
-                                // We'll only render a task in the hour it STARTS.
-                                // If it spans multiple hours, it will be taller.
+                                
                                 final hourStartMinutes = hour * 60;
                                 final hourEndMinutes = (hour + 1) * 60;
 
