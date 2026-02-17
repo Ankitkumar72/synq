@@ -6,14 +6,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/media_service.dart';
-import '../../../../core/navigation/fade_page_route.dart';
 import '../domain/models/note.dart';
 import '../domain/models/folder.dart';
 import '../data/notes_provider.dart';
 import '../data/folder_provider.dart';
 import '../data/note_editor_draft_store.dart';
-import 'folders_screen.dart';
 import '../presentation/widgets/tag_manage_dialog.dart';
+import '../../../../core/navigation/fade_page_route.dart';
+import 'folders_screen.dart';
 
 class NoteDetailScreen extends ConsumerStatefulWidget {
   final Note? noteToEdit;
@@ -278,6 +278,76 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     }
   }
 
+  Future<void> _openFolderPicker() async {
+    final foldersState = ref.read(foldersProvider);
+    final folders = foldersState.value ?? const <Folder>[];
+
+    const uncategorizedValue = '__uncategorized__';
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.folder_off_outlined),
+                title: const Text('Uncategorized'),
+                trailing: _selectedFolderId == null
+                    ? const Icon(Icons.check, color: Color(0xFF5473F7))
+                    : null,
+                onTap: () => Navigator.pop(context, uncategorizedValue),
+              ),
+              const Divider(height: 1),
+              ...folders.map((folder) {
+                final isSelected = _selectedFolderId == folder.id;
+                return ListTile(
+                  leading: Icon(
+                    IconData(
+                      folder.iconCodePoint,
+                      fontFamily: folder.iconFontFamily ?? 'MaterialIcons',
+                    ),
+                    color: Color(folder.colorValue),
+                  ),
+                  title: Text(folder.name),
+                  trailing: isSelected
+                      ? const Icon(Icons.check, color: Color(0xFF5473F7))
+                      : null,
+                  onTap: () => Navigator.pop(context, folder.id),
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selected == null) return;
+    final nextFolderId = selected == uncategorizedValue ? null : selected;
+    if (nextFolderId == _selectedFolderId) return;
+
+    setState(() {
+      _selectedFolderId = nextFolderId;
+      _hasUnsavedChanges = true;
+    });
+    _persistDraft();
+  }
+
   @override
   Widget build(BuildContext context) {
     final foldersAsync = ref.watch(foldersProvider);
@@ -381,10 +451,12 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       loading: () => 'Loading...',
       error: (_, __) => 'Error',
     );
-    // Use View.of(context) for reliable keyboard detection — immune to
-    // outer Scaffold consuming viewInsets via resizeToAvoidBottomInset.
+    // Read keyboard inset directly and position toolbar against it.
+    const toolbarHeight = 48.0;
+    const toolbarGap = 6.0;
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
     final isKeyboardVisible = keyboardInset > 0;
+    final showKeyboardToolbar = isKeyboardVisible && _bodyFocusNode.hasFocus;
 
     return PopScope(
       canPop: false,
@@ -396,9 +468,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         if (context.mounted) Navigator.pop(context);
       },
       child: Scaffold(
-        // true — body shrinks so its bottom edge == keyboard top.
-        // The outer MainShell Scaffold has resizeToAvoidBottomInset: false,
-        // so viewInsets are passed through to us untouched.
+        // Let Scaffold keep the body pinned to keyboard top.
         resizeToAvoidBottomInset: true,
         backgroundColor: Colors.white, // As per design
         appBar: AppBar(
@@ -406,10 +476,12 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           elevation: 0,
           toolbarHeight: 84,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () async {
-              if (_hasUnsavedChanges) _persistDraft();
-              if (context.mounted) Navigator.pop(context);
+            icon: const Icon(Icons.folder_open_outlined, color: Colors.black),
+            tooltip: 'Folders',
+            onPressed: () {
+              Navigator.of(context).push(
+                FadePageRoute(builder: (context) => const FoldersScreen()),
+              );
             },
           ),
           title: Column(
@@ -443,10 +515,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               onSelected: (value) {
                 switch (value) {
                   case 'move':
-                    Navigator.push(
-                      context,
-                      FadePageRoute(builder: (_) => const FoldersScreen()),
-                    );
+                    _openFolderPicker();
                     break;
                   case 'save':
                     _handleSave();
@@ -475,7 +544,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               itemBuilder: (context) => [
                 const PopupMenuItem(
                   value: 'move',
-                  child: Text('Move to Project'),
+                  child: Text('Assign Folder'),
                 ),
                 const PopupMenuItem(value: 'save', child: Text('Save Now')),
                 const PopupMenuItem(value: 'tags', child: Text('Edit Tags')),
@@ -485,6 +554,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           ],
         ),
         body: Stack(
+          fit: StackFit.expand,
           children: [
             AnimatedOpacity(
               duration: const Duration(milliseconds: 300),
@@ -498,9 +568,10 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                       24,
                       0,
                       24,
-                      // Body already shrinks to keyboard top, so we only
-                      // need space for the toolbar itself (no keyboard offset).
-                      (isKeyboardVisible && _bodyFocusNode.hasFocus) ? 76 : 24,
+                      // Reserve space for the floating toolbar when visible.
+                      showKeyboardToolbar
+                          ? (toolbarHeight + toolbarGap + 28)
+                          : 24,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,17 +644,26 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
             AnimatedPositioned(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
-              left: 0,
-              right: 0,
-              bottom: (isKeyboardVisible && _bodyFocusNode.hasFocus) ? 0 : -60,
+              left: 12,
+              right: 12,
+              bottom: showKeyboardToolbar ? toolbarGap : -80,
               child: Container(
-                height: 48,
+                height: toolbarHeight,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Color(0xFF1F1F1F),
-                  border: Border(
-                    top: BorderSide(color: Color(0xFF333333), width: 1),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0xFF333333),
+                    width: 1,
                   ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x22000000),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
