@@ -57,7 +57,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         // Use IndexedStack with independent Navigators for each tab
         body: IndexedStack(
           index: currentIndex,
