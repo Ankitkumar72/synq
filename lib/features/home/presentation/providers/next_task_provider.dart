@@ -32,7 +32,7 @@ final taskCountsProvider = FutureProvider<Map<String, int>>((ref) async {
   
   final todayTasks = notes.where((n) {
     if (!n.isTask) return false;
-    if (n.scheduledTime == null) return true; // Unscheduled tasks count as "today" or "general"?
+    if (n.scheduledTime == null) return true; 
     
     final taskDate = DateTime(n.scheduledTime!.year, n.scheduledTime!.month, n.scheduledTime!.day);
     return taskDate.isAtSameMomentAs(today);
