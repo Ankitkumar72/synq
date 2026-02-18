@@ -126,6 +126,7 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
             TextField(
               controller: _nameController,
               autofocus: true,
+              style: const TextStyle(color: Colors.black), // Explicit black text
               decoration: InputDecoration(
                 hintText: 'Folder Name',
                 filled: true,

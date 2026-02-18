@@ -22,15 +22,22 @@ class FolderDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+        toolbarHeight: 80, // Increased height
+        leading: Padding(
+          padding: const EdgeInsets.only(top: 15),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-        title: Text(
-          folder.name,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 15),
+          child: Text(
+            folder.name,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
           ),
         ),
         centerTitle: true, // Center the title
@@ -73,10 +80,10 @@ class FolderDetailScreen extends ConsumerWidget {
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 8,
+                      vertical: 0, // Reduced from 8
                     ),
                     leading: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6), // Reduced from 8
                       decoration: BoxDecoration(
                         color: Color(folder.colorValue).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
