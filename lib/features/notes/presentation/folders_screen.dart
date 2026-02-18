@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui; // Added for PathMetrics
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,7 +36,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
   Timer? _searchDebounce;
   String _searchQuery = '';
   static const double _gridSpacing = 12;
-  static const double _gridAspectRatio = 1.78;
+  static const double _gridAspectRatio = 2.5; // Changed from 1.78 to 2.5 for horizontal pills
 
   @override
   void dispose() {
@@ -98,24 +99,24 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'FOLDERS',
-                            style: GoogleFonts.inter(
-                              fontSize: 22,
+                            'Folders', // Capitalized normally as per design
+                            style: GoogleFonts.playfairDisplay( // Changed to Serif
+                              fontSize: 32, // Increased size
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
+                              letterSpacing: 0.5,
                               color: Colors.black,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32), // Increased spacing
                       
                       // Search Bar
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(100), // Pill shape
                         ),
                         child: TextField(
                           controller: _searchController,
@@ -138,7 +139,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                             icon: const Icon(Icons.search, color: Colors.grey),
                             hintText: 'Search folders, notes, tags...',
                             hintStyle: const TextStyle(color: AppColors.textSecondary),
-                            filled: false,
+                            filled: false, 
                             fillColor: Colors.transparent,
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
@@ -162,7 +163,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 32), // Increased spacing
                       
                       // Favorites Section
                       if (favorites.isNotEmpty) ...[
@@ -215,7 +216,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                           Text(
                             isSearching
                                 ? '${visibleFolders.length} Results'
-                                : '${folders.length} Total',
+                                : '${folders.length} Total', // Dynamic count text
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   color: AppColors.textSecondary,
                                 ),
@@ -286,55 +287,97 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
   Widget _buildAddNewFolderCard(BuildContext context) {
     return GestureDetector(
       onTap: () => showAddFolderSheet(context),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.10)),
+      child: CustomPaint(
+        painter: _DashedBorderPainter(
+          color: Colors.grey.withValues(alpha: 0.5),
+          strokeWidth: 1.0, 
+          radius: 100,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(10),
+        child: Container(
+          // No decoration border, handled by painter
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), // Same padding as FolderCard
+          child: Row(
+            children: [
+              Container(
+                width: 32, // Match FolderCard icon size
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.2), // Grey circle
+                  shape: BoxShape.circle, // Circular
+                ),
+                child: const Icon(Icons.add, size: 18, color: Colors.grey),
               ),
-              child: const Icon(Icons.add, size: 20, color: Colors.grey),
-            ),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+              const SizedBox(width: 10),
+              Expanded(
+                child: Align( // Vertical center alignment
+                  alignment: Alignment.centerLeft,
+                  child: Text(
                     'New Folder',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Create',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary, // Grey text
                       fontWeight: FontWeight.w500,
-                      fontSize: 12,
+                      fontSize: 14,
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double radius;
+  final double dashWidth;
+  final double dashSpace;
+
+  _DashedBorderPainter({
+    required this.color,
+    this.strokeWidth = 1.0,
+    this.radius = 0.0,
+    this.dashWidth = 6.0,
+    this.dashSpace = 4.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final RRect rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(radius),
+    );
+
+    final Path path = Path()..addRRect(rrect);
+
+    final Path dashedPath = Path();
+    for (final ui.PathMetric metric in path.computeMetrics()) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        dashedPath.addPath(
+          metric.extractPath(distance, distance + dashWidth),
+          Offset.zero,
+        );
+        distance += dashWidth + dashSpace;
+      }
+    }
+    
+    canvas.drawPath(dashedPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
+}
+

@@ -135,6 +135,8 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
+              maxLines: null, // Allow wrapping
+              textCapitalization: TextCapitalization.sentences, // Cap first letter
             ),
             const SizedBox(height: 24),
             Text('Color', style: Theme.of(context).textTheme.titleSmall!.copyWith(color: AppColors.textSecondary)),

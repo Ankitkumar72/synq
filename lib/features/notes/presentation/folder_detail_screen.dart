@@ -33,15 +33,7 @@ class FolderDetailScreen extends ConsumerWidget {
             color: Colors.black,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {
-              // Options: Edit Folder, Delete Folder
-              _showOptions(context, ref);
-            },
-          ),
-        ],
+        centerTitle: true, // Center the title
       ),
       body: folderNotes.isEmpty
           ? Center(
@@ -99,13 +91,19 @@ class FolderDetailScreen extends ConsumerWidget {
                     ),
                     title: Text(
                       note.title,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black, // Explicit black
+                      ),
                     ),
                     subtitle: note.body != null && note.body!.isNotEmpty
                         ? Text(
                             note.body!,
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            overflow: TextOverflow.ellipsis, // Keep 1 line
+                            style: const TextStyle(
+                              color: Colors.black87, // Visible dark color
+                            ),
                           )
                         : null,
                     trailing: Text(
@@ -114,6 +112,17 @@ class FolderDetailScreen extends ConsumerWidget {
                         color: AppColors.textSecondary,
                       ),
                     ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        FadePageRoute(
+                          builder: (_) => NoteDetailScreen(
+                            noteToEdit: note, // Pass the note object
+                            initialFolderId: folder.id,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
