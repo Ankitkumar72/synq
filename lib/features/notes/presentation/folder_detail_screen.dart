@@ -164,7 +164,7 @@ class FolderDetailScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => NoteOptionsSheet(
+      builder: (sheetContext) => NoteOptionsSheet(
         note: note,
         onRename: () {
           Navigator.push(
@@ -184,7 +184,7 @@ class FolderDetailScreen extends ConsumerWidget {
           showModalBottomSheet(
             context: context,
             backgroundColor: Colors.transparent,
-            builder: (context) => DeleteConfirmationSheet(
+            builder: (confirmSheetContext) => DeleteConfirmationSheet(
               itemName: note.title.isEmpty ? 'Untitled' : note.title,
               onDelete: () {
                 ref.read(notesProvider.notifier).deleteNote(note.id);
@@ -232,11 +232,11 @@ class FolderDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'MOVE TO FOLDER',
+                  'Move To Folder',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.0,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -247,7 +247,7 @@ class FolderDetailScreen extends ConsumerWidget {
                       children: [
                         ListTile(
                           leading: const Icon(Icons.folder_off_outlined, color: Colors.grey),
-                          title: const Text('Uncategorized', style: TextStyle(fontWeight: FontWeight.bold)),
+                          title: const Text('Uncategorized', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
                           trailing: note.folderId == null ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
                           onTap: () => Navigator.pop(context, uncategorizedValue),
                         ),
@@ -259,7 +259,7 @@ class FolderDetailScreen extends ConsumerWidget {
                               IconData(f.iconCodePoint, fontFamily: f.iconFontFamily ?? 'MaterialIcons'),
                               color: Color(f.colorValue),
                             ),
-                            title: Text(f.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            title: Text(f.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
                             trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
                             onTap: () => Navigator.pop(context, f.id),
                           );
@@ -281,5 +281,63 @@ class FolderDetailScreen extends ConsumerWidget {
     if (nextFolderId == note.folderId) return;
 
     await ref.read(notesProvider.notifier).updateNote(note.copyWith(folderId: nextFolderId));
+
+    if (context.mounted) {
+      final folderName = nextFolderId == null 
+          ? 'Uncategorized' 
+          : folders.any((f) => f.id == nextFolderId)
+              ? folders.firstWhere((f) => f.id == nextFolderId).name
+              : 'Folder';
+      
+      final fileName = note.title.isEmpty ? 'Untitled' : note.title;
+      _showToast(context, '$fileName Moved to $folderName.');
+    }
+  }
+
+  void _showToast(BuildContext context, String message) {
+    debugPrint('SHOWING TOAST: $message'); // Debug log
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 120, // Clearly below status bar and app bar
+        left: 40,
+        right: 40,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.98),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: const Color(0xFF5473F7).withOpacity(0.5), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.black, // High contrast black text
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+    Future.delayed(const Duration(seconds: 3), () {
+      if (entry.mounted) entry.remove();
+    });
   }
 }

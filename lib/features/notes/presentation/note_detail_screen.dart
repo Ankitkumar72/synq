@@ -310,7 +310,15 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const Text(
+                  'Move To Folder',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Flexible(
                   child: SingleChildScrollView(
                     child: Column(
@@ -388,6 +396,64 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       _hasUnsavedChanges = true;
     });
     _persistDraft();
+
+    if (mounted) {
+      final folderName = nextFolderId == null 
+          ? 'Uncategorized' 
+          : folders.any((f) => f.id == nextFolderId)
+              ? folders.firstWhere((f) => f.id == nextFolderId).name
+              : 'Folder';
+
+      final fileName = _titleController.text.trim().isEmpty ? 'Untitled' : _titleController.text.trim();
+      _showToast(context, '$fileName Moved to $folderName.');
+    }
+  }
+
+  void _showToast(BuildContext context, String message) {
+    debugPrint('SHOWING TOAST (EDITOR): $message');
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 120,
+        left: 40,
+        right: 40,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.98),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: const Color(0xFF5473F7).withOpacity(0.5), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+    Future.delayed(const Duration(seconds: 3), () {
+      if (entry.mounted) entry.remove();
+    });
   }
 
   void _showNoteOptions(BuildContext context) {
@@ -397,12 +463,12 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) {
+      builder: (sheetContext) {
         return NoteOptionsSheet(
           note: _editingNote!,
           isReadOnly: _isReadOnly,
           onClose: () {
-            Navigator.pop(context);
+            Navigator.pop(sheetContext);
           },
           onToggleReadingView: () {
             setState(() {
