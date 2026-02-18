@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../domain/models/folder.dart';
-import '../data/notes_provider.dart';
-import '../../../../core/navigation/fade_page_route.dart';
-import 'note_detail_screen.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/notes/data/folder_provider.dart';
+import 'package:synq/features/notes/domain/models/folder.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/core/navigation/fade_page_route.dart';
+import 'package:synq/features/notes/presentation/note_detail_screen.dart';
+import 'package:synq/features/notes/presentation/widgets/delete_confirmation_sheet.dart';
+import 'package:synq/features/notes/presentation/widgets/note_options_sheet.dart';
+import 'package:synq/features/notes/presentation/widgets/add_folder_sheet.dart';
 
 class FolderDetailScreen extends ConsumerWidget {
   final Folder folder;
@@ -114,7 +119,7 @@ class FolderDetailScreen extends ConsumerWidget {
                           )
                         : null,
                     trailing: Text(
-                      _formatDate(note.createdAt),
+                      _formatDateString(note.createdAt),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -124,12 +129,13 @@ class FolderDetailScreen extends ConsumerWidget {
                         context,
                         FadePageRoute(
                           builder: (_) => NoteDetailScreen(
-                            noteToEdit: note, // Pass the note object
+                            noteToEdit: note,
                             initialFolderId: folder.id,
                           ),
                         ),
                       );
                     },
+                    onLongPress: () => _showNoteOptionsMenu(context, ref, note),
                   ),
                 );
               },
@@ -149,9 +155,131 @@ class FolderDetailScreen extends ConsumerWidget {
     );
   }
 
-  String _formatDate(DateTime dt) {
+  String _formatDateString(DateTime dt) {
     return '${dt.day}/${dt.month}';
   }
 
-  void _showOptions(BuildContext context, WidgetRef ref) {}
+  void _showNoteOptionsMenu(BuildContext context, WidgetRef ref, Note note) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => NoteOptionsSheet(
+        note: note,
+        onRename: () {
+          Navigator.push(
+            context,
+            FadePageRoute(
+              builder: (_) => NoteDetailScreen(
+                noteToEdit: note,
+                initialFolderId: folder.id,
+              ),
+            ),
+          );
+        },
+        onMove: () {
+          _openFolderPicker(context, ref, note);
+        },
+        onDelete: () {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (context) => DeleteConfirmationSheet(
+              itemName: note.title.isEmpty ? 'Untitled' : note.title,
+              onDelete: () {
+                ref.read(notesProvider.notifier).deleteNote(note.id);
+              },
+              onDeleteAndDontAsk: () {
+                // For now, same as delete
+                ref.read(notesProvider.notifier).deleteNote(note.id);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _openFolderPicker(BuildContext context, WidgetRef ref, Note note) async {
+    final foldersState = ref.read(foldersProvider);
+    final folders = foldersState.value ?? const <Folder>[];
+
+    const uncategorizedValue = '__uncategorized__';
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'MOVE TO FOLDER',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.folder_off_outlined, color: Colors.grey),
+                          title: const Text('Uncategorized', style: TextStyle(fontWeight: FontWeight.bold)),
+                          trailing: note.folderId == null ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
+                          onTap: () => Navigator.pop(context, uncategorizedValue),
+                        ),
+                        const Divider(height: 1),
+                        ...folders.map((f) {
+                          final isSelected = note.folderId == f.id;
+                          return ListTile(
+                            leading: Icon(
+                              IconData(f.iconCodePoint, fontFamily: f.iconFontFamily ?? 'MaterialIcons'),
+                              color: Color(f.colorValue),
+                            ),
+                            title: Text(f.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
+                            onTap: () => Navigator.pop(context, f.id),
+                          );
+                        }),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected == null) return;
+    final nextFolderId = selected == uncategorizedValue ? null : selected;
+    if (nextFolderId == note.folderId) return;
+
+    await ref.read(notesProvider.notifier).updateNote(note.copyWith(folderId: nextFolderId));
+  }
 }

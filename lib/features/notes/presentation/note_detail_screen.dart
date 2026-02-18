@@ -4,16 +4,17 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/services/media_service.dart';
-import '../domain/models/note.dart';
-import '../domain/models/folder.dart';
-import '../data/notes_provider.dart';
-import '../data/folder_provider.dart';
-import '../data/note_editor_draft_store.dart';
-import '../presentation/widgets/tag_manage_dialog.dart';
-import '../../../../core/navigation/fade_page_route.dart';
-import 'folders_screen.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/core/services/media_service.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/features/notes/domain/models/folder.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/notes/data/folder_provider.dart';
+import 'package:synq/features/notes/data/note_editor_draft_store.dart';
+import 'package:synq/features/notes/presentation/widgets/tag_manage_dialog.dart';
+import 'package:synq/core/navigation/fade_page_route.dart';
+import 'package:synq/features/notes/presentation/folders_screen.dart';
+import 'package:synq/features/notes/presentation/widgets/note_options_sheet.dart';
 
 class NoteDetailScreen extends ConsumerStatefulWidget {
   final Note? noteToEdit;
@@ -390,189 +391,49 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   }
 
   void _showNoteOptions(BuildContext context) {
+    if (_editingNote == null) return;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Group 1: Close
-                  _buildOptionGroup([
-                    _buildOptionItem(
-                      icon: Icons.close,
-                      label: 'Close',
-                      onTap: () {
-                        Navigator.pop(context); // Close sheet
-                        Navigator.pop(context); // Close screen
-                      },
-                    ),
-                  ]),
-                  const SizedBox(height: 16),
-                  // Group 2: Reading View
-                  _buildOptionGroup([
-                    _buildOptionItem(
-                      icon: _isReadOnly
-                          ? Icons.edit_outlined
-                          : Icons.chrome_reader_mode_outlined,
-                      label: _isReadOnly ? 'Edit view' : 'Reading view',
-                      onTap: () {
-                        setState(() {
-                          _isReadOnly = !_isReadOnly;
-                        });
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ]),
-                  const SizedBox(height: 16),
-                  // Group 3: Rename, Move, Find, Replace
-                  _buildOptionGroup([
-                    _buildOptionItem(
-                      icon: Icons.edit_outlined,
-                      label: 'Rename...',
-                      onTap: () {
-                        Navigator.pop(context);
-                        _titleFocusNode.requestFocus();
-                      },
-                    ),
-                    _buildOptionItem(
-                      icon: Icons.drive_file_move_outlined,
-                      label: 'Move file to...',
-                      onTap: () {
-                        Navigator.pop(context);
-                        _openFolderPicker();
-                      },
-                    ),
-                    _buildOptionItem(
-                      icon: Icons.search,
-                      label: 'Find...',
-                      onTap: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Find not implemented')),
-                        );
-                      },
-                    ),
-                    _buildOptionItem(
-                      icon: Icons.find_replace,
-                      label: 'Replace...',
-                      onTap: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Replace not implemented'),
-                          ),
-                        );
-                      },
-                    ),
-                  ]),
-                  const SizedBox(height: 16),
-                  // Group 5: Delete
-                  _buildOptionGroup([
-                    _buildOptionItem(
-                      icon: Icons.delete_outline,
-                      label: 'Delete file',
-                      textColor: Colors.red,
-                      iconColor: Colors.red,
-                      onTap: () {
-                        Navigator.pop(context);
-                        _confirmDelete();
-                      },
-                    ),
-                  ]),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          ),
+        return NoteOptionsSheet(
+          note: _editingNote!,
+          isReadOnly: _isReadOnly,
+          onClose: () {
+            Navigator.pop(context);
+          },
+          onToggleReadingView: () {
+            setState(() {
+              _isReadOnly = !_isReadOnly;
+            });
+          },
+          onRename: () {
+            _titleFocusNode.requestFocus();
+          },
+          onMove: () {
+            _openFolderPicker();
+          },
+          onDelete: () {
+            _confirmDelete();
+          },
+          onFind: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Find not implemented')),
+            );
+          },
+          onReplace: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Replace not implemented')),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildOptionGroup(List<Widget> children) {
-    if (children.isEmpty) return const SizedBox.shrink();
 
-    final List<Widget> dividedChildren = [];
-    for (int i = 0; i < children.length; i++) {
-      dividedChildren.add(children[i]);
-      if (i < children.length - 1) {
-        final indent = 16.0;
-        const endIndent = 16.0;
-        dividedChildren.add(
-          Divider(
-            height: 1,
-            thickness: 0.5,
-            color: Colors.grey.shade300,
-            indent: indent,
-            endIndent: endIndent,
-          ),
-        );
-      }
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(28),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(mainAxisSize: MainAxisSize.min, children: dividedChildren),
-    );
-  }
-
-  Widget _buildOptionItem({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color textColor = Colors.black,
-    Color iconColor = Colors.black54,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Icon(icon, color: iconColor, size: 22),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    color: textColor,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Future<void> _confirmDelete() async {
     final shouldDelete = await showDialog<bool>(
