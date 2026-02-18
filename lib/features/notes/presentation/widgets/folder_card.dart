@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/models/folder.dart';
 
@@ -6,6 +7,7 @@ class FolderCard extends StatelessWidget {
   final Folder folder;
   final int itemCount;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress; // Added for options menu
   final VoidCallback? onEdit; // Added for edit option
 
   const FolderCard({
@@ -13,6 +15,7 @@ class FolderCard extends StatelessWidget {
     required this.folder,
     required this.itemCount,
     required this.onTap,
+    this.onLongPress,
     this.onEdit,
   });
 
@@ -20,6 +23,12 @@ class FolderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: () {
+        if (onLongPress != null) {
+          HapticFeedback.mediumImpact();
+          onLongPress!();
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,

@@ -8,11 +8,15 @@ import '../../../../core/theme/app_theme.dart';
 import '../data/folder_search_engine.dart';
 import '../data/folder_provider.dart';
 import '../data/notes_provider.dart';
+import '../data/notes_settings_provider.dart'; // Added
 import '../domain/models/folder.dart';
 import '../domain/models/note.dart';
 import 'widgets/folder_card.dart';
 import 'widgets/add_folder_sheet.dart';
+import 'widgets/folder_options_sheet.dart';
+import 'widgets/delete_confirmation_sheet.dart'; // Added
 import 'folder_detail_screen.dart';
+import 'note_detail_screen.dart';
 import '../../../../core/navigation/fade_page_route.dart';
 
 final folderSearchEngineProvider = Provider<FolderSearchEngine>((ref) {
@@ -50,6 +54,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     final foldersAsync = ref.watch(foldersProvider);
     final notesAsync = ref.watch(notesProvider);
     final searchEngine = ref.watch(folderSearchEngineProvider);
+    final notesSettings = ref.watch(notesSettingsProvider);
     final isSearching = _searchQuery.trim().isNotEmpty;
 
     return Scaffold(
@@ -194,6 +199,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                                    context,
                                    FadePageRoute(builder: (_) => FolderDetailScreen(folder: folder)),
                                  ),
+                                 onLongPress: () => _showFolderOptionsMenu(context, folder, count, notesSettings),
                                );
                              }).toList(),
                           ),
@@ -267,6 +273,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                                context,
                                FadePageRoute(builder: (_) => FolderDetailScreen(folder: folder)),
                              ),
+                             onLongPress: () => _showFolderOptionsMenu(context, folder, count, notesSettings),
                            );
                          },
                          childCount: isSearching
@@ -326,6 +333,65 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+  void _showFolderOptionsMenu(BuildContext context, Folder folder, int itemCount, NotesSettingsState settings) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FolderOptionsSheet(
+        folder: folder,
+        noteCount: itemCount,
+        folderCount: 0, // Flat structure assumed
+        onNewNote: () {
+          Navigator.push(
+            context,
+            FadePageRoute(builder: (_) => NoteDetailScreen(initialFolderId: folder.id)),
+          );
+        },
+        onNewFolder: () => showAddFolderSheet(context),
+        onMakeCopy: () {
+          // TODO: Implement copy
+        },
+        onMove: () {
+          // TODO: Implement move
+        },
+        onBookmark: () {
+          // TODO: Implement bookmark
+        },
+        onCopyPath: () {
+          // TODO: Implement copy path
+        },
+        onRename: () => showAddFolderSheet(context, folderToEdit: folder),
+        onDelete: () {
+          if (settings.skipFolderDeleteConfirmation) {
+            ref.read(foldersProvider.notifier).deleteFolder(folder.id);
+            return;
+          }
+          
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (context) => DeleteConfirmationSheet(
+              itemName: folder.name,
+              onDelete: () {
+                ref.read(foldersProvider.notifier).deleteFolder(folder.id);
+              },
+              onDeleteAndDontAsk: () {
+                ref.read(notesSettingsProvider.notifier).setSkipFolderDeleteConfirmation(true);
+                ref.read(foldersProvider.notifier).deleteFolder(folder.id);
+              },
+            ),
+          );
+        },
+        onSearch: () {
+          setState(() {
+            _searchQuery = folder.name;
+            _searchController.text = folder.name;
+          });
+        },
       ),
     );
   }

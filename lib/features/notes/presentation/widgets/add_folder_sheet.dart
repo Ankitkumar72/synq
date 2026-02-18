@@ -119,6 +119,7 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
               widget.folderToEdit == null ? 'New Folder' : 'Edit Folder',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: Colors.black, // Explicit black
                   ),
             ),
             const SizedBox(height: 24),
@@ -197,11 +198,14 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
             const SizedBox(height: 24),
             // Favorite Toggle
             SwitchListTile(
-              title: const Text('Add to Favorites'),
-              value: _isFavorite, 
+              title: const Text(
+                'Add to Favorites',
+                style: TextStyle(color: Colors.black), // Explicit black
+              ),
+              value: _isFavorite,
               onChanged: (val) => setState(() => _isFavorite = val),
               contentPadding: EdgeInsets.zero,
-              activeTrackColor: AppColors.primary,
+              activeTrackColor: const Color(0xFF5473F7), // Task blue
             ),
             const SizedBox(height: 24),
             SizedBox(
