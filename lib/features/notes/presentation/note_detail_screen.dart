@@ -346,7 +346,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                                 fontFamily:
                                     folder.iconFontFamily ?? 'MaterialIcons',
                               ),
-                              color: Color(folder.colorValue).withOpacity(1.0),
+                              color: Color(
+                                folder.colorValue,
+                              ).withValues(alpha: 1.0),
                             ),
                             title: Text(
                               folder.name,
@@ -404,8 +406,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                   const SizedBox(height: 8),
-                   Container(
+                  const SizedBox(height: 8),
+                  Container(
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
@@ -477,7 +479,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Replace not implemented')),
+                            content: Text('Replace not implemented'),
+                          ),
                         );
                       },
                     ),
@@ -511,20 +514,20 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
 
     final List<Widget> dividedChildren = [];
     for (int i = 0; i < children.length; i++) {
-        dividedChildren.add(children[i]);
-        if (i < children.length - 1) {
-            final indent = 16.0;
-            const endIndent = 16.0;
-            dividedChildren.add(
-                Divider(
-                    height: 1, 
-                    thickness: 0.5, 
-                    color: Colors.grey.shade300, 
-                    indent: indent, 
-                    endIndent: endIndent,
-                ),
-            );
-        }
+      dividedChildren.add(children[i]);
+      if (i < children.length - 1) {
+        final indent = 16.0;
+        const endIndent = 16.0;
+        dividedChildren.add(
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: Colors.grey.shade300,
+            indent: indent,
+            endIndent: endIndent,
+          ),
+        );
+      }
     }
 
     return Container(
@@ -533,10 +536,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         borderRadius: BorderRadius.circular(28),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: dividedChildren,
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: dividedChildren),
     );
   }
 
@@ -552,23 +552,23 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       child: InkWell(
         onTap: onTap,
         child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-                children: [
-                    Icon(icon, color: iconColor, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                        child: Text(
-                            label,
-                            style: GoogleFonts.inter(
-                                color: textColor,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                            ),
-                        ),
-                    ),
-                ],
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    color: textColor,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -602,8 +602,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       if (mounted) Navigator.pop(context);
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -875,10 +873,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                 decoration: BoxDecoration(
                   color: Color(0xFF1F1F1F),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: const Color(0xFF333333),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFF333333), width: 1),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x22000000),
