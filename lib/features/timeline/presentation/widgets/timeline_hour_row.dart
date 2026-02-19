@@ -56,8 +56,8 @@ class TimelineHourRow extends ConsumerWidget {
           // Main Content Area (The Box)
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(16),
-              constraints: const BoxConstraints(minHeight: 100),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              constraints: const BoxConstraints(minHeight: 80),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(24),

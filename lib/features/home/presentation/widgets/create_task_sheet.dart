@@ -555,11 +555,13 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
           ),
           
           Expanded(
-            child: Padding(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 12),
                   // Task Title
                   _buildSectionLabel('TASK TITLE'),
                   const SizedBox(height: 8),
@@ -656,9 +658,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                     ),
                   ),
 
-                  const SizedBox(height: 12), // Reduced spacing
-
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24), // Added some bottom spacing inside scroll view
                 ],
               ),
             ),

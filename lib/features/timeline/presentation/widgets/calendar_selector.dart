@@ -72,22 +72,9 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
       tasksByDate[date]!.sort((a, b) => a.scheduledTime!.compareTo(b.scheduledTime!));
     }
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: SizeTransition(
-            sizeFactor: animation,
-            axisAlignment: -1,
-            child: child,
-          ),
-        );
-      },
-      child: isMonthly
-          ? _buildMonthlyView(context, selectedDate, datesWithTasks, tasksByDate)
-          : _buildWeeklyView(context, selectedDate, datesWithTasks),
-    );
+    return isMonthly
+        ? _buildMonthlyView(context, selectedDate, datesWithTasks, tasksByDate)
+        : _buildWeeklyView(context, selectedDate, datesWithTasks);
   }
 
   Widget _buildHeader({
@@ -123,13 +110,16 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                              fontSize: 26,
-                            ),
+                      Flexible(
+                        child: Text(
+                          title,
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                                fontSize: 26,
+                              ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       if (isMonthly)
                         const Padding(
@@ -356,7 +346,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                 crossAxisCount: 7,
                 mainAxisSpacing: 4,
                 crossAxisSpacing: 4,
-                childAspectRatio: 0.45, // Taller cells for task pills
+                childAspectRatio: 0.5, // Adjusted from 0.45 for better stability
               ),
               itemCount: 42, // Always show 6 rows
               itemBuilder: (context, index) {
