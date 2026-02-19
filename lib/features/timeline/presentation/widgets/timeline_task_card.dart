@@ -36,50 +36,33 @@ class TimelineTaskCard extends StatelessWidget {
 
   Widget _buildCard(BuildContext context) {
     if (compact) {
-      Color? bgColor;
-      Color? textColor;
-      
-      if (isActive) {
-        bgColor = AppColors.activeCardBg;
-        textColor = AppColors.textPrimary;
-      } else {
-        bgColor = AppColors.surface;
-        textColor = AppColors.textPrimary;
-      }
-
       return GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isCompleted ? bgColor.withAlpha(100) : bgColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isActive ? AppColors.primary : Colors.grey.shade300,
-              width: isActive ? 2 : 1,
-            ),
-            boxShadow: isActive ? [
+            color: const Color(0xFFA5B4FC), // Soft Periwinkle/Blue from image
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withAlpha(80),
-                blurRadius: 8,
-                spreadRadius: 1,
-              )
-            ] : null,
+                color: Colors.black.withAlpha(15),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (isCompleted) ...[
-                const Icon(Icons.check_circle, size: 14, color: AppColors.textSecondary),
-                const SizedBox(width: 4),
-              ],
+              const Icon(Icons.check_circle_outline, size: 14, color: Colors.white),
+              const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isCompleted ? AppColors.textSecondary : textColor,
-                        decoration: isCompleted ? TextDecoration.lineThrough : null,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        color: Colors.white,
                       ),
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -27,96 +27,52 @@ class TimelineHourRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return IntrinsicHeight(
+    return Container(
       key: focusKey,
+      margin: const EdgeInsets.only(bottom: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Time Column
           SizedBox(
-            width: 85,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    tasksStartingNow.isNotEmpty 
-                        ? tasksStartingNow.first.startTime.toLowerCase() 
-                        : _formatHour(hour),
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: (isSelectedDateToday && currentHour == hour) 
-                          ? FontWeight.bold 
-                          : FontWeight.w500,
-                      color: (isSelectedDateToday && currentHour == hour)
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
-                    ),
-                    maxLines: 1,
-                    softWrap: false,
-                  ),
+            width: 60,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _formatHour(hour),
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: (isSelectedDateToday && currentHour == hour) 
+                      ? FontWeight.bold 
+                      : FontWeight.w500,
+                  color: (isSelectedDateToday && currentHour == hour)
+                      ? AppColors.primary
+                      : AppColors.textSecondary.withAlpha(180),
                 ),
-                if (tasksStartingNow.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        tasksStartingNow.last.endTime.toLowerCase(),
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: (isSelectedDateToday && currentHour == hour) 
-                              ? FontWeight.bold 
-                              : FontWeight.w500,
-                          color: (isSelectedDateToday && currentHour == hour)
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        softWrap: false,
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
 
-          // Timeline Connector Area (Vertical Line)
-          Container(
-            width: 2,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            color: Colors.grey.shade100,
-            child: (isSelectedDateToday && currentHour == hour)
-                ? Stack(
-                    children: [
-                      Positioned(
-                        top: 18,
-                        left: -4,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : null,
-          ),
-
-          // Task Content
+          // Main Content Area (The Box)
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 24.0),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              constraints: const BoxConstraints(minHeight: 100),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.grey.withAlpha(30)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: tasksStartingNow.isNotEmpty
                   ? _buildTaskBlocks(context, tasksStartingNow, ref)
-                  : _buildEmptyBlock(),
+                  : const SizedBox.shrink(), // Empty slot is just the white box
             ),
           ),
         ],
@@ -159,14 +115,8 @@ class TimelineHourRow extends ConsumerWidget {
   }
 
   Widget _buildEmptyBlock() {
-    return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-    );
+    // This is no longer used as the main build method handles the empty state by showing just the box
+    return const SizedBox.shrink();
   }
 
   String _formatHour(int hour) {
