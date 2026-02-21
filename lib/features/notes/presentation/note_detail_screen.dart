@@ -423,12 +423,12 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.98),
+                color: Colors.white.withValues(alpha: 0.98),
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: const Color(0xFF5473F7).withOpacity(0.5), width: 1.5),
+                border: Border.all(color: const Color(0xFF5473F7).withValues(alpha: 0.5), width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),

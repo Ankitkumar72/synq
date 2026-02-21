@@ -352,18 +352,10 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
           );
         },
         onNewFolder: () => showAddFolderSheet(context),
-        onMakeCopy: () {
-          // TODO: Implement copy
-        },
-        onMove: () {
-          // TODO: Implement move
-        },
-        onBookmark: () {
-          // TODO: Implement bookmark
-        },
-        onCopyPath: () {
-          // TODO: Implement copy path
-        },
+        onMakeCopy: () {},
+        onMove: () {},
+        onBookmark: () {},
+        onCopyPath: () {},
         onRename: () => showAddFolderSheet(context, folderToEdit: folder),
         onDelete: () {
           if (settings.skipFolderDeleteConfirmation) {
@@ -401,15 +393,13 @@ class _DashedBorderPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
   final double radius;
-  final double dashWidth;
-  final double dashSpace;
+  final double dashWidth = 6.0;
+  final double dashSpace = 4.0;
 
   _DashedBorderPainter({
     required this.color,
     this.strokeWidth = 1.0,
     this.radius = 0.0,
-    this.dashWidth = 6.0,
-    this.dashSpace = 4.0,
   });
 
   @override
@@ -446,4 +436,3 @@ class _DashedBorderPainter extends CustomPainter {
     return false;
   }
 }
-

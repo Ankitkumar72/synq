@@ -114,11 +114,6 @@ class TimelineHourRow extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyBlock() {
-    // This is no longer used as the main build method handles the empty state by showing just the box
-    return const SizedBox.shrink();
-  }
-
   String _formatHour(int hour) {
     final amPm = hour < 12 ? 'am' : 'pm';
     final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
