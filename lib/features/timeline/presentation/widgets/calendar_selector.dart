@@ -33,11 +33,13 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
   }
 
   void _toggleView() {
-    final isMonthly = ref.read(calendarViewProvider);
-    ref.read(calendarViewProvider.notifier).state = !isMonthly;
+    final viewMode = ref.read(timelineViewModeProvider);
     
-    if (!isMonthly) {
-      // When switching TO monthly (was weekly), sync visible month with selected date
+    if (viewMode == TimelineViewMode.monthly) {
+      ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.weekly;
+    } else {
+      ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.monthly;
+      
       final selectedDate = ref.read(selectedDateProvider);
       setState(() {
         _visibleMonth = DateTime(selectedDate.year, selectedDate.month);
@@ -50,7 +52,8 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
   Widget build(BuildContext context) {
     final selectedDate = ref.watch(selectedDateProvider);
     final datesWithTasks = ref.watch(datesWithTasksProvider);
-    final isMonthly = ref.watch(calendarViewProvider);
+    final viewMode = ref.watch(timelineViewModeProvider);
+    final isMonthly = viewMode == TimelineViewMode.monthly;
     final notesAsync = ref.watch(notesProvider);
     final allNotes = notesAsync.value ?? [];
 
@@ -424,8 +427,8 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     return GestureDetector(
       onTap: () {
         ref.read(selectedDateProvider.notifier).state = date;
-        // Redirect to daily timeline by switching back to weekly view
-        ref.read(calendarViewProvider.notifier).state = false;
+        // Redirect to daily timeline
+        ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.daily;
       },
       child: Column(
         children: [

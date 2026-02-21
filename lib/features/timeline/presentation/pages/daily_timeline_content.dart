@@ -7,7 +7,7 @@ import '../../data/timeline_provider.dart';
 import '../widgets/calendar_selector.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
 import '../widgets/timeline_hour_row.dart';
-
+import '../pages/weekly_timeline_content.dart';
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
 class DailyTimelineContent extends ConsumerStatefulWidget {
@@ -61,20 +61,20 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
       }
     });
 
-    // Auto-scroll when switching from monthly to daily view
-    ref.listen(calendarViewProvider, (previous, next) {
-      if (next == false) { // Switched to daily
+    // Auto-scroll when switching from monthly or weekly to daily view
+    ref.listen(timelineViewModeProvider, (previous, next) {
+      if (next == TimelineViewMode.daily) { // Switched to daily
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToCurrentHour();
         });
       }
     });
     
-    final isMonthly = ref.watch(calendarViewProvider);
+    final viewMode = ref.watch(timelineViewModeProvider);
     
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton: isMonthly 
+      floatingActionButton: viewMode == TimelineViewMode.monthly 
           ? null 
           : FloatingActionButton(
               onPressed: () => showCreateTaskSheet(context, initialDate: selectedDate),
@@ -87,8 +87,12 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
           padding: const EdgeInsets.only(top: 24),
           child: Column(
             children: [
-              isMonthly ? const Expanded(child: CalendarSelector()) : const CalendarSelector(),
-              if (!isMonthly)
+              if (viewMode == TimelineViewMode.monthly)
+                const Expanded(child: CalendarSelector())
+              else if (viewMode == TimelineViewMode.weekly)
+                const Expanded(child: WeeklyTimelineContent())
+              else ...[
+                const CalendarSelector(),
                 Expanded(
                   child: GestureDetector(
                     onTap: _scrollToCurrentHour,
@@ -202,6 +206,7 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         ),

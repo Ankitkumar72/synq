@@ -9,8 +9,10 @@ final minuteProvider = StreamProvider<int>((ref) {
 
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
-/// true if monthly, false if weekly
-final calendarViewProvider = StateProvider<bool>((ref) => false);
+enum TimelineViewMode { daily, weekly, monthly }
+
+/// Provides the current view mode for the timeline section
+final timelineViewModeProvider = StateProvider<TimelineViewMode>((ref) => TimelineViewMode.weekly);
 
 final datesWithTasksProvider = Provider<Set<DateTime>>((ref) {
   final notesAsync = ref.watch(notesProvider);
