@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../pages/weekly_focus_screen.dart';
+import '../../data/weekly_focus_provider.dart';
 
-class WeeklyFocusCard extends StatelessWidget {
+class WeeklyFocusCard extends ConsumerWidget {
   const WeeklyFocusCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final focusState = ref.watch(weeklyFocusProvider);
+    final completedCount = focusState.criteriaStatus.where((c) => c).length;
+    final totalCount = focusState.criteriaStatus.length;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const WeeklyFocusScreen()),
+        );
+      },
+      child: Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFFF7F8FA), // Light grey matching design
@@ -42,11 +56,11 @@ class WeeklyFocusCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            "What's your main goal to achieve this week?",
+            focusState.objective.isEmpty ? 'Tap to set your weekly focus' : focusState.objective,
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF8A93A4), // Light grey text
+              color: focusState.objective.isEmpty ? const Color(0xFFC4B5FD) : const Color(0xFF8A93A4), // Lighter color if empty
               height: 1.4,
             ),
           ),
@@ -54,23 +68,26 @@ class WeeklyFocusCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'High Priority',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF8A93A4),
+              if (focusState.priority.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ),
-              ),
+                  child: Text(
+                    focusState.priority,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF8A93A4),
+                    ),
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
               Text(
-                '0/1 completed',
+                '$completedCount/$totalCount completed',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -81,6 +98,7 @@ class WeeklyFocusCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
