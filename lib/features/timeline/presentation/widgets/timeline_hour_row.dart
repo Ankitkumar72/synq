@@ -96,13 +96,20 @@ class TimelineHourRow extends ConsumerWidget {
           isActive: isSelectedDateToday && _isTaskCurrentlyActive(event.startTime, event.endTime),
           onTap: () {
             final tasks = ref.read(notesProvider).value;
-            final task = tasks?.where((n) => n.id == event.id).firstOrNull;
+            // First try matching exact event ID, fallback to title matching due to some timeline_events being dummy items
+            var task = tasks?.where((n) => n.id == event.id).firstOrNull;
+            task ??= tasks?.where((n) => n.isTask && n.title == event.title).firstOrNull;
+            
             if (task != null) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => TaskDetailScreen(task: task),
+                  builder: (context) => TaskDetailScreen(task: task!),
                 ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Task details not found'), duration: Duration(seconds: 1)),
               );
             }
           },

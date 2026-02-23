@@ -33,11 +33,23 @@ class DailyScheduleCard extends StatelessWidget {
       }
     }
     
-    final subtitle = hasTasks 
-        ? '${tasks.length} task${tasks.length > 1 ? 's' : ''} scheduled'
-        : 'No tasks scheduled';
+    final completedTasks = tasks.where((t) => t.isCompleted == true).length;
+    final totalTasks = tasks.length;
+    
+    String subtitle;
+    if (!hasTasks) {
+      subtitle = 'No tasks scheduled';
+    } else if (completedTasks == totalTasks) {
+      subtitle = 'All tasks completed';
+    } else if (completedTasks > 0) {
+      subtitle = '$completedTasks task${completedTasks > 1 ? 's' : ''} completed, $totalTasks scheduled';
+    } else {
+      subtitle = '$totalTasks task${totalTasks > 1 ? 's' : ''} scheduled';
+    }
         
-    final dotColor = hasTasks ? const Color(0xFF6B58F5) : const Color(0xFFD1D5DB);
+    final dotColor = (hasTasks && completedTasks == totalTasks) 
+        ? Colors.green 
+        : (hasTasks ? const Color(0xFF6B58F5) : const Color(0xFFD1D5DB));
 
     return GestureDetector(
       onTap: onTap,
@@ -109,12 +121,16 @@ class DailyScheduleCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text(
-                        subtitle,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF8A93A4),
+                      Expanded(
+                        child: Text(
+                          subtitle,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF8A93A4),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
