@@ -39,7 +39,7 @@ class TimelineTaskCard extends StatelessWidget {
       return GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFFA5B4FC), // Soft Periwinkle/Blue from image
             borderRadius: BorderRadius.circular(12),
@@ -54,7 +54,7 @@ class TimelineTaskCard extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_outline, size: 16, color: Colors.white),
+              Icon(isCompleted ? Icons.check_circle : Icons.check_circle_outline, size: 16, color: Colors.white),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
@@ -63,6 +63,8 @@ class TimelineTaskCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                         color: Colors.white,
+                        decoration: isCompleted ? TextDecoration.lineThrough : null,
+                        decorationColor: Colors.white,
                       ),
                   overflow: TextOverflow.ellipsis,
                 ),
