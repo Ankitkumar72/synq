@@ -173,8 +173,6 @@ class _MainShellState extends ConsumerState<MainShell> {
             setState(() => _isNoteEditorOpen = false);
           }
         } else {
-          // If switching tabs, clear source stack then switch.
-          // Avoid extra target-stack work here to keep tab switching snappy.
           currentNavigator?.popUntil((route) => route.isFirst);
           if (_isNoteEditorOpen) {
             setState(() => _isNoteEditorOpen = false);
