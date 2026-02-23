@@ -86,10 +86,6 @@ class _MainShellState extends ConsumerState<MainShell> {
             children: [
               _buildNavButton(ref, currentIndex, 0, Icons.grid_view_rounded),
               _buildNavButton(ref, currentIndex, 1, Icons.calendar_month),
-              
-              // Add Task Button Removed
-
-              // Add Note Button
               IconButton(
                 onPressed: () {
                   _openNoteEditor(currentIndex);
