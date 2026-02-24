@@ -212,102 +212,104 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                 ),
-                insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CalendarDatePicker(
-                        initialDate: selectedDate,
-                        firstDate: DateTime.now().subtract(const Duration(days: 3650)),
-                        lastDate: DateTime.now().add(const Duration(days: 3650)),
-                        onDateChanged: (date) {
-                          setModalState(() => selectedDate = date);
-                        },
-                      ),
-                      const Divider(height: 1, color: Color(0xFF708090)),
-                      ListTile(
-                        visualDensity: const VisualDensity(vertical: -2),
-                        leading: const Icon(Icons.access_time, color: Colors.white70),
-                        title: Text(
-                          selectedIsAllDay
-                              ? 'Set time'
-                              : '${_formatTimeFromTimeOfDay(selectedStartTime)} - ${_formatTimeFromTimeOfDay(selectedEndTime)}',
-                          style: const TextStyle(
-                            color: Color(0xFFE7EBF0),
-                            fontSize: 14,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CalendarDatePicker(
+                          initialDate: selectedDate,
+                          firstDate: DateTime.now().subtract(const Duration(days: 3650)),
+                          lastDate: DateTime.now().add(const Duration(days: 3650)),
+                          onDateChanged: (date) {
+                            setModalState(() => selectedDate = date);
+                          },
+                        ),
+                        const Divider(height: 1, color: Color(0xFF708090)),
+                        ListTile(
+                          visualDensity: const VisualDensity(vertical: -4),
+                          leading: const Icon(Icons.access_time, color: Colors.white70),
+                          title: Text(
+                            selectedIsAllDay
+                                ? 'Set time'
+                                : '${_formatTimeFromTimeOfDay(selectedStartTime)} - ${_formatTimeFromTimeOfDay(selectedEndTime)}',
+                            style: const TextStyle(
+                              color: Color(0xFFE7EBF0),
+                              fontSize: 14,
+                            ),
+                          ),
+                          onTap: setTimeRange,
+                        ),
+                        const Divider(height: 1, color: Color(0xFF708090)),
+                        ListTile(
+                          visualDensity: const VisualDensity(vertical: -4),
+                          leading: const Icon(Icons.repeat, color: Colors.white70),
+                          title: Text(
+                            _formatRecurrenceLabelForRule(selectedRule),
+                            style: const TextStyle(
+                              color: Color(0xFFE7EBF0),
+                              fontSize: 14,
+                            ),
+                          ),
+                          onTap: setRepeatRule,
+                        ),
+                        const Divider(height: 1, color: Color(0xFF708090)),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _isTaskAllDay = selectedIsAllDay;
+                                    _recurrenceRule = selectedRule;
+                                    if (selectedIsAllDay) {
+                                      _taskDueDate = DateTime(
+                                        selectedDate.year,
+                                        selectedDate.month,
+                                        selectedDate.day,
+                                      );
+                                      _taskEndTime = null;
+                                    } else {
+                                      _taskDueDate = DateTime(
+                                        selectedDate.year,
+                                        selectedDate.month,
+                                        selectedDate.day,
+                                        selectedStartTime.hour,
+                                        selectedStartTime.minute,
+                                      );
+                                      _taskEndTime = DateTime(
+                                        selectedDate.year,
+                                        selectedDate.month,
+                                        selectedDate.day,
+                                        selectedEndTime.hour,
+                                        selectedEndTime.minute,
+                                      );
+                                    }
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                child: const Text(
+                                  'Done',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        onTap: setTimeRange,
-                      ),
-                      const Divider(height: 1, color: Color(0xFF708090)),
-                      ListTile(
-                        visualDensity: const VisualDensity(vertical: -2),
-                        leading: const Icon(Icons.repeat, color: Colors.white70),
-                        title: Text(
-                          _formatRecurrenceLabelForRule(selectedRule),
-                          style: const TextStyle(
-                            color: Color(0xFFE7EBF0),
-                            fontSize: 14,
-                          ),
-                        ),
-                        onTap: setRepeatRule,
-                      ),
-                      const Divider(height: 1, color: Color(0xFF708090)),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(fontSize: 14),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _isTaskAllDay = selectedIsAllDay;
-                                  _recurrenceRule = selectedRule;
-                                  if (selectedIsAllDay) {
-                                    _taskDueDate = DateTime(
-                                      selectedDate.year,
-                                      selectedDate.month,
-                                      selectedDate.day,
-                                    );
-                                    _taskEndTime = null;
-                                  } else {
-                                    _taskDueDate = DateTime(
-                                      selectedDate.year,
-                                      selectedDate.month,
-                                      selectedDate.day,
-                                      selectedStartTime.hour,
-                                      selectedStartTime.minute,
-                                    );
-                                    _taskEndTime = DateTime(
-                                      selectedDate.year,
-                                      selectedDate.month,
-                                      selectedDate.day,
-                                      selectedEndTime.hour,
-                                      selectedEndTime.minute,
-                                    );
-                                  }
-                                });
-                                Navigator.pop(context);
-                              },
-                              child: const Text(
-                                'Done',
-                                style: TextStyle(fontSize: 14),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
