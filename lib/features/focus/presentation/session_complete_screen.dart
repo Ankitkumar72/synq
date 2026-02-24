@@ -17,12 +17,12 @@ class SessionCompleteScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Spacer(flex: 2),
+              const SizedBox(height: 32),
               
               // Title
               Text(
@@ -131,7 +131,7 @@ class SessionCompleteScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const Spacer(flex: 3),
+              const SizedBox(height: 64),
               
               // Buttons
               SizedBox(

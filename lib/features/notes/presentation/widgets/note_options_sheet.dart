@@ -34,10 +34,12 @@ class NoteOptionsSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
           // Drag Handle
           Center(
             child: Container(
@@ -140,8 +142,9 @@ class NoteOptionsSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
