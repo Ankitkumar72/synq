@@ -27,7 +27,7 @@ class SessionCompleteScreen extends StatelessWidget {
               // Title
               Text(
                 'Session Complete',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -67,7 +67,7 @@ class SessionCompleteScreen extends StatelessWidget {
                       children: [
                         Text(
                           'Time Focused',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.roboto(
                             fontSize: 16,
                             color: Colors.grey[600],
                             fontWeight: FontWeight.w500,
@@ -75,7 +75,7 @@ class SessionCompleteScreen extends StatelessWidget {
                         ),
                         Text(
                           timeFocused,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.roboto(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
@@ -94,7 +94,7 @@ class SessionCompleteScreen extends StatelessWidget {
                       children: [
                         Text(
                           'Task',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.roboto(
                             fontSize: 16,
                             color: Colors.grey[600],
                             fontWeight: FontWeight.w500,
@@ -104,7 +104,7 @@ class SessionCompleteScreen extends StatelessWidget {
                           child: Text(
                             taskName,
                             textAlign: TextAlign.right,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.roboto(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
@@ -121,7 +121,7 @@ class SessionCompleteScreen extends StatelessWidget {
                     Text(
                       '"Consistency is the hallmark of the unimaginative, but the foundation of design."',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.roboto(
                         fontSize: 16,
                         fontStyle: FontStyle.italic,
                         color: Colors.grey[600],
@@ -144,7 +144,7 @@ class SessionCompleteScreen extends StatelessWidget {
                   icon: const Icon(Icons.list, color: Colors.white),
                   label: Text(
                     'Back to Tasks',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -171,7 +171,7 @@ class SessionCompleteScreen extends StatelessWidget {
                   icon: const Icon(Icons.coffee, color: Colors.black),
                   label: Text(
                     'Take a Break',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,

@@ -60,7 +60,7 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
                   children: [
                     Text(
                       'CURRENT WEEK',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.roboto(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
@@ -119,7 +119,7 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
             children: [
               Text(
                 'SCHEDULE',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -132,7 +132,7 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
                 },
                 child: Text(
                   'View Calendar',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,

@@ -74,7 +74,7 @@ class DailyScheduleCard extends StatelessWidget {
                 children: [
                   Text(
                     dayOfWeek,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF8A93A4),
@@ -83,7 +83,7 @@ class DailyScheduleCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     dayNum,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF1E1E1E),
@@ -103,7 +103,7 @@ class DailyScheduleCard extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: hasTasks ? const Color(0xFF1E1E1E) : const Color(0xFF8A93A4),
@@ -124,7 +124,7 @@ class DailyScheduleCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           subtitle,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.roboto(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF8A93A4),
@@ -163,7 +163,7 @@ class DailyScheduleCard extends StatelessWidget {
                 ),
                 child: Text(
                   'Plan',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF6B58F5), // Deep purple

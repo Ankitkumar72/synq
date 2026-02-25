@@ -123,7 +123,7 @@ class _MainShellState extends ConsumerState<MainShell> {
             content: Text(
               'Press back again to exit',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.roboto(
                 color: Colors.white,
                 fontWeight: FontWeight.w500,
               ),

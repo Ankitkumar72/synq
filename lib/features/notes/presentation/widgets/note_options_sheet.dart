@@ -225,7 +225,7 @@ class _OptionItem extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     color: color,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,

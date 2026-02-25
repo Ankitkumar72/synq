@@ -41,19 +41,19 @@ class AppTheme {
         seedColor: AppColors.primary,
         surface: AppColors.surface,
       ),
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.playfairDisplay(
+      textTheme: GoogleFonts.robotoTextTheme().copyWith(
+        displayLarge: GoogleFonts.roboto(
           fontSize: 40,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
           letterSpacing: -0.5,
         ),
-        headlineMedium: GoogleFonts.playfairDisplay(
+        headlineMedium: GoogleFonts.roboto(
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
         ),
-        titleLarge: GoogleFonts.inter(
+        titleLarge: GoogleFonts.roboto(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -109,7 +109,7 @@ class AppTheme {
         brightness: Brightness.dark,
         surface: AppColors.surfaceDark,
       ),
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      textTheme: GoogleFonts.robotoTextTheme(ThemeData.dark().textTheme),
        cardTheme: CardThemeData(
         color: AppColors.surfaceDark,
         elevation: 0,

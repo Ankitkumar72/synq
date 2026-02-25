@@ -40,7 +40,7 @@ class TimelineHourRow extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 _formatHour(hour),
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 13,
                   fontWeight: (isSelectedDateToday && currentHour == hour) 
                       ? FontWeight.bold 

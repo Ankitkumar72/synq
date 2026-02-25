@@ -105,7 +105,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                         children: [
                           Text(
                             'Folders', // Capitalized normally as per design
-                            style: GoogleFonts.playfairDisplay( // Changed to Serif
+                            style: GoogleFonts.roboto( // Changed to Serif
                               fontSize: 32, // Increased size
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,

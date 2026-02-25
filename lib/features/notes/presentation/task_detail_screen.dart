@@ -299,7 +299,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               const SizedBox(height: 20),
               Text(
                 'Delete Task',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
@@ -309,7 +309,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               Text(
                 'Are you sure you want to delete this task? This action cannot be undone.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 15,
                   color: Colors.grey,
                   height: 1.5,
@@ -327,7 +327,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       ),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.grey),
+                        style: GoogleFonts.roboto(fontWeight: FontWeight.w600, color: Colors.grey),
                       ),
                     ),
                   ),
@@ -360,7 +360,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       ),
                       child: Text(
                         'Delete',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                        style: GoogleFonts.roboto(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -397,7 +397,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
             onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
-          title: Text('Task Removed', style: GoogleFonts.inter(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+          title: Text('Task Removed', style: GoogleFonts.roboto(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         body: Center(
           child: Column(
@@ -414,7 +414,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               const SizedBox(height: 24),
               Text(
                 'Task was deleted successfully.',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 16,
                   color: Colors.grey[600],
                   fontWeight: FontWeight.w500,
@@ -431,7 +431,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Back to Home', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                  child: Text('Back to Home', style: GoogleFonts.roboto(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -513,7 +513,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 onTap: _editTitle,
                 child: Text(
                   task.title,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,

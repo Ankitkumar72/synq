@@ -559,7 +559,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           ),
           title: Text(
             'Note Removed',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.roboto(
               color: Colors.black,
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -585,7 +585,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               const SizedBox(height: 24),
               Text(
                 'Note was deleted successfully.',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 16,
                   color: Colors.grey[600],
                   fontWeight: FontWeight.w500,
@@ -607,7 +607,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                   ),
                   child: Text(
                     'Back to Home',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                    style: GoogleFonts.roboto(fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -672,7 +672,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
             children: [
               Text(
                 folderName.toUpperCase(),
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
                   color: Colors.black,
@@ -681,7 +681,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               ),
               Text(
                 _saveStatus.toUpperCase(),
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF5473F7),
@@ -730,7 +730,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                             textAlign: TextAlign.left,
                             decoration: InputDecoration(
                               hintText: 'Title',
-                              hintStyle: GoogleFonts.merriweather(
+                              hintStyle: GoogleFonts.roboto(
                                 color: Colors.grey.shade400,
                                 fontSize: 32,
                                 fontWeight: FontWeight.w900,
@@ -743,7 +743,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                               contentPadding: EdgeInsets.zero,
                               filled: false,
                             ),
-                            style: GoogleFonts.merriweather(
+                            style: GoogleFonts.roboto(
                               fontSize: 32,
                               fontWeight: FontWeight.w900,
                               color: Colors.black,
@@ -761,7 +761,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                           textAlign: TextAlign.left,
                           decoration: InputDecoration(
                             hintText: 'Start writing...',
-                            hintStyle: GoogleFonts.inter(
+                            hintStyle: GoogleFonts.roboto(
                               color: Colors.grey.shade400,
                               fontSize: 18,
                             ),
@@ -773,7 +773,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                             contentPadding: EdgeInsets.zero,
                             filled: false,
                           ),
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.roboto(
                             fontSize: 18,
                             color: AppColors.textPrimary,
                             height: 1.6,

@@ -100,7 +100,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                 if (isMonthly)
                   Text(
                     'SCHEDULE',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
@@ -250,7 +250,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Text(
             'Select Month & Year',
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: GoogleFonts.roboto(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
           content: SizedBox(
             width: 300,
@@ -279,7 +279,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel', style: GoogleFonts.inter(color: Colors.grey)),
+              child: Text('Cancel', style: GoogleFonts.roboto(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(tempDate),
@@ -287,7 +287,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                 backgroundColor: const Color(0xFF1E1E1E),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text('Confirm', style: GoogleFonts.inter(color: Colors.white)),
+              child: Text('Confirm', style: GoogleFonts.roboto(color: Colors.white)),
             ),
           ],
         );
@@ -390,7 +390,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
           children: [
             Text(
               DateFormat('E').format(date).substring(0, 3),
-              style: GoogleFonts.inter(
+              style: GoogleFonts.roboto(
                 color: isSelected ? Colors.white.withValues(alpha: 0.8) : Colors.grey.shade500,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -399,7 +399,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
             const SizedBox(height: 6),
             Text(
               date.day.toString(),
-              style: GoogleFonts.inter(
+              style: GoogleFonts.roboto(
                 color: isSelected ? Colors.white : Colors.black87,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
@@ -441,7 +441,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
             ),
             child: Text(
               date.day.toString(),
-              style: GoogleFonts.inter(
+              style: GoogleFonts.roboto(
                 color: isSelected 
                     ? Colors.white 
                     : (isPadding ? Colors.grey.shade400 : Colors.black87),
@@ -488,7 +488,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                         Expanded(
                           child: Text(
                             task.title,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.roboto(
                               fontSize: 7.5,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,

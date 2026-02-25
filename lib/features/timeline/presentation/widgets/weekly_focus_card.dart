@@ -46,7 +46,7 @@ class WeeklyFocusCard extends ConsumerWidget {
               const SizedBox(width: 12),
               Text(
                 'Weekly Focus',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF1E1E1E),
@@ -57,7 +57,7 @@ class WeeklyFocusCard extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             focusState.objective.isEmpty ? 'Tap to set your weekly focus' : focusState.objective,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.roboto(
               fontSize: 18,
               fontWeight: FontWeight.w500,
               color: focusState.objective.isEmpty ? const Color(0xFFC4B5FD) : const Color(0xFF8A93A4), // Lighter color if empty
@@ -77,7 +77,7 @@ class WeeklyFocusCard extends ConsumerWidget {
                   ),
                   child: Text(
                     focusState.priority,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF8A93A4),
@@ -88,7 +88,7 @@ class WeeklyFocusCard extends ConsumerWidget {
                 const SizedBox.shrink(),
               Text(
                 '$completedCount/$totalCount completed',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF8A93A4),

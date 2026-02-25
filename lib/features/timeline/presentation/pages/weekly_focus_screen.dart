@@ -29,7 +29,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
         ),
         title: Text(
           'Weekly Focus',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.roboto(
             color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 18,
@@ -69,7 +69,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                 icon: const Icon(Icons.edit, color: Colors.white, size: 20),
                 label: Text(
                   'Update Goal',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -120,7 +120,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           const SizedBox(height: 24),
           Text(
             'CURRENT OBJECTIVE',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.roboto(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF8A93A4),
@@ -131,7 +131,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           Text(
             focusState.objective.isEmpty ? "Tap 'Update Goal' to set your focus" : focusState.objective,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.roboto(
               fontSize: focusState.objective.isEmpty ? 18 : 24,
               fontWeight: FontWeight.bold,
               color: focusState.objective.isEmpty ? const Color(0xFFC4B5FD) : const Color(0xFF1E1E1E),
@@ -150,7 +150,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                 ),
                 child: Text(
                   'Week $weekNumber',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF8A93A4),
@@ -168,7 +168,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                   ),
                   child: Text(
                     focusState.priority,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF6B58F5),
@@ -213,7 +213,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Success Criteria',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF1E1E1E),
@@ -229,7 +229,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                 ),
                 child: Text(
                   '$completedCount/$totalCount Done',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF8A93A4),
@@ -242,7 +242,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           if (totalCount == 0)
             Text(
               'No criteria added yet.',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.roboto(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF8A93A4),
@@ -303,7 +303,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
               Expanded(
                 child: Text(
                   text,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                     color: isChecked ? const Color(0xFF8A93A4) : const Color(0xFF1E1E1E),
@@ -363,7 +363,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Top Tasks',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF1E1E1E),
@@ -374,7 +374,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
               if (topTasks.isNotEmpty)
                 Text(
                   '${topTasks.length} left',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF8A93A4),
@@ -386,7 +386,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           if (topTasks.isEmpty)
             Text(
               'No active tasks found. Enjoy your day!',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.roboto(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF8A93A4),
@@ -438,7 +438,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'Add Task',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF8A93A4),
@@ -478,7 +478,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
             child: Center(
               child: Text(
                 priority,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: priorityTextColor,
@@ -493,7 +493,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF1E1E1E),
@@ -502,7 +502,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF8A93A4),
@@ -554,7 +554,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
               const SizedBox(width: 12),
               Text(
                 'Daily Intentions',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF1E1E1E),
@@ -600,7 +600,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                       children: [
                         Text(
                           dayData['day'] as String,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.roboto(
                             color: isSelected ? Colors.white.withAlpha(200) : (isToday ? const Color(0xFF6B58F5) : Colors.grey.shade500),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -612,7 +612,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                         else
                           Text(
                             dayData['date'] as String,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.roboto(
                               color: isToday ? const Color(0xFF6B58F5) : Colors.black87,
                               fontWeight: FontWeight.bold,
                               fontSize: 20,
@@ -628,7 +628,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           const SizedBox(height: 20),
           Text(
             'Log your daily progress towards the weekly goal.',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.roboto(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF8A93A4),

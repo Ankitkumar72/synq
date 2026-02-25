@@ -116,7 +116,7 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                   children: [
                                     Text(
                                       _formatSelectedDate(selectedDate),
-                                      style: GoogleFonts.inter(
+                                      style: GoogleFonts.roboto(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textPrimary,
@@ -125,7 +125,7 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                                     const SizedBox(height: 4),
                                     Text(
                                       '${events.length} tasks scheduled',
-                                      style: GoogleFonts.inter(
+                                      style: GoogleFonts.roboto(
                                         fontSize: 14,
                                         color: AppColors.textSecondary,
                                         fontWeight: FontWeight.w500,
