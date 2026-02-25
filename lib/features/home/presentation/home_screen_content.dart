@@ -42,7 +42,7 @@ class HomeScreenContent extends ConsumerWidget {
                 ),
                 Text(
                   'Synq.',
-                  style: GoogleFonts.roboto(
+                  style: GoogleFonts.playfairDisplay(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF555555),
