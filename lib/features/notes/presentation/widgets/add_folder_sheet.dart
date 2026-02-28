@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/icon_utils.dart';
 import '../../domain/models/folder.dart';
 import '../../data/folder_provider.dart';
 
@@ -30,18 +31,7 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
     0xFF607D8B, // Blue Grey
   ];
 
-  final List<IconData> _icons = [
-    Icons.folder,
-    Icons.work,
-    Icons.person,
-    Icons.star,
-    Icons.lightbulb,
-    Icons.shopping_cart,
-    Icons.travel_explore,
-    Icons.school,
-    Icons.fitness_center,
-    Icons.music_note,
-  ];
+  final List<IconData> _icons = IconUtils.supportedIcons;
 
   @override
   void initState() {
@@ -49,7 +39,7 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
     if (widget.folderToEdit != null) {
       _nameController.text = widget.folderToEdit!.name;
       _selectedColor = widget.folderToEdit!.colorValue;
-      _selectedIcon = IconData(widget.folderToEdit!.iconCodePoint, fontFamily: widget.folderToEdit!.iconFontFamily ?? 'MaterialIcons');
+      _selectedIcon = IconUtils.getIconFromCodePoint(widget.folderToEdit!.iconCodePoint);
       _isFavorite = widget.folderToEdit!.isFavorite;
     }
   }

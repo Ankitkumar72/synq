@@ -13,6 +13,7 @@ import 'package:synq/features/notes/data/folder_provider.dart';
 import 'package:synq/features/notes/data/note_editor_draft_store.dart';
 import 'package:synq/features/notes/presentation/widgets/tag_manage_dialog.dart';
 import 'package:synq/core/navigation/fade_page_route.dart';
+import 'package:synq/core/utils/icon_utils.dart';
 import 'package:synq/features/notes/presentation/folders_screen.dart';
 import 'package:synq/features/notes/presentation/widgets/note_options_sheet.dart';
 
@@ -350,11 +351,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                           final isSelected = _selectedFolderId == folder.id;
                           return ListTile(
                             leading: Icon(
-                              IconData(
-                                folder.iconCodePoint,
-                                fontFamily:
-                                    folder.iconFontFamily ?? 'MaterialIcons',
-                              ),
+                              IconUtils.getIconFromCodePoint(folder.iconCodePoint),
                               color: Color(
                                 folder.colorValue,
                               ).withValues(alpha: 1.0),

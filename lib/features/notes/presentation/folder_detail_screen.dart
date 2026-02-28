@@ -6,6 +6,7 @@ import 'package:synq/features/notes/data/folder_provider.dart';
 import 'package:synq/features/notes/domain/models/folder.dart';
 import 'package:synq/features/notes/domain/models/note.dart';
 import 'package:synq/core/navigation/fade_page_route.dart';
+import 'package:synq/core/utils/icon_utils.dart';
 import 'package:synq/features/notes/presentation/note_detail_screen.dart';
 import 'package:synq/features/notes/presentation/widgets/delete_confirmation_sheet.dart';
 import 'package:synq/features/notes/presentation/widgets/note_options_sheet.dart';
@@ -52,10 +53,7 @@ class FolderDetailScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    IconData(
-                      folder.iconCodePoint,
-                      fontFamily: folder.iconFontFamily ?? 'MaterialIcons',
-                    ),
+                    IconUtils.getIconFromCodePoint(folder.iconCodePoint),
                     size: 64,
                     color: Color(folder.colorValue).withValues(alpha: 0.5),
                   ),
@@ -255,7 +253,7 @@ class FolderDetailScreen extends ConsumerWidget {
                           final isSelected = note.folderId == f.id;
                           return ListTile(
                             leading: Icon(
-                              IconData(f.iconCodePoint, fontFamily: f.iconFontFamily ?? 'MaterialIcons'),
+                              IconUtils.getIconFromCodePoint(f.iconCodePoint),
                               color: Color(f.colorValue),
                             ),
                             title: Text(f.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),

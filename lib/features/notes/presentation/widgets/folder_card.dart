@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/icon_utils.dart';
 import '../../domain/models/folder.dart';
 
 class FolderCard extends StatelessWidget {
@@ -46,19 +47,19 @@ class FolderCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 32, // Slightly smaller icon container
+              width: 32, 
               height: 32,
               decoration: BoxDecoration(
                 color: Color(folder.colorValue).withValues(alpha: 0.12),
-                shape: BoxShape.circle, // Circular shape
+                shape: BoxShape.circle, 
               ),
               child: Icon(
-                IconData(folder.iconCodePoint, fontFamily: folder.iconFontFamily ?? 'MaterialIcons'),
+                IconUtils.getIconFromCodePoint(folder.iconCodePoint),
                 color: Color(folder.colorValue),
-                size: 16, // Adjusted icon size
+                size: 16, 
               ),
             ),
-            const SizedBox(width: 12), // Adjusted spacing
+            const SizedBox(width: 12), 
             Text(
               folder.name,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -66,15 +67,15 @@ class FolderCard extends StatelessWidget {
                     fontSize: 16,
                     color: Colors.black87,
                   ),
-              maxLines: 2, // Allow 2 lines
+              maxLines: 2, 
               overflow: TextOverflow.ellipsis,
             ),
-            const Spacer(), // Push count to the right
+            const Spacer(), 
             Text(
-              '$itemCount', // Just the number
+              '$itemCount', 
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
-                    fontSize: 14, // Slightly larger count
+                    fontSize: 14, 
                     fontWeight: FontWeight.w500,
                   ),
             ),
