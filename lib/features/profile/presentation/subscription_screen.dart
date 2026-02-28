@@ -15,25 +15,7 @@ class SubscriptionScreen extends StatelessWidget {
           icon: const Icon(Icons.close, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Restore purchases is not available yet.'),
-                ),
-              );
-            },
-            child: Text(
-              'Restore',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
+        // Dummy Restore button temporarily removed for store compliance
       ),
       body: SafeArea(
         child: Padding(
@@ -192,30 +174,7 @@ class SubscriptionScreen extends StatelessWidget {
               
               const Spacer(flex: 2),
 
-              // CTA Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                  ),
-                  child: const Text(
-                    'Start 7-Day Free Trial',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
+              // Subscription CTA temporarily removed pending fully integrated payment processor
 
               // Footer Text
               Text(

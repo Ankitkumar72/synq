@@ -6,6 +6,7 @@ import '../../data/weekly_focus_provider.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
 import '../../../notes/domain/models/note.dart';
+import '../widgets/update_goal_sheet.dart';
 
 class WeeklyFocusScreen extends ConsumerStatefulWidget {
   const WeeklyFocusScreen({super.key});
@@ -640,106 +641,11 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
   }
 
   void _showUpdateGoalDialog() {
-    final focusState = ref.read(weeklyFocusProvider);
-    final objectiveController = TextEditingController(text: focusState.objective);
-    final priorityController = TextEditingController(text: focusState.priority);
-    
-    // We'll manage criteria locally in the dialog state
-    final criteriaControllers = focusState.criteria.map((c) => TextEditingController(text: c)).toList();
-    final criteriaStatus = List<bool>.from(focusState.criteriaStatus);
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Update Goal'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextField(
-                        controller: objectiveController,
-                        decoration: const InputDecoration(labelText: 'Objective'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: priorityController,
-                        decoration: const InputDecoration(labelText: 'Priority Tag'),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text('Success Criteria', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      ...List.generate(criteriaControllers.length, (index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: criteriaControllers[index],
-                                  decoration: InputDecoration(
-                                    hintText: 'Criteria ${index + 1}',
-                                    isDense: true,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close, color: Colors.red, size: 20),
-                                onPressed: () {
-                                  setDialogState(() {
-                                    criteriaControllers.removeAt(index);
-                                    criteriaStatus.removeAt(index);
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                      TextButton.icon(
-                        onPressed: () {
-                          setDialogState(() {
-                            criteriaControllers.add(TextEditingController());
-                            criteriaStatus.add(false);
-                          });
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Criteria'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final notifier = ref.read(weeklyFocusProvider.notifier);
-                    notifier.updateObjective(objectiveController.text);
-                    notifier.updatePriority(priorityController.text);
-                    
-                    final newCriteria = criteriaControllers.map((c) => c.text).where((t) => t.isNotEmpty).toList();
-                    final newStatus = criteriaStatus.take(newCriteria.length).toList();
-                    // If we removed empty strings, ensure status matches
-                    notifier.updateCriteria(newCriteria, newStatus);
-                    
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const UpdateGoalSheet(),
     );
   }
 }

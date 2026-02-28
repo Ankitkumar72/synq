@@ -11,10 +11,12 @@ class FirebaseService {
     
     // Debug log to verify project ID and details
     final options = DefaultFirebaseOptions.currentPlatform;
-    debugPrint('🔥 Firebase Initialized!');
-    debugPrint('🔥 Project ID: ${options.projectId}');
-    debugPrint('🔥 App ID: ${options.appId}');
-    debugPrint('🔥 API Key: ${options.apiKey.substring(0, 5)}...');
+    if (kDebugMode) {
+      debugPrint('🔥 Firebase Initialized!');
+      debugPrint('🔥 Project ID: ${options.projectId}');
+      debugPrint('🔥 App ID: ${options.appId}');
+      debugPrint('🔥 API Key: ${options.apiKey.substring(0, 5)}...');
+    }
     
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
