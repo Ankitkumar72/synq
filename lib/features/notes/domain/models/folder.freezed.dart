@@ -27,6 +27,7 @@ mixin _$Folder {
   int get colorValue => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   bool get isFavorite => throw _privateConstructorUsedError;
+  String? get parentId => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -45,7 +46,8 @@ abstract class $FolderCopyWith<$Res> {
       String? iconFontFamily,
       int colorValue,
       DateTime createdAt,
-      bool isFavorite});
+      bool isFavorite,
+      String? parentId});
 }
 
 /// @nodoc
@@ -68,6 +70,7 @@ class _$FolderCopyWithImpl<$Res, $Val extends Folder>
     Object? colorValue = null,
     Object? createdAt = null,
     Object? isFavorite = null,
+    Object? parentId = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -98,6 +101,10 @@ class _$FolderCopyWithImpl<$Res, $Val extends Folder>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
+      parentId: freezed == parentId
+          ? _value.parentId
+          : parentId // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -116,7 +123,8 @@ abstract class _$$FolderImplCopyWith<$Res> implements $FolderCopyWith<$Res> {
       String? iconFontFamily,
       int colorValue,
       DateTime createdAt,
-      bool isFavorite});
+      bool isFavorite,
+      String? parentId});
 }
 
 /// @nodoc
@@ -137,6 +145,7 @@ class __$$FolderImplCopyWithImpl<$Res>
     Object? colorValue = null,
     Object? createdAt = null,
     Object? isFavorite = null,
+    Object? parentId = freezed,
   }) {
     return _then(_$FolderImpl(
       id: null == id
@@ -167,6 +176,10 @@ class __$$FolderImplCopyWithImpl<$Res>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
+      parentId: freezed == parentId
+          ? _value.parentId
+          : parentId // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -181,7 +194,8 @@ class _$FolderImpl implements _Folder {
       this.iconFontFamily,
       required this.colorValue,
       required this.createdAt,
-      this.isFavorite = false});
+      this.isFavorite = false,
+      this.parentId});
 
   factory _$FolderImpl.fromJson(Map<String, dynamic> json) =>
       _$$FolderImplFromJson(json);
@@ -201,10 +215,12 @@ class _$FolderImpl implements _Folder {
   @override
   @JsonKey()
   final bool isFavorite;
+  @override
+  final String? parentId;
 
   @override
   String toString() {
-    return 'Folder(id: $id, name: $name, iconCodePoint: $iconCodePoint, iconFontFamily: $iconFontFamily, colorValue: $colorValue, createdAt: $createdAt, isFavorite: $isFavorite)';
+    return 'Folder(id: $id, name: $name, iconCodePoint: $iconCodePoint, iconFontFamily: $iconFontFamily, colorValue: $colorValue, createdAt: $createdAt, isFavorite: $isFavorite, parentId: $parentId)';
   }
 
   @override
@@ -223,13 +239,15 @@ class _$FolderImpl implements _Folder {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.isFavorite, isFavorite) ||
-                other.isFavorite == isFavorite));
+                other.isFavorite == isFavorite) &&
+            (identical(other.parentId, parentId) ||
+                other.parentId == parentId));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, id, name, iconCodePoint,
-      iconFontFamily, colorValue, createdAt, isFavorite);
+      iconFontFamily, colorValue, createdAt, isFavorite, parentId);
 
   @JsonKey(ignore: true)
   @override
@@ -253,7 +271,8 @@ abstract class _Folder implements Folder {
       final String? iconFontFamily,
       required final int colorValue,
       required final DateTime createdAt,
-      final bool isFavorite}) = _$FolderImpl;
+      final bool isFavorite,
+      final String? parentId}) = _$FolderImpl;
 
   factory _Folder.fromJson(Map<String, dynamic> json) = _$FolderImpl.fromJson;
 
@@ -271,6 +290,8 @@ abstract class _Folder implements Folder {
   DateTime get createdAt;
   @override
   bool get isFavorite;
+  @override
+  String? get parentId;
   @override
   @JsonKey(ignore: true)
   _$$FolderImplCopyWith<_$FolderImpl> get copyWith =>

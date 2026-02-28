@@ -115,8 +115,8 @@ class FolderOptionsSheet extends StatelessWidget {
                 onTap: onMove,
               ),
               _OptionItem(
-                icon: Icons.bookmark_outline,
-                label: 'Bookmark...',
+                icon: folder.isFavorite ? Icons.bookmark : Icons.bookmark_outline,
+                label: folder.isFavorite ? 'Remove bookmark' : 'Bookmark...',
                 onTap: onBookmark,
               ),
             ],

@@ -56,6 +56,10 @@ class LocalDatabase {
       StreamController<void>.broadcast();
   final StreamController<void> _foldersChangedController =
       StreamController<void>.broadcast();
+  final StreamController<void> _syncQueueChangedController =
+      StreamController<void>.broadcast();
+
+  Stream<void> get syncQueueChanged => _syncQueueChangedController.stream;
 
   Future<void> dispose() async {
     if (_isClosed) return;
@@ -63,6 +67,7 @@ class LocalDatabase {
 
     await _notesChangedController.close();
     await _foldersChangedController.close();
+    await _syncQueueChangedController.close();
     await _database?.close();
     _database = null;
   }
@@ -560,6 +565,8 @@ class LocalDatabase {
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+
+    _syncQueueChangedController.add(null);
   }
 
   Future<int?> _currentUpdatedAtMs({

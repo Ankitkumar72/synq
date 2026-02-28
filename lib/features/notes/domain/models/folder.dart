@@ -13,6 +13,7 @@ class Folder with _$Folder {
     required int colorValue,
     required DateTime createdAt,
     @Default(false) bool isFavorite,
+    String? parentId,
   }) = _Folder;
 
   factory Folder.fromJson(Map<String, dynamic> json) => _$FolderFromJson(json);

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui; // Added for PathMetrics
+import 'package:flutter/services.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -80,6 +81,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
             final visibleFolders = matchedFolderIds
                 .map((id) => folderById[id])
                 .whereType<Folder>()
+                .where((f) => isSearching ? true : f.parentId == null)
                 .toList(growable: false);
             
             // Favorites (filtered by search when query exists)
@@ -352,10 +354,53 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
           );
         },
         onNewFolder: () => showAddFolderSheet(context),
-        onMakeCopy: () {},
-        onMove: () {},
-        onBookmark: () {},
-        onCopyPath: () {},
+        onMakeCopy: () async {
+          final newFolderId = DateTime.now().millisecondsSinceEpoch.toString();
+          final newFolder = folder.copyWith(
+            id: newFolderId,
+            name: '${folder.name} (Copy)',
+            createdAt: DateTime.now(),
+          );
+          await ref.read(foldersProvider.notifier).addFolder(newFolder);
+
+          final notesState = ref.read(notesProvider);
+          final allNotes = notesState.value ?? [];
+          final notesToCopy = allNotes.where((n) => n.folderId == folder.id).toList();
+
+          for (final note in notesToCopy) {
+            final newNote = note.copyWith(
+              id: DateTime.now().millisecondsSinceEpoch.toString() + note.id.hashCode.toString(),
+              folderId: newFolderId,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+            await ref.read(notesProvider.notifier).addNote(newNote);
+          }
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Copied ${folder.name} and ${notesToCopy.length} notes'), behavior: SnackBarBehavior.floating),
+            );
+          }
+        },
+        onMove: () {
+          _moveFolder(context, ref, folder);
+        },
+        onBookmark: () {
+          ref.read(foldersProvider.notifier).toggleFavorite(folder.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(folder.isFavorite ? 'Removed from favorites' : 'Added to favorites'), 
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+        onCopyPath: () {
+          Clipboard.setData(ClipboardData(text: 'Synq / ${folder.name}'));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Path copied to clipboard'), behavior: SnackBarBehavior.floating),
+          );
+        },
         onRename: () => showAddFolderSheet(context, folderToEdit: folder),
         onDelete: () {
           if (settings.skipFolderDeleteConfirmation) {
@@ -386,6 +431,102 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _moveFolder(BuildContext context, WidgetRef ref, Folder folderToMove) async {
+    final foldersState = ref.read(foldersProvider);
+    final folders = foldersState.value ?? const <Folder>[];
+
+    // Exclude self and direct children to prevent cycles
+    final validTargets = folders.where((f) => f.id != folderToMove.id && f.parentId != folderToMove.id).toList();
+
+    const rootValue = '__root__';
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Move To',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.home_outlined, color: Colors.grey),
+                          title: const Text('Top Level (Root)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                          trailing: folderToMove.parentId == null ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
+                          onTap: () => Navigator.pop(context, rootValue),
+                        ),
+                        const Divider(height: 1),
+                        ...validTargets.map((f) {
+                          final isSelected = folderToMove.parentId == f.id;
+                          return ListTile(
+                            leading: Icon(
+                              Icons.folder_outlined,
+                              color: Color(f.colorValue),
+                            ),
+                            title: Text(f.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                            trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
+                            onTap: () => Navigator.pop(context, f.id),
+                          );
+                        }),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected == null) return;
+    final nextParentId = selected == rootValue ? null : selected;
+    if (nextParentId == folderToMove.parentId) return;
+
+    await ref.read(foldersProvider.notifier).updateFolder(folderToMove.copyWith(parentId: nextParentId));
+
+    if (context.mounted) {
+      final parentName = nextParentId == null 
+          ? 'Root' 
+          : folders.firstWhere((f) => f.id == nextParentId, orElse: () => Folder(id: '', name: 'Folder', iconCodePoint: 0, colorValue: 0, createdAt: DateTime.now())).name;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Moved ${folderToMove.name} to $parentName'), behavior: SnackBarBehavior.floating),
+      );
+    }
   }
 }
 

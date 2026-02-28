@@ -14,6 +14,7 @@ _$FolderImpl _$$FolderImplFromJson(Map<String, dynamic> json) => _$FolderImpl(
       colorValue: (json['colorValue'] as num).toInt(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       isFavorite: json['isFavorite'] as bool? ?? false,
+      parentId: json['parentId'] as String?,
     );
 
 Map<String, dynamic> _$$FolderImplToJson(_$FolderImpl instance) =>
@@ -25,4 +26,5 @@ Map<String, dynamic> _$$FolderImplToJson(_$FolderImpl instance) =>
       'colorValue': instance.colorValue,
       'createdAt': instance.createdAt.toIso8601String(),
       'isFavorite': instance.isFavorite,
+      'parentId': instance.parentId,
     };
