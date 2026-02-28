@@ -454,7 +454,21 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   }
 
   void _showNoteOptions(BuildContext context) {
-    if (_editingNote == null) return;
+    final currentNote = _editingNote ??
+        Note(
+          id: _draftNoteId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          title: _titleController.text.trim().isEmpty ? 'Untitled' : _titleController.text.trim(),
+          body: _bodyController.text.trim(),
+          category: NoteCategory.work, // Default category
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          folderId: _selectedFolderId,
+          tags: _tags,
+          links: _links,
+          attachments: _attachments,
+          isTask: _isTask,
+          scheduledTime: _scheduledTime,
+        );
 
     showModalBottomSheet(
       context: context,
@@ -462,7 +476,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       isScrollControlled: true,
       builder: (sheetContext) {
         return NoteOptionsSheet(
-          note: _editingNote!,
+          note: currentNote,
           isReadOnly: _isReadOnly,
           onClose: () {
             Navigator.pop(sheetContext);
@@ -518,11 +532,12 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       ),
     );
 
-    if (shouldDelete == true && _editingNote != null) {
-      await ref.read(notesProvider.notifier).deleteNote(_editingNote!.id);
-      if (mounted) Navigator.pop(context);
-    } else if (shouldDelete == true && _draftNoteId != null) {
+    if (shouldDelete == true) {
+      _hasUnsavedChanges = false;
       NoteEditorDraftStore.remove(_draftKey);
+      if (_editingNote != null) {
+        await ref.read(notesProvider.notifier).deleteNote(_editingNote!.id);
+      }
       if (mounted) Navigator.pop(context);
     }
   }

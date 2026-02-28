@@ -190,12 +190,6 @@ class HomeScreenContent extends ConsumerWidget {
                 ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Tap + to create your first task',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary.withAlpha(150),
-                ),
-          ),
         ],
       ),
     );
