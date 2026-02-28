@@ -22,29 +22,56 @@ class FirebaseSyncCoordinator {
   final LocalDatabase _database;
   final Random _random = Random();
 
-  static const Duration _syncInterval = Duration(seconds: 45);
   static const int _pullBatchSize = 200;
   static const int _pushBatchSize = 200;
 
-  Timer? _timer;
+  StreamSubscription<void>? _syncQueueSubscription;
+  StreamSubscription<QuerySnapshot>? _notesSubscription;
+  StreamSubscription<QuerySnapshot>? _foldersSubscription;
   bool _isSyncing = false;
+  bool _syncRequested = false;
 
   void start() {
-    _timer?.cancel();
-    _timer = Timer.periodic(_syncInterval, (_) {
+    _syncQueueSubscription?.cancel();
+    _syncQueueSubscription = _database.syncQueueChanged.listen((_) {
       unawaited(syncNow());
     });
+
+    _notesSubscription?.cancel();
+    _notesSubscription = _collectionForType(LocalDatabase.entityTypeNote)
+        .orderBy('server_updated_at', descending: true)
+        .limit(1)
+        .snapshots()
+        .listen((_) {
+      unawaited(syncNow());
+    });
+
+    _foldersSubscription?.cancel();
+    _foldersSubscription = _collectionForType(LocalDatabase.entityTypeFolder)
+        .orderBy('server_updated_at', descending: true)
+        .limit(1)
+        .snapshots()
+        .listen((_) {
+      unawaited(syncNow());
+    });
+
     unawaited(syncNow());
   }
 
   void dispose() {
-    _timer?.cancel();
-    _timer = null;
+    _syncQueueSubscription?.cancel();
+    _notesSubscription?.cancel();
+    _foldersSubscription?.cancel();
   }
 
   Future<void> syncNow() async {
-    if (_isSyncing) return;
+    if (_isSyncing) {
+      _syncRequested = true;
+      return;
+    }
     _isSyncing = true;
+    _syncRequested = false;
+    
     try {
       await _pushOutbox();
       await _pullEntity(LocalDatabase.entityTypeNote);
@@ -54,6 +81,9 @@ class FirebaseSyncCoordinator {
       debugPrintStack(stackTrace: stackTrace);
     } finally {
       _isSyncing = false;
+      if (_syncRequested) {
+        unawaited(syncNow());
+      }
     }
   }
 

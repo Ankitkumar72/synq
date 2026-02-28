@@ -29,7 +29,7 @@ final syncAccessProvider =
 class SyncAccessNotifier extends StateNotifier<SyncAccessState> {
   SyncAccessNotifier()
       : super(const SyncAccessState(
-          cloudSyncEnabled: false,
+          cloudSyncEnabled: true,
           isLoading: true,
         )) {
     _load();
@@ -39,7 +39,7 @@ class SyncAccessNotifier extends StateNotifier<SyncAccessState> {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    final enabled = prefs.getBool(_cloudSyncKey) ?? false;
+    final enabled = prefs.getBool(_cloudSyncKey) ?? true;
     state = state.copyWith(
       cloudSyncEnabled: enabled,
       isLoading: false,

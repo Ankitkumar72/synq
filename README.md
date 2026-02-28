@@ -29,7 +29,7 @@ Synq is a powerful and intuitive task and note management application built with
 - **Profile & Subscription**
   - **User Profile**: Manage account settings and view productivity stats.
   - **Subscription Plans**: Upgrade to Synq Pro for cloud sync, unlimited devices, and advanced analytics.
-  - **Secure Data**: End-to-end encryption for all user data.
+  - **Secure Data**: Data is stored locally and synced securely over TLS.
 
 - **UI/UX**
   - **Premium Design**: Polished UI with custom themes (Light & Dark mode).
