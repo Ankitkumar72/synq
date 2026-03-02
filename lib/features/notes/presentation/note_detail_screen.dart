@@ -4,6 +4,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:super_clipboard/super_clipboard.dart';
+import 'package:synq/features/notes/utils/markdown_bridge.dart';
+import 'package:synq/features/notes/utils/html_parser.dart';
 import 'package:synq/core/theme/app_theme.dart';
 import 'package:synq/core/services/media_service.dart';
 import 'package:synq/features/notes/domain/models/note.dart';
@@ -30,7 +34,7 @@ class NoteDetailScreen extends ConsumerStatefulWidget {
 class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     with SingleTickerProviderStateMixin {
   final _titleController = TextEditingController();
-  final _bodyController = TextEditingController();
+  late final quill.QuillController _quillController;
 
   final _titleFocusNode = FocusNode();
   final _bodyFocusNode = FocusNode();
@@ -69,7 +73,11 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     if (widget.noteToEdit != null) {
       final note = widget.noteToEdit!;
       _titleController.text = note.title;
-      _bodyController.text = note.body ?? '';
+      _quillController = quill.QuillController(
+        document: MarkdownBridge.deltaFromMarkdown(note.body),
+        selection: const TextSelection.collapsed(offset: 0),
+        readOnly: false,
+      );
       _selectedFolderId = note.folderId;
       _tags.addAll(note.tags);
       _links.addAll(note.links);
@@ -80,13 +88,14 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     } else {
       _selectedFolderId = widget.initialFolderId;
       _titleController.text = ''; // Start empty
+      _quillController = quill.QuillController.basic();
       _editingNote = null;
     }
 
     _restoreDraftIfAvailable();
 
     _titleController.addListener(_onTextChanged);
-    _bodyController.addListener(_onTextChanged);
+    _quillController.addListener(_onTextChanged);
 
     // Listen to focus changes to toggle toolbar
     _bodyFocusNode.addListener(() {
@@ -120,7 +129,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
 
     _draftNoteId = draft.noteId ?? _draftNoteId;
     _titleController.text = draft.title;
-    _bodyController.text = draft.body;
+    
+    _quillController.document = MarkdownBridge.deltaFromMarkdown(draft.body);
+    
     _selectedFolderId = draft.selectedFolderId;
     _tags
       ..clear()
@@ -142,7 +153,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       NoteEditorDraft(
         noteId: _draftNoteId,
         title: _titleController.text,
-        body: _bodyController.text,
+        body: MarkdownBridge.markdownFromDelta(_quillController.document),
         selectedFolderId: _selectedFolderId,
         tags: List<String>.from(_tags),
         links: List<String>.from(_links),
@@ -182,7 +193,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   @override
   void dispose() {
     _titleController.dispose();
-    _bodyController.dispose();
+    _quillController.dispose();
     _titleFocusNode.dispose();
     _bodyFocusNode.dispose();
     _autoSaveTimer?.cancel();
@@ -194,7 +205,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     if (_isSaving) return;
 
     final title = _titleController.text.trim();
-    final body = _bodyController.text.trim();
+    final body = MarkdownBridge.markdownFromDelta(_quillController.document).trim();
 
     if (title.isEmpty && body.isEmpty) return; // Don't save empty
 
@@ -458,7 +469,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         Note(
           id: _draftNoteId ?? DateTime.now().millisecondsSinceEpoch.toString(),
           title: _titleController.text.trim().isEmpty ? 'Untitled' : _titleController.text.trim(),
-          body: _bodyController.text.trim(),
+          body: MarkdownBridge.markdownFromDelta(_quillController.document).trim(),
           category: NoteCategory.work, // Default category
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
@@ -766,31 +777,36 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                         ),
 
                         // Body
-                        TextField(
-                          controller: _bodyController,
-                          focusNode: _bodyFocusNode,
-                          readOnly: _isReadOnly,
-                          textAlign: TextAlign.left,
-                          decoration: InputDecoration(
-                            hintText: 'Start writing...',
-                            hintStyle: GoogleFonts.roboto(
-                              color: Colors.grey.shade400,
-                              fontSize: 18,
+                        Container(
+                          constraints: BoxConstraints(
+                            minHeight: MediaQuery.of(context).size.height * 0.5,
+                          ),
+                          child: quill.QuillEditor.basic(
+                            controller: _quillController,
+                            configurations: quill.QuillEditorConfigurations(
+                              placeholder: 'Start writing...',
+                              onPerformAction: (action) {
+                                if (action == TextInputAction.paste) {
+                                  _handleCustomPaste();
+                                  return true;
+                                }
+                                return false;
+                              },
+                              customStyles: quill.DefaultStyles(
+                                paragraph: quill.DefaultTextBlockStyle(
+                                  GoogleFonts.roboto(
+                                    fontSize: 18,
+                                    color: AppColors.textPrimary,
+                                    height: 1.6,
+                                  ),
+                                  const quill.HorizontalSpacing(0, 0),
+                                  const quill.VerticalSpacing(0, 0),
+                                  const quill.VerticalSpacing(0, 0),
+                                  null,
+                                ),
+                              ),
                             ),
-                            border: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            errorBorder: InputBorder.none,
-                            disabledBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
-                            filled: false,
                           ),
-                          style: GoogleFonts.roboto(
-                            fontSize: 18,
-                            color: AppColors.textPrimary,
-                            height: 1.6,
-                          ),
-                          maxLines: null,
                         ),
                         const SizedBox(height: 24),
                       ],
@@ -829,17 +845,32 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                         physics: const BouncingScrollPhysics(),
                         child: Row(
                           children: [
-                            _buildToolbarButton(Icons.undo, () {}),
-                            _buildToolbarButton(Icons.redo, () {}),
+                            _buildToolbarButton(Icons.undo, () {
+                              _quillController.undo();
+                            }),
+                            _buildToolbarButton(Icons.redo, () {
+                              _quillController.redo();
+                            }),
                             _toolbarDivider(),
-                            _buildToolbarButton(
-                              Icons.data_object,
-                              () => _formatText('`', '`'),
+                            quill.QuillToolbar.simple(
+                              configurations: quill.QuillSimpleToolbarConfigurations(
+                                controller: _quillController,
+                                showFontFamily: false,
+                                showFontSize: false,
+                                showColorButton: false,
+                                showBackgroundColorButton: false,
+                                showAlignmentButtons: false,
+                                showClearFormat: false,
+                                showSubscript: false,
+                                showSuperscript: false,
+                                showStrikeThrough: false,
+                                showInlineCode: true,
+                                showSearchButton: false,
+                                showDividers: false,
+                                showIndent: false,
+                              ),
                             ),
-                            _buildToolbarButton(
-                              Icons.file_copy_outlined,
-                              () {},
-                            ),
+                            _toolbarDivider(),
                             _buildToolbarButton(Icons.sell_outlined, () {
                               showDialog(
                                 context: context,
@@ -857,19 +888,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                               );
                             }),
                             _buildToolbarButton(Icons.attach_file, _pickImage),
-                            _toolbarDivider(),
-                            _buildToolbarButton(
-                              Icons.text_fields,
-                              () => _formatText('# ', ''),
-                            ),
-                            _buildToolbarButton(
-                              Icons.format_bold,
-                              () => _formatText('**', '**'),
-                            ),
-                            _buildToolbarButton(
-                              Icons.format_italic,
-                              () => _formatText('*', '*'),
-                            ),
                           ],
                         ),
                       ),
@@ -910,38 +928,60 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     );
   }
 
-  void _formatText(String prefix, String suffix) {
-    final text = _bodyController.text;
-    final selection = _bodyController.selection;
+  Future<void> _handleCustomPaste() async {
+    final reader = await ClipboardReader.readClipboard();
 
-    if (selection.isCollapsed) {
-      // Insert at cursor
-      final newText = text.replaceRange(
-        selection.start,
-        selection.end,
-        '$prefix$suffix',
-      );
-      _bodyController.value = TextEditingValue(
-        text: newText,
-        selection: TextSelection.collapsed(
-          offset: selection.start + prefix.length,
-        ),
-      );
-    } else {
-      // Wrap selected text
-      final selectedText = text.substring(selection.start, selection.end);
-      final newText = text.replaceRange(
-        selection.start,
-        selection.end,
-        '$prefix$selectedText$suffix',
-      );
-      _bodyController.value = TextEditingValue(
-        text: newText,
-        selection: TextSelection(
-          baseOffset: selection.start,
-          extentOffset: selection.end + prefix.length + suffix.length,
-        ),
-      );
+    // 1. Handle Images First
+    if (reader.canProvide(Formats.png) || reader.canProvide(Formats.jpeg)) {
+      final format = reader.canProvide(Formats.png) ? Formats.png : Formats.jpeg;
+      final extension = format == Formats.png ? 'png' : 'jpg';
+
+      final bytes = await reader.readValue(format);
+      if (bytes != null) {
+        final path = await _mediaService.saveBytesToLocalDocuments(bytes, extension: extension);
+        if (path != null) {
+          final selection = _quillController.selection;
+          _quillController.document.insert(selection.end, quill.BlockEmbed.image(path));
+          _quillController.updateSelection(
+            TextSelection.collapsed(offset: selection.end + 1),
+            quill.ChangeSource.local,
+          );
+          
+          setState(() {
+            _attachments.add(path);
+            _hasUnsavedChanges = true;
+          });
+          _persistDraft();
+          return;
+        }
+      }
+    }
+
+    // 2. Handle Rich HTML
+    if (reader.canProvide(Formats.htmlText)) {
+      final htmlStr = await reader.readValue(Formats.htmlText);
+      if (htmlStr != null) {
+        final parsedDoc = HtmlParser.deltaFromHtml(htmlStr);
+        final selection = _quillController.selection;
+        
+        // Insert the parsed rich layout directly at the cursor
+        _quillController.replaceText(
+            selection.start, selection.end - selection.start, parsedDoc.toDelta(),
+            TextSelection.collapsed(offset: selection.start + parsedDoc.length));
+        return;
+      }
+    }
+    
+    // Fallback if no HTML exists (plain text pasting)
+    if (reader.canProvide(Formats.plainText)) {
+      final text = await reader.readValue(Formats.plainText);
+      if (text != null) {
+        final selection = _quillController.selection;
+        _quillController.replaceText(
+            selection.start, selection.end - selection.start, text,
+            TextSelection.collapsed(offset: selection.start + text.length));
+      }
     }
   }
+
 }

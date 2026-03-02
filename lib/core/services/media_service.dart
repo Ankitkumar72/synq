@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -30,6 +31,20 @@ class MediaService {
       return savedImage.path;
     } catch (e) {
       debugPrint('Error saving image locally: $e');
+      return null;
+    }
+  }
+
+  /// Save raw image bytes (e.g. from clipboard) to local storage
+  Future<String?> saveBytesToLocalDocuments(Uint8List bytes, {String extension = 'png'}) async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = 'pasted_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final file = File('${appDir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+      return file.path;
+    } catch (e) {
+      debugPrint('Error saving pasted image bytes: $e');
       return null;
     }
   }
