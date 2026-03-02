@@ -1,12 +1,13 @@
-import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:markdown_quill/markdown_quill.dart';
-import 'package:quill_markdown/quill_markdown.dart';
 
 class MarkdownBridge {
-  static final MarkdownQuill _markdownQuill = MarkdownQuill(
-    options: const MarkdownQuillOptions(),
-  );
+  static final md.Document _mdDocument = md.Document(encodeHtml: false);
+  static final MarkdownToDelta _mdToDelta =
+      MarkdownToDelta(markdownDocument: _mdDocument);
+  static final DeltaToMarkdown _deltaToMd = DeltaToMarkdown();
 
   /// Converts a Markdown string from Firestore into a Quill [Document] Delta format
   /// Allows the editor to render the `.md` content natively.
@@ -16,11 +17,11 @@ class MarkdownBridge {
     }
 
     try {
-      final delta = _markdownQuill.parse(markdown);
+      final delta = _mdToDelta.convert(markdown);
       return Document.fromDelta(delta);
     } catch (e) {
       // Fallback in case of terrible parse failure to prevent app crash
-      print('Error parsing markdown to delta: $e');
+      debugPrint('Error parsing markdown to delta: $e');
       final doc = Document();
       doc.insert(0, markdown);
       return doc;
@@ -32,9 +33,9 @@ class MarkdownBridge {
   static String markdownFromDelta(Document document) {
     try {
       final delta = document.toDelta();
-      return delta.toMarkdown();
+      return _deltaToMd.convert(delta);
     } catch (e) {
-      print('Error parsing delta to markdown: $e');
+      debugPrint('Error parsing delta to markdown: $e');
       return document.toPlainText();
     }
   }

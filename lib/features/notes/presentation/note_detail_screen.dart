@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -783,15 +784,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                           ),
                           child: quill.QuillEditor.basic(
                             controller: _quillController,
-                            configurations: quill.QuillEditorConfigurations(
+                            focusNode: _bodyFocusNode,
+                            config: quill.QuillEditorConfig(
                               placeholder: 'Start writing...',
-                              onPerformAction: (action) {
-                                if (action == TextInputAction.paste) {
-                                  _handleCustomPaste();
-                                  return true;
-                                }
-                                return false;
-                              },
                               customStyles: quill.DefaultStyles(
                                 paragraph: quill.DefaultTextBlockStyle(
                                   GoogleFonts.roboto(
@@ -852,9 +847,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                               _quillController.redo();
                             }),
                             _toolbarDivider(),
-                            quill.QuillToolbar.simple(
-                              configurations: quill.QuillSimpleToolbarConfigurations(
-                                controller: _quillController,
+                            quill.QuillSimpleToolbar(
+                              controller: _quillController,
+                              config: const quill.QuillSimpleToolbarConfig(
                                 showFontFamily: false,
                                 showFontSize: false,
                                 showColorButton: false,
@@ -928,15 +923,29 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     );
   }
 
+  // ignore: unused_element
   Future<void> _handleCustomPaste() async {
-    final reader = await ClipboardReader.readClipboard();
+    final clipboard = SystemClipboard.instance;
+    if (clipboard == null) return;
+    final reader = await clipboard.read();
 
     // 1. Handle Images First
     if (reader.canProvide(Formats.png) || reader.canProvide(Formats.jpeg)) {
       final format = reader.canProvide(Formats.png) ? Formats.png : Formats.jpeg;
       final extension = format == Formats.png ? 'png' : 'jpg';
 
-      final bytes = await reader.readValue(format);
+      final completer = Completer<Uint8List?>();
+      reader.getFile(format, (file) async {
+        try {
+          final bytes = await file.readAll();
+          completer.complete(bytes);
+        } catch (_) {
+          completer.complete(null);
+        }
+      }, onError: (_) {
+        completer.complete(null);
+      });
+      final bytes = await completer.future;
       if (bytes != null) {
         final path = await _mediaService.saveBytesToLocalDocuments(bytes, extension: extension);
         if (path != null) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:html2md/html2md.dart' as html2md;
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:synq/features/notes/utils/markdown_bridge.dart';
@@ -17,7 +18,7 @@ class HtmlParser {
       return MarkdownBridge.deltaFromMarkdown(markdownString);
       
     } catch (e) {
-      print('Error parsing HTML to Delta: $e');
+      debugPrint('Error parsing HTML to Delta: $e');
       final doc = Document();
       doc.insert(0, html);
       return doc;
