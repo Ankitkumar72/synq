@@ -63,3 +63,7 @@ android/key.properties
 *.p12
 *.cer
 *.mobileprovision
+
+# Developer Keys
+keys.txt
+android/keys.txt
