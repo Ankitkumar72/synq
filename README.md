@@ -54,7 +54,9 @@ Synq is a powerful and intuitive task and note management application built with
 
 Synq is built using a **Feature-First Architecture** combined with **Riverpod** for state management and **Firebase** for the backend.
 
-### Project Structure (`lib/`)
+### Project Structure
+
+For a detailed breakdown of the application modules and their respective UI components, please refer to the [Detailed Structure & Architecture Map](Design/structure.md).
 
 ```
 lib/
