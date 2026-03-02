@@ -46,6 +46,8 @@ Synq is a powerful and intuitive task and note management application built with
 - **Enhanced Task Detail**: Improved sub-task persistence, scrolling stability, and auto-loading states.
 - **Styled Headers**: Professional, bold hierarchy for "TASK TITLE" and "DESCRIPTION".
 - **Independent Categories**: Separated state management for task and note categories for more modular organization.
+- **Weekly Focus Management**: Added a dedicated modal to easily set and monitor the main weekly focus, including priority tags and success criteria.
+- **Robust Real-Time Sync**: Rewrote the synchronization layer using a robust `FirebaseSyncCoordinator` to ensure reliable offline-first data availability and synchronization across multiple devices.
 
 
 ## 🏗 Architecture
