@@ -67,3 +67,7 @@ android/key.properties
 # Developer Keys
 keys.txt
 android/keys.txt
+
+# Generated during signing checks
+android/signing_result.txt
+android/signing_result_utf8.txt
