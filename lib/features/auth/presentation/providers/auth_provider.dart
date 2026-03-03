@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';
 import '../../../notes/data/local_database.dart';
 import '../../../notes/data/note_editor_draft_store.dart';
-import '../../../notes/data/seed_notes.dart';
+
 
 // State to hold preventing duplicate loading
 class AuthState {
@@ -85,12 +85,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final userCredential = await _repository.signInWithGoogle();
-      
-      if (userCredential != null && userCredential.user != null) {
-        // Seed sample data for new users
-        await SeedNotesService.seedIfEmpty(userCredential.user!.uid);
-      }
+      await _repository.signInWithGoogle();
 
       // user cancelation returns null but doesn't throw, 
       // success will trigger stream.
