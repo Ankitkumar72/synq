@@ -36,4 +36,8 @@ class NoteEditorDraftStore {
   static void remove(String key) {
     _drafts.remove(key);
   }
+
+  static void clearAll() {
+    _drafts.clear();
+  }
 }

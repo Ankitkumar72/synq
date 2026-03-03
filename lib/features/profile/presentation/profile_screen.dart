@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../notes/data/repository_provider.dart';
 import 'subscription_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -143,6 +144,49 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             _buildSettingItem('Data Export'),
                             _buildSettingItem('Privacy'),
+                            Consumer(
+                              builder: (context, ref, _) {
+                                return _buildSettingItem(
+                                  'Clear Offline Data',
+                                  onTap: () async {
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text('Clear Offline Data'),
+                                        content: const Text(
+                                          'This will delete all locally stored notes, folders, and sync data. '
+                                          'Data saved to the cloud will not be affected and will re-sync automatically.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, true),
+                                            child: const Text(
+                                              'Clear',
+                                              style: TextStyle(color: Colors.red),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirmed == true && context.mounted) {
+                                      final db = ref.read(localDatabaseProvider);
+                                      await db.clearAllData();
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Offline data cleared'),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                );
+                              },
+                            ),
                             const SizedBox(height: 16),
                             
                             // Logout Button

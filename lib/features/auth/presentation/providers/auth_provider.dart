@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';
+import '../../../notes/data/local_database.dart';
+import '../../../notes/data/note_editor_draft_store.dart';
 import '../../../notes/data/seed_notes.dart';
 
 // State to hold preventing duplicate loading
@@ -44,6 +46,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _repository.authStateChanges.listen((user) {
       if (user != null) {
         state = state.copyWith(isAuthenticated: true, isLoading: false);
+        // Clean up stale DB files from other accounts (fire-and-forget)
+        () async {
+          try {
+            await LocalDatabase.deleteStaleDbFiles(user.uid);
+          } catch (e) {
+            debugPrint('STALE_DB_CLEANUP_ERROR: $e');
+          }
+        }();
       } else {
         state = state.copyWith(isAuthenticated: false, isLoading: false);
       }
@@ -104,7 +114,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     try {
-       await _repository.signOut();
+      NoteEditorDraftStore.clearAll();
+      await _repository.signOut();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }

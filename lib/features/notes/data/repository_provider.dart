@@ -11,8 +11,18 @@ import 'local_db_notes_repository.dart';
 import 'notes_repository.dart';
 import 'sync_access_provider.dart';
 
+final _currentUserIdProvider = Provider<String>((ref) {
+  final authState = ref.watch(authProvider);
+  final user = FirebaseAuth.instance.currentUser;
+  if (!authState.isAuthenticated || user == null) {
+    return '_anonymous';
+  }
+  return user.uid;
+});
+
 final localDatabaseProvider = Provider<LocalDatabase>((ref) {
-  final database = LocalDatabase();
+  final userId = ref.watch(_currentUserIdProvider);
+  final database = LocalDatabase(userId);
   ref.onDispose(database.dispose);
   return database;
 });

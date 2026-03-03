@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
@@ -41,12 +42,17 @@ class SyncQueueOperation {
 }
 
 class LocalDatabase {
-  static const String _databaseName = 'synq_local.db';
+  LocalDatabase(this._userId);
+
+  final String _userId;
+
   static const String _queuePending = 'pending';
   static const String entityTypeNote = 'note';
   static const String entityTypeFolder = 'folder';
   static const String opTypeUpsert = 'upsert';
   static const String opTypeDelete = 'delete';
+  static const int staleDaysThreshold = 30;
+  static const int sizeWarningBytes = 50 * 1024 * 1024; // 50 MB
 
   final Uuid _uuid = const Uuid();
   Database? _database;
@@ -475,11 +481,83 @@ class LocalDatabase {
     });
   }
 
+  /// Deletes all rows from notes, folders, sync_queue, and sync_state.
+  /// Used by the "Clear Offline Data" button — NOT called on logout.
+  Future<void> clearAllData() async {
+    final db = await _openDatabase();
+    await db.transaction((txn) async {
+      await txn.delete('notes');
+      await txn.delete('folders');
+      await txn.delete('sync_queue');
+      await txn.delete('sync_state');
+    });
+    _notesChangedController.add(null);
+    _foldersChangedController.add(null);
+  }
+
+  /// Returns the current DB file size in bytes.
+  Future<int> dbFileSizeBytes() async {
+    final basePath = await getDatabasesPath();
+    final file = File(path.join(basePath, 'synq_$_userId.db'));
+    if (await file.exists()) return await file.length();
+    return 0;
+  }
+
+  /// Deletes synq_*.db files not accessed in [staleDaysThreshold] days,
+  /// excluding the current user's DB. Also always deletes the anonymous DB.
+  /// Uses `.lastopen` sidecar files for reliable cross-platform staleness
+  /// detection (iOS does not reliably update file-system timestamps on
+  /// SQLite WAL databases).
+  static Future<void> deleteStaleDbFiles(String currentUserId) async {
+    final basePath = await getDatabasesPath();
+    final dir = Directory(basePath);
+    if (!await dir.exists()) return;
+    final cutoffMs = DateTime.now()
+        .subtract(const Duration(days: staleDaysThreshold))
+        .millisecondsSinceEpoch;
+    final currentFileName = 'synq_$currentUserId.db';
+    const anonymousFileName = 'synq__anonymous.db';
+
+    await for (final entity in dir.list()) {
+      if (entity is! File) continue;
+      final name = path.basename(entity.path);
+      if (!name.startsWith('synq_') || !name.endsWith('.db')) continue;
+      if (name == currentFileName) continue;
+
+      // Always delete the anonymous DB — it's a throwaway session.
+      if (name == anonymousFileName) {
+        await _deleteSidecarAndDb(entity);
+        continue;
+      }
+
+      // Read the .lastopen sidecar to decide staleness.
+      final sidecarPath = '${entity.path.substring(0, entity.path.length - 3)}.lastopen';
+      final sidecar = File(sidecarPath);
+      if (await sidecar.exists()) {
+        final raw = (await sidecar.readAsString()).trim();
+        final lastOpenedMs = int.tryParse(raw);
+        if (lastOpenedMs != null && lastOpenedMs < cutoffMs) {
+          await _deleteSidecarAndDb(entity);
+        }
+      } else {
+        // No sidecar → very old DB from before this logic existed. Delete it.
+        await entity.delete();
+      }
+    }
+  }
+
+  static Future<void> _deleteSidecarAndDb(File dbFile) async {
+    final sidecarPath = '${dbFile.path.substring(0, dbFile.path.length - 3)}.lastopen';
+    final sidecar = File(sidecarPath);
+    if (await sidecar.exists()) await sidecar.delete();
+    if (await dbFile.exists()) await dbFile.delete();
+  }
+
   Future<Database> _openDatabase() async {
     if (_database != null) return _database!;
 
     final basePath = await getDatabasesPath();
-    final databasePath = path.join(basePath, _databaseName);
+    final databasePath = path.join(basePath, 'synq_$_userId.db');
     _database = await openDatabase(
       databasePath,
       version: 1,
@@ -534,7 +612,22 @@ class LocalDatabase {
         ''');
       },
     );
+    await _touchLastOpenFile();
     return _database!;
+  }
+
+  /// Writes the current epoch ms to a `.lastopen` sidecar file next to the DB.
+  /// Used by [deleteStaleDbFiles] for iOS-safe staleness detection.
+  Future<void> _touchLastOpenFile() async {
+    try {
+      final basePath = await getDatabasesPath();
+      final sidecar = File(path.join(basePath, 'synq_$_userId.lastopen'));
+      await sidecar.writeAsString(
+        '${DateTime.now().millisecondsSinceEpoch}',
+      );
+    } catch (_) {
+      // Non-critical — staleness detection degrades gracefully.
+    }
   }
 
   Future<void> _enqueueOperation({
