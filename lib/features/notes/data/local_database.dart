@@ -550,7 +550,11 @@ class LocalDatabase {
     final sidecarPath = '${dbFile.path.substring(0, dbFile.path.length - 3)}.lastopen';
     final sidecar = File(sidecarPath);
     if (await sidecar.exists()) await sidecar.delete();
-    if (await dbFile.exists()) await dbFile.delete();
+    // Delete main DB + SQLite WAL companion files.
+    for (final suffix in ['', '-wal', '-shm']) {
+      final f = File('${dbFile.path}$suffix');
+      if (await f.exists()) await f.delete();
+    }
   }
 
   Future<Database> _openDatabase() async {
