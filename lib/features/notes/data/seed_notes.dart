@@ -14,25 +14,22 @@ class SeedNotesService {
       .get();
     
     if (snapshot.docs.isEmpty) {
-      // First time user - seed sample tasks
       final sampleNotes = [
         Note(
           id: uuid.v4(),
-          title: 'Strategy Planning',
+          title: '🎯 What is "Strategy Planning"?',
+          body: 'Welcome! This is a **Task**. \n\nTasks are designed for action. Unlike regular notes, they help you track progress on your big goals. \n\n**Try this:** \n1. Tap the checkbox to complete a step. \n2. Use this space to break down your roadmap or development plan. \n3. Stay focused on your Deep Work blocks!',
           isTask: true,
-          category: NoteCategory.work, // Added required field
+          category: NoteCategory.work,
           createdAt: DateTime.now(),
-          scheduledTime: DateTime.now().add(const Duration(hours: 2)),
-          endTime: DateTime.now().add(const Duration(hours: 3)),
         ),
         Note(
           id: uuid.v4(),
-          title: 'Deep Work Block',
-          isTask: false, // Assuming 'focus' meant a non-task note or different category, adapting to bool
-          category: NoteCategory.work,
+          title: '💡 Pro Tip: Deep Work',
+          body: 'This is a **Note**. \n\nNotes are perfect for capturing ideas, snippets of code, or brainstorming sessions that don\'t need a "Done" button. Use them for your research and reference material.',
+          isTask: false,
+          category: NoteCategory.idea,
           createdAt: DateTime.now(),
-          scheduledTime: DateTime.now().add(const Duration(hours: 1)),
-          endTime: DateTime.now().add(const Duration(hours: 2)),
         ),
       ];
       
