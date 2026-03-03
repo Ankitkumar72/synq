@@ -85,7 +85,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      await _repository.signInWithGoogle();
+      final userCredential = await _repository.signInWithGoogle();
+
+      if (userCredential != null && userCredential.user != null) {
+        await SeedNotesService.seedIfEmpty(userCredential.user!.uid);
+      }
 
       // user cancelation returns null but doesn't throw, 
       // success will trigger stream.
