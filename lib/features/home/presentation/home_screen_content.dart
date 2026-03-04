@@ -12,6 +12,7 @@ import '../../focus/presentation/focus_screen.dart';
 import '../../notes/presentation/note_detail_screen.dart';
 import '../../notes/data/notes_provider.dart';
 import '../../notes/presentation/task_detail_screen.dart';
+import '../../notes/utils/markdown_bridge.dart';
 /// HomeScreen content without the bottom navigation bar (for use in MainShell)
 class HomeScreenContent extends ConsumerWidget {
   const HomeScreenContent({super.key});
@@ -351,7 +352,8 @@ class HomeScreenContent extends ConsumerWidget {
 
   Widget _buildNoteItem(BuildContext context, WidgetRef ref, Note note) {
     final body = note.body ?? '';
-    final firstBodyLine = body
+    final plainText = MarkdownBridge.deltaFromMarkdown(body).toPlainText();
+    final firstBodyLine = plainText
         .split(RegExp(r'\r?\n'))
         .map((line) => line.trim())
         .firstWhere((line) => line.isNotEmpty, orElse: () => '');

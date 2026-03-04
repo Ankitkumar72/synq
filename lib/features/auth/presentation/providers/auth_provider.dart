@@ -78,6 +78,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.signUp(email, password, name: name);
       // Success is handled by stream listener (authStateChanges will fire)
+      final user = _repository.currentUser;
+      if (user != null) {
+        await SeedNotesService.seedIfEmpty(user.uid);
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _formatError(e.toString()));
     }

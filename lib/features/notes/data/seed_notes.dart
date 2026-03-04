@@ -34,12 +34,16 @@ class SeedNotesService {
       ];
       
       for (final note in sampleNotes) {
+        final noteData = note.toJson();
+        noteData['server_updated_at'] = FieldValue.serverTimestamp();
+        noteData['is_deleted'] = false;
+
         await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .collection('notes')
           .doc(note.id)
-          .set(note.toJson());
+          .set(noteData);
       }
     }
   }
