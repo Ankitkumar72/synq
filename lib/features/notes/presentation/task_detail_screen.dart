@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../domain/models/note.dart';
 import '../data/notes_provider.dart';
+import '../utils/markdown_controller.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
   final Note task;
@@ -19,7 +20,7 @@ class TaskDetailScreen extends ConsumerStatefulWidget {
 
 class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late TextEditingController _subTaskController;
-  late TextEditingController _descriptionController;
+  late MarkdownEditingController _descriptionController;
   late FocusNode _subTaskFocusNode;
   late ScrollController _scrollController;
   Timer? _debounceTimer;
@@ -36,7 +37,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   void initState() {
     super.initState();
     _subTaskController = TextEditingController();
-    _descriptionController = TextEditingController(text: widget.task.body);
+    _descriptionController = MarkdownEditingController(text: widget.task.body);
     _descriptionController.addListener(_onDescriptionChanged);
     _subTaskFocusNode = FocusNode();
     _scrollController = ScrollController();
