@@ -521,11 +521,11 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
   Widget _buildDailyIntentionsSection() {
     final focusState = ref.watch(weeklyFocusProvider);
     
-    // Get dates for Mon - Fri of the current week
+    // Get dates for Mon - Sun of the current week
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     
-    // We now show 7 days (MON - SUN)
+    // We show 7 days (MON - SUN)
     final days = List.generate(7, (index) {
       final date = startOfWeek.add(Duration(days: index));
       final isFinished = focusState.dailyIntentions.length > index ? focusState.dailyIntentions[index] : false;
@@ -566,64 +566,94 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           const SizedBox(height: 20),
           SizedBox(
             height: 105, // accommodate container height + cross-axis padding for shadow
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: days.length,
-              padding: const EdgeInsets.only(bottom: 12), // provides cross-axis padding for the shadow
-              itemBuilder: (context, index) {
-                final dayData = days[index];
-                final isSelected = dayData['icon'] as bool;
-                final isToday = dayData['isToday'] as bool;
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Determine width for ~4 items (3 gaps of 12px)
+                final itemWidth = (constraints.maxWidth - (3 * 12)) / 4;
+                
+                // Calculate initial scroll offset to center 'Today'
+                final todayIndex = now.weekday - 1; 
+                final itemTotalWidth = itemWidth + 12; // item width + spacing
+                
+                // Offset calculation: 
+                // We want the today item to be centered. Center of scroll view is constraints.maxWidth / 2.
+                // Item left edge should be at: center - (itemWidth / 2)
+                // Left edge of item conceptually is at: todayIndex * itemTotalWidth
+                // So scrollOffset = (todayIndex * itemTotalWidth) - (constraints.maxWidth / 2) + (itemWidth / 2)
+                double initialScrollOffset = 0;
+                if (todayIndex >= 0 && todayIndex < 7) {
+                   initialScrollOffset = (todayIndex * itemTotalWidth) - (constraints.maxWidth / 2) + (itemWidth / 2);
+                   // Constrain offset between 0 and max possible scroll
+                   final maxScroll = (7 * itemTotalWidth) - 12 - constraints.maxWidth;
+                   initialScrollOffset = initialScrollOffset.clamp(0.0, maxScroll < 0 ? 0.0 : maxScroll);
+                }
 
-                return GestureDetector(
-                  onTap: () {
-                    ref.read(weeklyFocusProvider.notifier).toggleDailyIntention(index);
-                  },
-                  child: Container(
-                    width: 60,
-                    margin: const EdgeInsets.only(right: 12), // removed bottom margin, handled by ListView padding
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF5473F7) : (isToday ? const Color(0xFFF0EFFF) : const Color(0xFFF5F7FF)),
-                      borderRadius: BorderRadius.circular(35),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: const Color(0xFF5473F7).withAlpha(76),
-                                blurRadius: 15,
-                                offset: const Offset(0, 8),
-                              )
-                            ]
-                          : [],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          dayData['day'] as String,
-                          style: GoogleFonts.roboto(
-                            color: isSelected ? Colors.white.withAlpha(200) : (isToday ? const Color(0xFF6B58F5) : Colors.grey.shade500),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                // We don't want to rebuild Controller on every LayoutBuilder pass, but assuming this doesn't resize often drastically.
+                // For a robust centering initialization on first build without a complex stateful wrapper, 
+                // assigning it here works well enough for static orientation.
+                final ScrollController scrollController = ScrollController(initialScrollOffset: initialScrollOffset);
+
+                return ListView.builder(
+                  controller: scrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: days.length,
+                  padding: const EdgeInsets.only(bottom: 12), // provides cross-axis padding for the shadow
+                  itemBuilder: (context, index) {
+                    final dayData = days[index];
+                    final isSelected = dayData['icon'] as bool;
+                    final isToday = dayData['isToday'] as bool;
+
+                    return GestureDetector(
+                      onTap: () {
+                        ref.read(weeklyFocusProvider.notifier).toggleDailyIntention(index);
+                      },
+                      child: Container(
+                        width: itemWidth,
+                        margin: const EdgeInsets.only(right: 12), // removed bottom margin, handled by ListView padding
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFF5473F7) : (isToday ? const Color(0xFFF0EFFF) : const Color(0xFFF5F7FF)),
+                          borderRadius: BorderRadius.circular(35),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFF5473F7).withAlpha(76),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 8),
+                                  )
+                                ]
+                              : [],
                         ),
-                        const SizedBox(height: 6),
-                        if (isSelected)
-                          const Icon(Icons.check, color: Colors.white, size: 20)
-                        else
-                          Text(
-                            dayData['date'] as String,
-                            style: GoogleFonts.roboto(
-                              color: isToday ? const Color(0xFF6B58F5) : Colors.black87,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              dayData['day'] as String,
+                              style: GoogleFonts.roboto(
+                                color: isSelected ? Colors.white.withAlpha(200) : (isToday ? const Color(0xFF6B58F5) : Colors.grey.shade500),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ),
+                            const SizedBox(height: 6),
+                            if (isSelected)
+                              const Icon(Icons.check, color: Colors.white, size: 20)
+                            else
+                              Text(
+                                dayData['date'] as String,
+                                style: GoogleFonts.roboto(
+                                  color: isToday ? const Color(0xFF6B58F5) : Colors.black87,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
-              },
+              }
             ),
           ),
           const SizedBox(height: 20),
