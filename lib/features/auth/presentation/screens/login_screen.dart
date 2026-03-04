@@ -25,10 +25,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
               // Logo
@@ -308,6 +309,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -339,13 +341,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
              else 
                Icon(icon, size: 24),
              const SizedBox(width: 12),
-             Text(
-               label,
-               style: const TextStyle(
-                 fontFamily: 'Roboto', // Use Roboto if available, else standard
-                 fontWeight: FontWeight.w500, 
-                 fontSize: 16,
-                 color: Color(0xFF3C4043), // Google Text Color
+             Flexible(
+               child: Text(
+                 label,
+                 overflow: TextOverflow.ellipsis,
+                 style: const TextStyle(
+                   fontFamily: 'Roboto', // Use Roboto if available, else standard
+                   fontWeight: FontWeight.w500, 
+                   fontSize: 16,
+                   color: Color(0xFF3C4043), // Google Text Color
+                 ),
                ),
              ),
           ],

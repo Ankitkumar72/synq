@@ -52,10 +52,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
               const Text(
@@ -248,6 +250,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               const SizedBox(height: 24),
             ],
           ),
+        ),
         ),
       ),
     );
