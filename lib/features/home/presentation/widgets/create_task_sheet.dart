@@ -52,7 +52,8 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
       _selectedFolderId = widget.initialFolderId;
       _taskDueDate = widget.initialDate;
       if (_taskDueDate != null) {
-        _isTaskAllDay = true; // Default to all day for just date selection
+        _isTaskAllDay = false; // By default, don't force all-day
+        _taskEndTime = _taskDueDate!.add(const Duration(hours: 1));
       }
     }
   }

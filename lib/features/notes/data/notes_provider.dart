@@ -14,6 +14,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
 
   @override
   Stream<List<Note>> build() {
+    NotificationService().onAction ??= _handleNotificationAction;
     ref.watch(syncCoordinatorProvider);
     _repository = ref.watch(notesRepositoryProvider);
     return _repository.watchNotes();
@@ -21,7 +22,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
 
   Future<void> addNote(Note note) async {
     await _repository.addNote(note);
-    await _scheduleOrCancelNotification(note);
+    await NotificationService().scheduleNote(note);
     
     // Generate recurring instances if applicable
     if (note.recurrenceRule != null && note.scheduledTime != null) {
@@ -37,7 +38,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
 
     try {
       await _repository.updateNote(note);
-      await _scheduleOrCancelNotification(note);
+      await NotificationService().scheduleNote(note);
     } catch (e) {
       // Revert on error if necessary, though the stream will eventually refresh
       // For now, we rely on the repository watch to pull the correct state back
@@ -124,6 +125,9 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
 
     if (futureIdsToDelete.isNotEmpty) {
       await _repository.deleteNotes(futureIdsToDelete);
+      for (var id in futureIdsToDelete) {
+        await NotificationService().cancelNotification(id.hashCode);
+      }
     }
 
     // 2. Update THIS note
@@ -153,6 +157,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
          // "Update All" is typically for content.
        );
        await _repository.updateNote(updatedInstance);
+       await NotificationService().scheduleNote(updatedInstance);
     }
   }
 
@@ -201,6 +206,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
       
       instances.add(instance);
       await _repository.addNote(instance); // Add immediately (or batch ideally)
+      await NotificationService().scheduleNote(instance);
       
       nextDate = _calculateNextDate(nextDate, rule);
       count++;
@@ -247,52 +253,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
     }
   }
 
-  /// Schedules or cancels a notification based on the 3-case logic:
-  /// 1. No date/time → cancel any existing notification
-  /// 2. Date/time set, no reminder → schedule at scheduledTime
-  /// 3. Reminder set → schedule at reminderTime
-  Future<void> _scheduleOrCancelNotification(Note note) async {
-    final notifService = NotificationService();
-    final notifId = note.id.hashCode;
 
-    // Wire up action handler (idempotent — just sets the callback reference)
-    notifService.onAction ??= _handleNotificationAction;
-
-    // Always cancel first to avoid duplicates
-    await notifService.cancelNotification(notifId);
-
-    // Don't schedule for completed tasks
-    if (note.isCompleted) return;
-
-    final now = DateTime.now();
-
-    if (note.reminderTime != null) {
-      // Case 3: Reminder is explicitly set → use reminder time
-      if (note.reminderTime!.isAfter(now)) {
-        await notifService.scheduleNotification(
-          id: notifId,
-          title: note.title,
-          body: note.body ?? 'Time to focus!',
-          scheduledDate: note.reminderTime!,
-          subText: 'Synq Task • Reminder',
-          noteId: note.id,
-        );
-      }
-    } else if (note.scheduledTime != null && !note.isAllDay) {
-      // Case 2: Date/time set, no reminder → notify at scheduled time
-      if (note.scheduledTime!.isAfter(now)) {
-        await notifService.scheduleNotification(
-          id: notifId,
-          title: note.title,
-          body: note.body ?? 'Task starting now',
-          scheduledDate: note.scheduledTime!,
-          subText: 'Synq Task • Due Now',
-          noteId: note.id,
-        );
-      }
-    }
-    // Case 1: No date/time → no notification (already cancelled above)
-  }
 
   /// Handles notification action button taps.
   Future<void> _handleNotificationAction(

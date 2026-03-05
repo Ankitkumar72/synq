@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import '../domain/models/folder.dart';
 import '../domain/models/note.dart';
 import 'local_database.dart';
+import '../../../core/services/notification_service.dart';
 
 class FirebaseSyncCoordinator {
   FirebaseSyncCoordinator({
@@ -279,6 +280,7 @@ class FirebaseSyncCoordinator {
             source: SyncWriteSource.remote,
             remoteUpdatedAtMs: remoteUpdatedAtMs,
           );
+          await NotificationService().cancelNotification(docId.hashCode);
           return;
         }
 
@@ -288,6 +290,7 @@ class FirebaseSyncCoordinator {
           source: SyncWriteSource.remote,
           remoteUpdatedAtMs: remoteUpdatedAtMs,
         );
+        await NotificationService().scheduleNote(note);
         return;
       }
 

@@ -8,10 +8,10 @@ import 'core/theme/app_theme.dart';
 import 'core/providers/firebase_provider.dart';
 import 'features/shell/presentation/main_shell.dart';
 
-import 'core/widgets/responsive_wrapper.dart';
-import 'features/auth/presentation/providers/auth_provider.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/notes/data/sync_access_provider.dart';
+import 'package:synq/core/widgets/responsive_wrapper.dart';
+import 'package:synq/features/auth/presentation/providers/auth_provider.dart';
+import 'package:synq/features/auth/presentation/screens/login_screen.dart';
+import 'package:synq/features/notes/data/sync_access_provider.dart';
 
 void main() async {
   String? firebaseError;
@@ -34,11 +34,30 @@ void main() async {
   ));
 }
 
-class SynqApp extends ConsumerWidget {
+class SynqApp extends ConsumerStatefulWidget {
   const SynqApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SynqApp> createState() => _SynqAppState();
+}
+
+class _SynqAppState extends ConsumerState<SynqApp> {
+  bool _didRequestNotificationPermission = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_didRequestNotificationPermission) {
+        return;
+      }
+      _didRequestNotificationPermission = true;
+      NotificationService().requestPermissions();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final firebaseError = ref.watch(firebaseErrorProvider);
     final syncAccess = ref.watch(syncAccessProvider);
@@ -102,5 +121,3 @@ class SynqApp extends ConsumerWidget {
     );
   }
 }
-
-

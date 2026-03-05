@@ -1,10 +1,19 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
+import '../../features/notes/domain/models/note.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `Firebase.initializeApp()` before using other Firebase services.
+  debugPrint("Handling a background message: ${message.messageId}");
+}
 
 /// Callback that the service invokes when a notification action is tapped.
-/// [actionId] is `'check_off'` or `'snooze'`, [noteId] is the task ID.
+/// [actionId] is 'check_off' or 'snooze', [noteId] is the task ID.
 typedef NotificationActionCallback = Future<void> Function(
     String actionId, String noteId);
 
@@ -46,6 +55,17 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: _handleNotificationResponse,
     );
+
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('Got a message whilst in the foreground!');
+      debugPrint('Message data: ${message.data}');
+
+      if (message.notification != null) {
+        debugPrint('Message also contained a notification: ${message.notification}');
+      }
+    });
   }
 
   Future<void> _handleNotificationResponse(
@@ -53,35 +73,59 @@ class NotificationService {
     final actionId = response.actionId;
     final payload = response.payload;
 
+    debugPrint('🔔 [NotificationService] Notification clicked! Action: $actionId, Payload: $payload');
+
     if (actionId != null &&
         actionId.isNotEmpty &&
         payload != null &&
         payload.isNotEmpty) {
       if (onAction != null) {
+        debugPrint('🔔 [NotificationService] Routing action to handler...');
         await onAction!(actionId, payload);
+      } else {
+        debugPrint('⚠️ [NotificationService] onAction handler is null!');
       }
     }
-    // Tapping the notification body (no actionId) can be handled here
-    // for navigation in the future.
   }
 
   Future<void> requestPermissions() async {
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
-    } else if (defaultTargetPlatform == TargetPlatform.android) {
+    try {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin>()
+            ?.requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
+        return;
+      }
+
+      if (defaultTargetPlatform != TargetPlatform.android) {
+        return;
+      }
+
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
           flutterLocalNotificationsPlugin
               .resolvePlatformSpecificImplementation<
                   AndroidFlutterLocalNotificationsPlugin>();
 
-      await androidImplementation?.requestNotificationsPermission();
+      if (androidImplementation == null) {
+        debugPrint('[NotificationService] Android notification implementation is unavailable.');
+        return;
+      }
+
+      // Android 13+ (API 33+) requires permission for POST_NOTIFICATIONS
+      await androidImplementation.requestNotificationsPermission();
+      
+      // Android 12+ (API 31+) requires permission for exact alarms
+      await androidImplementation.requestExactAlarmsPermission();
+
+      // FCM Permissions
+      await FirebaseMessaging.instance.requestPermission();
+    } catch (e) {
+      debugPrint('[NotificationService] Failed to request permissions: $e');
     }
   }
 
@@ -131,6 +175,13 @@ class NotificationService {
         ],
       );
 
+      bool canScheduleExact = true;
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final androidImplementation = flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        canScheduleExact = await androidImplementation?.canScheduleExactNotifications() ?? false;
+      }
+
       await flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
@@ -140,13 +191,71 @@ class NotificationService {
           android: androidDetails,
           iOS: const DarwinNotificationDetails(),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: canScheduleExact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: noteId,
       );
+
+      debugPrint('✅ [NotificationService] Scheduled "$title" for $scheduledDate (Exact: $canScheduleExact)');
     } catch (e) {
-      debugPrint('Error scheduling notification: $e');
+      debugPrint('❌ [NotificationService] Error scheduling notification: $e');
+    }
+  }
+
+  /// Centralized logic to schedule or cancel notifications for a Note
+  Future<void> scheduleNote(Note note) async {
+    final notifId = note.id.hashCode;
+
+    // Always cancel first to avoid duplicates
+    await cancelNotification(notifId);
+
+    // Don't schedule for completed tasks
+    if (note.isCompleted) return;
+
+    final now = DateTime.now();
+    DateTime? notifyTime;
+    String subText = 'Synq Task • Due Now';
+    String bodyText = note.body ?? 'Time to focus!';
+
+    if (note.reminderTime != null) {
+      notifyTime = note.reminderTime;
+      subText = 'Synq Task • Reminder';
+    } else if (note.scheduledTime != null) {
+      if (note.isAllDay) {
+        // Default to 9:00 AM on the scheduled date for all-day tasks
+        notifyTime = DateTime(
+          note.scheduledTime!.year,
+          note.scheduledTime!.month,
+          note.scheduledTime!.day,
+          9,
+          0,
+        );
+        subText = 'Synq Task • All Day';
+        bodyText = note.body ?? 'All day task';
+      } else {
+        notifyTime = note.scheduledTime;
+        subText = 'Synq Task • Start Time';
+        bodyText = note.body ?? 'Task starting now';
+      }
+    }
+
+    if (notifyTime != null && notifyTime.isAfter(now)) {
+      debugPrint('📅 [NotificationService] Scheduling notification for ${note.title} at $notifyTime');
+      await scheduleNotification(
+        id: notifId,
+        title: note.title,
+        body: bodyText,
+        scheduledDate: notifyTime,
+        subText: subText,
+        noteId: note.id,
+      );
+    } else if (notifyTime != null) {
+      debugPrint('⏭️ [NotificationService] Notify time $notifyTime is in the past for ${note.title}, skipping.');
+    } else {
+      debugPrint('ℹ️ [NotificationService] Task ${note.title} has no specific time to notify.');
     }
   }
 
