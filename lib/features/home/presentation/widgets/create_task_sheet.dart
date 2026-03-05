@@ -546,18 +546,26 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
           folderId: _selectedFolderId,
         ));
 
-    if (widget.taskToEdit == null) {
-      await ref.read(notesProvider.notifier).addNote(task);
-    } else {
-        // ... (Keep existing update logic for recurring tasks)
-       // Simple update for now to avoid complexity in this snippet, 
-       // but typically we'd show the dialog again if it's recurring.
-       // For this redesign, assuming standard update flow.
-       await ref.read(notesProvider.notifier).updateNote(task);
-    }
+    try {
+      if (widget.taskToEdit == null) {
+        await ref.read(notesProvider.notifier).addNote(task);
+      } else {
+        await ref.read(notesProvider.notifier).updateNote(task);
+      }
 
-    if (mounted) {
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+             content: Text('Failed to save task: $e'),
+             backgroundColor: Colors.red,
+             behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
