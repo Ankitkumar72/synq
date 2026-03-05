@@ -2,10 +2,8 @@
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="#FFFFFF">
-  <!-- Task list / checklist icon (matches the mockup's small icon) -->
+    android:viewportHeight="24">
   <path
-      android:fillColor="@android:color/white"
+      android:fillColor="#FFFFFFFF"
       android:pathData="M3,5h2v2H3V5zM3,11h2v2H3V11zM3,17h2v2H3V17zM7,5h14v2H7V5zM7,11h14v2H7V11zM7,17h14v2H7V17z"/>
 </vector>

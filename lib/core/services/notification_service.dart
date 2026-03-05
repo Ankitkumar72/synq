@@ -51,10 +51,21 @@ class NotificationService {
       iOS: initializationSettingsDarwin,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: _handleNotificationResponse,
-    );
+    try {
+      await flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: _handleNotificationResponse,
+      );
+    } catch (e) {
+      debugPrint('⚠️ [NotificationService] Failed to initialize with custom icon, falling back: $e');
+      await flutterLocalNotificationsPlugin.initialize(
+        const InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/launcher_icon'),
+          iOS: initializationSettingsDarwin,
+        ),
+        onDidReceiveNotificationResponse: _handleNotificationResponse,
+      );
+    }
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
