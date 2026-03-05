@@ -8,6 +8,7 @@ import 'core/theme/app_theme.dart';
 import 'core/providers/firebase_provider.dart';
 import 'features/shell/presentation/main_shell.dart';
 
+import 'core/widgets/responsive_wrapper.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/notes/data/sync_access_provider.dart';
@@ -60,6 +61,11 @@ class SynqApp extends ConsumerWidget {
       supportedLocales: const [
         Locale('en', 'US'),
       ],
+      builder: (context, child) {
+        return ResponsiveWrapper(
+          child: child ?? const SizedBox(),
+        );
+      },
       home: firebaseError != null
           ? Scaffold(
               backgroundColor: AppColors.background,
