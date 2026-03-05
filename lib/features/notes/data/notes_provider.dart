@@ -255,6 +255,9 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
     final notifService = NotificationService();
     final notifId = note.id.hashCode;
 
+    // Wire up action handler (idempotent — just sets the callback reference)
+    notifService.onAction ??= _handleNotificationAction;
+
     // Always cancel first to avoid duplicates
     await notifService.cancelNotification(notifId);
 
@@ -268,9 +271,11 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
       if (note.reminderTime!.isAfter(now)) {
         await notifService.scheduleNotification(
           id: notifId,
-          title: 'Reminder: ${note.title}',
+          title: note.title,
           body: note.body ?? 'Time to focus!',
           scheduledDate: note.reminderTime!,
+          subText: 'Synq Task • Reminder',
+          noteId: note.id,
         );
       }
     } else if (note.scheduledTime != null && !note.isAllDay) {
@@ -281,9 +286,57 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
           title: note.title,
           body: note.body ?? 'Task starting now',
           scheduledDate: note.scheduledTime!,
+          subText: 'Synq Task • Due Now',
+          noteId: note.id,
         );
       }
     }
     // Case 1: No date/time → no notification (already cancelled above)
+  }
+
+  /// Handles notification action button taps.
+  Future<void> _handleNotificationAction(
+      String actionId, String noteId) async {
+    final repo = ref.read(notesRepositoryProvider);
+    final notifService = NotificationService();
+
+    if (actionId == 'check_off') {
+      // Mark the task as completed
+      final notes = state.value;
+      if (notes == null) return;
+      final note = notes.cast<Note?>().firstWhere(
+            (n) => n!.id == noteId,
+            orElse: () => null,
+          );
+      if (note == null || note.isCompleted) return;
+
+      final updated = note.copyWith(
+        isCompleted: true,
+        completedAt: DateTime.now(),
+      );
+      await repo.updateNote(updated);
+      state = AsyncValue.data(
+        [for (final n in notes) if (n.id == noteId) updated else n],
+      );
+    } else if (actionId == 'snooze') {
+      // Reschedule the notification for +10 minutes from now
+      final notifId = noteId.hashCode;
+      final snoozedTime = DateTime.now().add(const Duration(minutes: 10));
+
+      final notes = state.value;
+      final note = notes?.cast<Note?>().firstWhere(
+            (n) => n!.id == noteId,
+            orElse: () => null,
+          );
+
+      await notifService.scheduleNotification(
+        id: notifId,
+        title: note?.title ?? 'Task',
+        body: note?.body ?? 'Snoozed task',
+        scheduledDate: snoozedTime,
+        subText: 'Synq Task • Snoozed',
+        noteId: noteId,
+      );
+    }
   }
 }
