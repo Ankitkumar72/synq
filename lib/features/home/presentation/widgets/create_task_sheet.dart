@@ -271,6 +271,24 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                               const SizedBox(width: 8),
                               TextButton(
                                 onPressed: () {
+                                  // Cascading clear: clear date → also clears time, reminder, recurrence
+                                  setState(() {
+                                    _taskDueDate = null;
+                                    _taskEndTime = null;
+                                    _isTaskAllDay = false;
+                                    _taskReminderTime = null;
+                                    _recurrenceRule = null;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                child: const Text(
+                                  'Clear',
+                                  style: TextStyle(fontSize: 14, color: Colors.red),
+                                ),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () {
                                   setState(() {
                                     _isTaskAllDay = selectedIsAllDay;
                                     _recurrenceRule = selectedRule;

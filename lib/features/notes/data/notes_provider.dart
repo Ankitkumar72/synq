@@ -21,14 +21,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
 
   Future<void> addNote(Note note) async {
     await _repository.addNote(note);
-    if (note.reminderTime != null && note.reminderTime!.isAfter(DateTime.now()) && !note.isCompleted) {
-      await NotificationService().scheduleNotification(
-        id: note.id.hashCode,
-        title: 'Reminder: ${note.title}',
-        body: note.body ?? 'Time to focus!',
-        scheduledDate: note.reminderTime!,
-      );
-    }
+    await _scheduleOrCancelNotification(note);
     
     // Generate recurring instances if applicable
     if (note.recurrenceRule != null && note.scheduledTime != null) {
@@ -44,16 +37,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
 
     try {
       await _repository.updateNote(note);
-      if (note.reminderTime != null && note.reminderTime!.isAfter(DateTime.now()) && !note.isCompleted) {
-        await NotificationService().scheduleNotification(
-          id: note.id.hashCode,
-          title: 'Reminder: ${note.title}',
-          body: note.body ?? 'Time to focus!',
-          scheduledDate: note.reminderTime!,
-        );
-      } else {
-        await NotificationService().cancelNotification(note.id.hashCode);
-      }
+      await _scheduleOrCancelNotification(note);
     } catch (e) {
       // Revert on error if necessary, though the stream will eventually refresh
       // For now, we rely on the repository watch to pull the correct state back
@@ -245,5 +229,61 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
       case RecurrenceUnit.year:
          return DateTime(currentDate.year + interval, currentDate.month, currentDate.day, currentDate.hour, currentDate.minute);
     }
+  }
+
+  /// Reorder unscheduled tasks. Takes list of task IDs in the desired order
+  /// and updates the `order` field on each.
+  Future<void> reorderTasks(List<String> orderedIds) async {
+    final currentNotes = state.value ?? [];
+    for (var i = 0; i < orderedIds.length; i++) {
+      final note = currentNotes.firstWhere(
+        (n) => n.id == orderedIds[i],
+        orElse: () => throw Exception('Task not found: ${orderedIds[i]}'),
+      );
+      if (note.order != i) {
+        final updated = note.copyWith(order: i);
+        await _repository.updateNote(updated);
+      }
+    }
+  }
+
+  /// Schedules or cancels a notification based on the 3-case logic:
+  /// 1. No date/time → cancel any existing notification
+  /// 2. Date/time set, no reminder → schedule at scheduledTime
+  /// 3. Reminder set → schedule at reminderTime
+  Future<void> _scheduleOrCancelNotification(Note note) async {
+    final notifService = NotificationService();
+    final notifId = note.id.hashCode;
+
+    // Always cancel first to avoid duplicates
+    await notifService.cancelNotification(notifId);
+
+    // Don't schedule for completed tasks
+    if (note.isCompleted) return;
+
+    final now = DateTime.now();
+
+    if (note.reminderTime != null) {
+      // Case 3: Reminder is explicitly set → use reminder time
+      if (note.reminderTime!.isAfter(now)) {
+        await notifService.scheduleNotification(
+          id: notifId,
+          title: 'Reminder: ${note.title}',
+          body: note.body ?? 'Time to focus!',
+          scheduledDate: note.reminderTime!,
+        );
+      }
+    } else if (note.scheduledTime != null && !note.isAllDay) {
+      // Case 2: Date/time set, no reminder → notify at scheduled time
+      if (note.scheduledTime!.isAfter(now)) {
+        await notifService.scheduleNotification(
+          id: notifId,
+          title: note.title,
+          body: note.body ?? 'Task starting now',
+          scheduledDate: note.scheduledTime!,
+        );
+      }
+    }
+    // Case 1: No date/time → no notification (already cancelled above)
   }
 }

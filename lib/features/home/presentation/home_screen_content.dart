@@ -103,10 +103,11 @@ class HomeScreenContent extends ConsumerWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    final tasks = notes.where((n) {
-      if (!n.isTask) return false;
-      if (n.scheduledTime == null) return true;
-
+    // Separate tasks into scheduled (today) and unscheduled
+    final allTasks = notes.where((n) => n.isTask).toList();
+    
+    final scheduledTasks = allTasks.where((n) {
+      if (n.scheduledTime == null) return false;
       final scheduledDate = DateTime(
         n.scheduledTime!.year,
         n.scheduledTime!.month,
@@ -120,6 +121,10 @@ class HomeScreenContent extends ConsumerWidget {
         if (b.scheduledTime == null) return -1;
         return a.scheduledTime!.compareTo(b.scheduledTime!);
       });
+
+    final unscheduledTasks = allTasks.where((n) => n.scheduledTime == null).toList()
+      ..sort((a, b) => a.order.compareTo(b.order));
+
     final notesOnly = notes.where((n) => !n.isTask).toList();
 
     if (notes.isEmpty) {
@@ -129,13 +134,13 @@ class HomeScreenContent extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Tasks Section
-        if (tasks.isNotEmpty) ...[
+        // Scheduled Tasks Section
+        if (scheduledTasks.isNotEmpty) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'YOUR TASKS',
+                'SCHEDULED',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.bold,
@@ -143,7 +148,7 @@ class HomeScreenContent extends ConsumerWidget {
                     ),
               ),
               Text(
-                '${tasks.where((t) => !t.isCompleted).length} remaining',
+                '${scheduledTasks.where((t) => !t.isCompleted).length} remaining',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -151,7 +156,33 @@ class HomeScreenContent extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...tasks.map((task) => _buildTaskItem(context, ref, task)),
+          ...scheduledTasks.map((task) => _buildTaskItem(context, ref, task)),
+        ],
+
+        // Unscheduled Tasks Section (drag-to-reorder)
+        if (unscheduledTasks.isNotEmpty) ...[
+          if (scheduledTasks.isNotEmpty) const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'TO-DO',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+              ),
+              Text(
+                '${unscheduledTasks.where((t) => !t.isCompleted).length} remaining',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildReorderableUnscheduledSection(context, ref, unscheduledTasks),
         ],
 
         // Notes Section
@@ -169,6 +200,44 @@ class HomeScreenContent extends ConsumerWidget {
           ...notesOnly.map((note) => _buildNoteItem(context, ref, note)),
         ],
       ],
+    );
+  }
+
+  Widget _buildReorderableUnscheduledSection(
+    BuildContext context,
+    WidgetRef ref,
+    List<Note> unscheduledTasks,
+  ) {
+    return ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      buildDefaultDragHandles: false,
+      itemCount: unscheduledTasks.length,
+      proxyDecorator: (child, index, animation) {
+        return Material(
+          color: Colors.transparent,
+          elevation: 4,
+          shadowColor: Colors.black26,
+          borderRadius: BorderRadius.circular(16),
+          child: child,
+        );
+      },
+      onReorder: (oldIndex, newIndex) {
+        if (newIndex > oldIndex) newIndex--;
+        final reordered = List<Note>.from(unscheduledTasks);
+        final item = reordered.removeAt(oldIndex);
+        reordered.insert(newIndex, item);
+        final orderedIds = reordered.map((t) => t.id).toList();
+        ref.read(notesProvider.notifier).reorderTasks(orderedIds);
+      },
+      itemBuilder: (context, index) {
+        final task = unscheduledTasks[index];
+        return ReorderableDragStartListener(
+          key: ValueKey(task.id),
+          index: index,
+          child: _buildTaskItem(context, ref, task),
+        );
+      },
     );
   }
 

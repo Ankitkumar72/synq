@@ -214,6 +214,7 @@ mixin _$Note {
   List<SubTask> get subtasks => throw _privateConstructorUsedError;
   String? get folderId => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
+  int get order => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -248,7 +249,8 @@ abstract class $NoteCopyWith<$Res> {
       List<String> links,
       List<SubTask> subtasks,
       String? folderId,
-      DateTime? updatedAt});
+      DateTime? updatedAt,
+      int order});
 
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
 }
@@ -289,6 +291,7 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? subtasks = null,
     Object? folderId = freezed,
     Object? updatedAt = freezed,
+    Object? order = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -383,6 +386,10 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      order: null == order
+          ? _value.order
+          : order // ignore: cast_nullable_to_non_nullable
+              as int,
     ) as $Val);
   }
 
@@ -429,7 +436,8 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       List<String> links,
       List<SubTask> subtasks,
       String? folderId,
-      DateTime? updatedAt});
+      DateTime? updatedAt,
+      int order});
 
   @override
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
@@ -468,6 +476,7 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? subtasks = null,
     Object? folderId = freezed,
     Object? updatedAt = freezed,
+    Object? order = null,
   }) {
     return _then(_$NoteImpl(
       id: null == id
@@ -562,6 +571,10 @@ class __$$NoteImplCopyWithImpl<$Res>
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      order: null == order
+          ? _value.order
+          : order // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -593,7 +606,8 @@ class _$NoteImpl extends _Note {
       final List<String> links = const [],
       final List<SubTask> subtasks = const [],
       this.folderId,
-      this.updatedAt})
+      this.updatedAt,
+      this.order = 0})
       : _tags = tags,
         _attachments = attachments,
         _links = links,
@@ -682,10 +696,13 @@ class _$NoteImpl extends _Note {
   final String? folderId;
   @override
   final DateTime? updatedAt;
+  @override
+  @JsonKey()
+  final int order;
 
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, order: $order)';
   }
 
   @override
@@ -730,7 +747,8 @@ class _$NoteImpl extends _Note {
             (identical(other.folderId, folderId) ||
                 other.folderId == folderId) &&
             (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+                other.updatedAt == updatedAt) &&
+            (identical(other.order, order) || other.order == order));
   }
 
   @JsonKey(ignore: true)
@@ -759,7 +777,8 @@ class _$NoteImpl extends _Note {
         const DeepCollectionEquality().hash(_links),
         const DeepCollectionEquality().hash(_subtasks),
         folderId,
-        updatedAt
+        updatedAt,
+        order
       ]);
 
   @JsonKey(ignore: true)
@@ -800,7 +819,8 @@ abstract class _Note extends Note {
       final List<String> links,
       final List<SubTask> subtasks,
       final String? folderId,
-      final DateTime? updatedAt}) = _$NoteImpl;
+      final DateTime? updatedAt,
+      final int order}) = _$NoteImpl;
   const _Note._() : super._();
 
   factory _Note.fromJson(Map<String, dynamic> json) = _$NoteImpl.fromJson;
@@ -851,6 +871,8 @@ abstract class _Note extends Note {
   String? get folderId;
   @override
   DateTime? get updatedAt;
+  @override
+  int get order;
   @override
   @JsonKey(ignore: true)
   _$$NoteImplCopyWith<_$NoteImpl> get copyWith =>
