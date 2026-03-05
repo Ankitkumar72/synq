@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../domain/models/note.dart';
 import '../data/notes_provider.dart';
 import '../utils/markdown_controller.dart';
+import '../../home/presentation/providers/schedule_conflict_provider.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
   final Note task;
@@ -252,7 +253,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       initialTime: initialTime,
     );
 
-    if (pickedTime != null) {
+    if (pickedTime != null && mounted) {
       final newScheduled = DateTime(
         initialDate.year,
         initialDate.month,
@@ -260,6 +261,73 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         pickedTime.hour,
         pickedTime.minute,
       );
+
+      // Check for scheduling conflicts
+      final conflicts = await ref.read(
+        scheduleConflictProvider((
+          proposedStart: newScheduled,
+          proposedEnd: currentTask.endTime,
+          excludeId: currentTask.id,
+        )).future,
+      );
+
+      if (conflicts.isNotEmpty && mounted) {
+        final first = conflicts.first;
+        final conflictHour = first.scheduledTime!.hour > 12
+            ? first.scheduledTime!.hour - 12
+            : (first.scheduledTime!.hour == 0 ? 12 : first.scheduledTime!.hour);
+        final conflictMin =
+            first.scheduledTime!.minute.toString().padLeft(2, '0');
+        final conflictPeriod =
+            first.scheduledTime!.hour >= 12 ? 'PM' : 'AM';
+        final conflictTimeStr =
+            '$conflictHour:$conflictMin $conflictPeriod';
+
+        final keepAnyway = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.amber[700], size: 24),
+                const SizedBox(width: 8),
+                const Text('Schedule Overlap',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: Text(
+              '"${first.title}" is already scheduled at '
+              '$conflictTimeStr \u2014 these may overlap in your focus block.',
+              style: const TextStyle(fontSize: 14, height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Pick Different Time'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5372F6),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Keep Anyway'),
+              ),
+            ],
+          ),
+        );
+
+        if (keepAnyway == false && mounted) {
+          // Re-open the time picker
+          return _pickTime();
+        }
+        if (keepAnyway == null) return; // Dismissed the dialog
+      }
 
       final updatedTask = currentTask.copyWith(scheduledTime: newScheduled);
       ref.read(notesProvider.notifier).updateNote(updatedTask);

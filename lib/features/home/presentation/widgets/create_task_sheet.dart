@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../notes/domain/models/recurrence_rule.dart';
 import '../../../notes/domain/models/note.dart';
 import '../../../notes/data/notes_provider.dart';
+import '../providers/schedule_conflict_provider.dart';
 import 'repeat_settings_screen.dart';
 
 class CreateTaskSheet extends ConsumerStatefulWidget {
@@ -256,6 +257,39 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                           onTap: setRepeatRule,
                         ),
                         const Divider(height: 1, color: Color(0xFF708090)),
+                        // -- Conflict warning inside the dialog --
+                        if (!selectedIsAllDay)
+                          Consumer(builder: (context, dialogRef, _) {
+                            final proposedStart = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                              selectedStartTime.hour,
+                              selectedStartTime.minute,
+                            );
+                            final proposedEnd = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                              selectedEndTime.hour,
+                              selectedEndTime.minute,
+                            );
+                            final conflictsAsync = dialogRef.watch(
+                              scheduleConflictProvider((
+                                proposedStart: proposedStart,
+                                proposedEnd: proposedEnd,
+                                excludeId: widget.taskToEdit?.id,
+                              )),
+                            );
+                            return conflictsAsync.when(
+                              data: (conflicts) {
+                                if (conflicts.isEmpty) return const SizedBox.shrink();
+                                return _buildConflictBanner(conflicts, dark: true);
+                              },
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, __) => const SizedBox.shrink(),
+                            );
+                          }),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
                           child: Row(
@@ -631,6 +665,29 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                     onTap: _openTimePlannerSheet,
                   ),
 
+                  // -- Inline conflict warning below the schedule card --
+                  if (_taskDueDate != null && !_isTaskAllDay)
+                    Consumer(builder: (context, innerRef, _) {
+                      final conflictsAsync = innerRef.watch(
+                        scheduleConflictProvider((
+                          proposedStart: _taskDueDate!,
+                          proposedEnd: _taskEndTime,
+                          excludeId: widget.taskToEdit?.id,
+                        )),
+                      );
+                      return conflictsAsync.when(
+                        data: (conflicts) {
+                          if (conflicts.isEmpty) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: _buildConflictBanner(conflicts, dark: false),
+                          );
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      );
+                    }),
+
                   const SizedBox(height: 12), // Reduced spacing
 
                   // Description
@@ -914,7 +971,41 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
      return '${months[dt.month - 1]} ${dt.day}';
   }
-  
+
+  /// Builds the amber conflict-warning banner used in both the time-planner
+  /// dialog and below the schedule card.
+  Widget _buildConflictBanner(List<Note> conflicts, {required bool dark}) {
+    final first = conflicts.first;
+    final timeStr = _formatTime(first.scheduledTime);
+    final bg = dark ? const Color(0xFF3A3020) : const Color(0xFFFFF8E1);
+    final textColor = dark ? const Color(0xFFFFD54F) : const Color(0xFF6D4C00);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: dark ? const Color(0xFF5C4B1F) : const Color(0xFFFFE082),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded, size: 18, color: textColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '"${first.title}" is already scheduled at $timeStr — '
+              'these may overlap in your focus block',
+              style: TextStyle(fontSize: 12, color: textColor, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 void showCreateTaskSheet(BuildContext context, {Note? taskToEdit, String? initialFolderId, DateTime? initialDate}) {
