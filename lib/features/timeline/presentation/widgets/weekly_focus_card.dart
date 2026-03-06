@@ -60,7 +60,7 @@ class WeeklyFocusCard extends ConsumerWidget {
             style: GoogleFonts.roboto(
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              color: focusState.objective.isEmpty ? const Color(0xFFC4B5FD) : const Color(0xFF8A93A4), // Lighter color if empty
+              color: focusState.objective.isEmpty ? const Color(0xFFC4B5FD) : Colors.black, // Lighter color if empty
               height: 1.4,
             ),
           ),

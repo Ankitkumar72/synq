@@ -150,7 +150,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
             style: GoogleFonts.roboto(
               fontSize: focusState.objective.isEmpty ? 18 : 24,
               fontWeight: FontWeight.bold,
-              color: focusState.objective.isEmpty ? const Color(0xFFC4B5FD) : const Color(0xFF1E1E1E),
+              color: focusState.objective.isEmpty ? const Color(0xFFC4B5FD) : Colors.black,
             ),
           ),
           const SizedBox(height: 20),
