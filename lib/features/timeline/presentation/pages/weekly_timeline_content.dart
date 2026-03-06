@@ -41,10 +41,15 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
           }
         }
 
-        if (todayIndex > 0) {
-          // Approximate height of DailyScheduleCard (88-100) + separator (12)
+        if (todayIndex != -1) {
+          // Find approximate offset to center the item
+          final viewportHeight = _scrollController.position.viewportDimension;
+          const itemHeight = 110.0; // Approximate height of DailyScheduleCard + separator
+          
+          final targetOffset = (todayIndex * itemHeight) - (viewportHeight / 2) + (itemHeight / 2);
+          
           _scrollController.animateTo(
-            todayIndex * 110.0,
+            targetOffset.clamp(0, _scrollController.position.maxScrollExtent),
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeInOut,
           );

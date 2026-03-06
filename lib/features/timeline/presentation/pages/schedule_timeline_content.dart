@@ -40,11 +40,14 @@ class _ScheduleTimelineContentState extends ConsumerState<ScheduleTimelineConten
       }
       
       if (todayIndex != -1) {
-        // Find approximate offset. 
-        // Each day row height varies based on task count, but we can guess or use a fixed target.
-        // Assuming ~100px per day on average or a bit more.
+        // Find approximate offset to center the item
+        final viewportHeight = _scrollController.position.viewportDimension;
+        const itemHeight = 120.0; // Approximate height per day block
+        
+        final targetOffset = (todayIndex * itemHeight) - (viewportHeight / 2) + (itemHeight / 2);
+        
         _scrollController.animateTo(
-          todayIndex * 120.0, 
+          targetOffset.clamp(0, _scrollController.position.maxScrollExtent), 
           duration: const Duration(milliseconds: 600),
           curve: Curves.easeInOut,
         );
