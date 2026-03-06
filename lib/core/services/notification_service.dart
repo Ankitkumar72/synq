@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
+import 'dart:ui';
 import '../../features/notes/domain/models/note.dart';
 
 @pragma('vm:entry-point')
@@ -36,7 +37,7 @@ class NotificationService {
     tz.initializeTimeZones();
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('ic_stat_synq');
+        AndroidInitializationSettings('ic_notification_synq');
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
@@ -160,7 +161,9 @@ class NotificationService {
         importance: Importance.max,
         priority: Priority.high,
         // Icon setup
-        icon: 'ic_stat_synq',
+        icon: 'ic_notification_synq',
+        largeIcon: const DrawableResourceAndroidBitmap('ic_large_notification'),
+        color: const Color(0xFF00B0FF), // Electric blue branding
         // Rich text
         styleInformation: BigTextStyleInformation(
           body,
