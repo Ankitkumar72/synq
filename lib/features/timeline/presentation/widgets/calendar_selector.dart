@@ -266,11 +266,16 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
               data: Theme.of(context).copyWith(
                 colorScheme: Theme.of(context).colorScheme.copyWith(
                   onSurface: Colors.black,
+                  onSurfaceVariant: Colors.black, 
                   onPrimary: Colors.white,
+                  primary: const Color(0xFF5473F7), // Match app theme blue for highlights
                 ),
                 textTheme: Theme.of(context).textTheme.apply(
                   bodyColor: Colors.black,
                   displayColor: Colors.black,
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(foregroundColor: Colors.black),
                 ),
               ),
               child: CalendarDatePicker(
