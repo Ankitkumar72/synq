@@ -17,32 +17,42 @@ class ScheduleTimelineContent extends ConsumerWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     
+    // Weekly Header Date Calculation
+    final currentWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+    final startFormat = DateFormat('MMM d');
+    final endFormat = DateFormat('MMM d');
+    final weekRangeText = '${startFormat.format(currentWeekStart)} - ${endFormat.format(currentWeekStart.add(const Duration(days: 6)))}';
+
+    Widget content;
+    
     if (sortedDates.isEmpty) {
-      return Center(
-        child: Text(
-          'No scheduled tasks found.',
-          style: GoogleFonts.roboto(
-            color: AppColors.textSecondary,
-            fontSize: 16,
+      content = Expanded(
+        child: Center(
+          child: Text(
+            'No scheduled tasks found.',
+            style: GoogleFonts.roboto(
+              color: AppColors.textSecondary,
+              fontSize: 16,
+            ),
           ),
         ),
       );
-    }
-    
-    return Container(
-      color: AppColors.background,
-      child: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.only(top: 16.0, bottom: 80.0, left: 16.0, right: 16.0),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final date = sortedDates[index];
-                  final events = groupedEvents[date]!;
-                  final isToday = date == today;
-                  
-                  return Padding(
+    } else {
+      content = Expanded(
+        child: Container(
+          color: AppColors.background,
+          child: CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.only(top: 16.0, bottom: 80.0),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final date = sortedDates[index];
+                      final events = groupedEvents[date]!;
+                      final isToday = date == today;
+                      
+                      return Padding(
                     padding: const EdgeInsets.only(bottom: 24.0),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,6 +178,81 @@ class ScheduleTimelineContent extends ConsumerWidget {
               ),
             ),
           ),
+        ],
+      ),
+        ),
+      );
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CURRENT WEEK',
+                      style: GoogleFonts.roboto(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            weekRangeText,
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                  fontSize: 26,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.keyboard_arrow_down, size: 24, color: AppColors.textSecondary),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Builder(
+                builder: (context) {
+                  return GestureDetector(
+                    onTap: () {
+                      Scaffold.of(context).openEndDrawer();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10), // Slightly larger padding for the menu button
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF6F8FA), // Light grey matching the design in screenshot
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.menu, color: AppColors.textPrimary, size: 24),
+                    ),
+                  );
+                }
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          
+          content, // The scroll view or empty state
         ],
       ),
     );
