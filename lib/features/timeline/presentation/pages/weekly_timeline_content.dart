@@ -90,17 +90,56 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
                 ),
               ),
               const SizedBox(width: 16),
-              GestureDetector(
-                onTap: () {
-                  ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.monthly;
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFDE8E1), // Light peach color matching design
-                    shape: BoxShape.circle,
+              Theme(
+                data: Theme.of(context).copyWith(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  popupMenuTheme: PopupMenuThemeData(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
+                    color: AppColors.surface,
                   ),
-                  child: const Icon(Icons.calendar_today_outlined, color: Color(0xFFE58D70), size: 24),
+                ),
+                child: PopupMenuButton<String>(
+                  offset: const Offset(0, 50),
+                  onSelected: (value) {
+                    if (value == 'Day') {
+                      ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.daily;
+                    } else if (value == 'Week' || value == 'Schedule') {
+                      // TimelineViewMode currently supports daily, weekly, monthly
+                      ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.weekly;
+                    } else if (value == 'Month') {
+                      ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.monthly;
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'Schedule',
+                      child: Text('Schedule', style: GoogleFonts.roboto(fontSize: 16, color: AppColors.textPrimary)),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'Day',
+                      child: Text('Day', style: GoogleFonts.roboto(fontSize: 16, color: AppColors.textPrimary)),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'Week',
+                      child: Text('Week', style: GoogleFonts.roboto(fontSize: 16, color: AppColors.textPrimary)),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'Month',
+                      child: Text('Month', style: GoogleFonts.roboto(fontSize: 16, color: AppColors.textPrimary)),
+                    ),
+                  ],
+                  child: Container(
+                    padding: const EdgeInsets.all(10), // Slightly larger padding for the menu button
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF6F8FA), // Light grey matching the design in screenshot
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.menu, color: AppColors.textPrimary, size: 24),
+                  ),
                 ),
               ),
             ],
