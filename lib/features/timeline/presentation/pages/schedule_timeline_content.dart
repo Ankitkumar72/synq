@@ -7,11 +7,59 @@ import '../../data/timeline_provider.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../notes/presentation/task_detail_screen.dart';
 
-class ScheduleTimelineContent extends ConsumerWidget {
+class ScheduleTimelineContent extends ConsumerStatefulWidget {
   const ScheduleTimelineContent({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ScheduleTimelineContent> createState() => _ScheduleTimelineContentState();
+}
+
+class _ScheduleTimelineContentState extends ConsumerState<ScheduleTimelineContent> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    
+    // Auto-scroll to today after layout
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      
+      final groupedEvents = ref.read(scheduleEventsProvider);
+      final sortedDates = groupedEvents.keys.toList()..sort();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      
+      int todayIndex = -1;
+      for (int i = 0; i < sortedDates.length; i++) {
+        if (sortedDates[i].isAtSameMomentAs(today)) {
+          todayIndex = i;
+          break;
+        }
+      }
+      
+      if (todayIndex != -1) {
+        // Find approximate offset. 
+        // Each day row height varies based on task count, but we can guess or use a fixed target.
+        // Assuming ~100px per day on average or a bit more.
+        _scrollController.animateTo(
+          todayIndex * 120.0, 
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final groupedEvents = ref.watch(scheduleEventsProvider);
     final sortedDates = groupedEvents.keys.toList()..sort();
     final now = DateTime.now();
@@ -42,6 +90,7 @@ class ScheduleTimelineContent extends ConsumerWidget {
         child: Container(
           color: AppColors.background,
           child: CustomScrollView(
+            controller: _scrollController,
             slivers: [
               SliverPadding(
                 padding: const EdgeInsets.only(top: 16.0, bottom: 80.0),
@@ -50,136 +99,142 @@ class ScheduleTimelineContent extends ConsumerWidget {
                     (context, index) {
                       final date = sortedDates[index];
                       final events = groupedEvents[date]!;
-                      final isToday = date == today;
+                      final isToday = date.isAtSameMomentAs(today);
                       
-                      return Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Date Column
-                        SizedBox(
-                          width: 48,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                DateFormat('E').format(date),
-                                style: GoogleFonts.roboto(
-                                  color: isToday ? AppColors.primary : Colors.black54,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: isToday ? AppColors.primary : Colors.transparent,
-                                  shape: BoxShape.circle,
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  '${date.day}',
-                                  style: GoogleFonts.roboto(
-                                    color: isToday ? Colors.white : Colors.black87,
-                                    fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12.0),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+                        decoration: BoxDecoration(
+                          color: isToday ? const Color(0xFFF0F4FF) : Colors.transparent, // Very light blue for today
+                          borderRadius: BorderRadius.circular(16),
+                          border: isToday ? Border.all(color: AppColors.primary.withAlpha(50), width: 1) : null,
                         ),
-                        const SizedBox(width: 8),
-                        // Tasks Column
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: events.map((event) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: InkWell(
-                                  onTap: () {
-                                    final noteId = event.id.replaceFirst('task_', '');
-                                    final notes = ref.read(notesProvider).value ?? [];
-                                    try {
-                                      final note = notes.firstWhere((n) => n.id == noteId);
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => TaskDetailScreen(task: note),
-                                        ),
-                                      );
-                                    } catch (e) {
-                                      // Note not found
-                                    }
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF5C84D4), // Matching the blue card color from reference
-                                      borderRadius: BorderRadius.circular(12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Date Column
+                            SizedBox(
+                              width: 48,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    DateFormat('E').format(date).toUpperCase(),
+                                    style: GoogleFonts.roboto(
+                                      color: isToday ? AppColors.primary : Colors.black54,
+                                      fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
+                                      fontSize: 12,
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: isToday ? AppColors.primary : Colors.transparent,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      '${date.day}',
+                                      style: GoogleFonts.roboto(
+                                        color: isToday ? Colors.white : Colors.black87,
+                                        fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Tasks Column
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: events.map((event) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: InkWell(
+                                      onTap: () {
+                                        final noteId = event.id.replaceFirst('task_', '');
+                                        final notes = ref.read(notesProvider).value ?? [];
+                                        try {
+                                          final note = notes.firstWhere((n) => n.id == noteId);
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => TaskDetailScreen(task: note),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          // Note not found
+                                        }
+                                      },
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF5C84D4), // Matching the blue card color from reference
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Icon(
-                                              event.isCompleted ? Icons.check_circle : Icons.check_circle_outline,
-                                              color: Colors.white,
-                                              size: 18,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                event.title,
-                                                style: GoogleFonts.roboto(
+                                            Row(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Icon(
+                                                  event.isCompleted ? Icons.check_circle : Icons.check_circle_outline,
                                                   color: Colors.white,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 15,
-                                                  decoration: event.isCompleted ? TextDecoration.lineThrough : null,
+                                                  size: 18,
                                                 ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    event.title,
+                                                    style: GoogleFonts.roboto(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w500,
+                                                      fontSize: 15,
+                                                      decoration: event.isCompleted ? TextDecoration.lineThrough : null,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 26.0, top: 4.0),
+                                              child: Text(
+                                                event.startTime.toLowerCase(), // e.g., 8:30 am
+                                                style: GoogleFonts.roboto(
+                                                  color: Colors.white.withAlpha(210), // white82
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 26.0, top: 4.0),
-                                          child: Text(
-                                            event.startTime.toLowerCase(), // e.g., 8:30 am
-                                            style: GoogleFonts.roboto(
-                                              color: Colors.white.withAlpha(210), // white82
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w400,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                },
-                childCount: sortedDates.length,
+                      );
+                    },
+                    childCount: sortedDates.length,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
         ),
       );
     }

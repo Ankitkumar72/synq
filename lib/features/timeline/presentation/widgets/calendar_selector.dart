@@ -324,7 +324,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
 
   Widget _buildMonthGrid(BuildContext context, DateTime monthDate, DateTime selectedDate, Set<DateTime> datesWithTasks, Map<DateTime, List<Note>> tasksByDate) {
     final monthDays = _getMonthDays(monthDate);
-    final weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    final weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -522,7 +522,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
   }
 
   List<DateTime> _getWeekDays(DateTime center) {
-    final startOfWeek = center.subtract(Duration(days: center.weekday % 7));
+    final startOfWeek = center.subtract(Duration(days: center.weekday - 1));
     return List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
   }
 
@@ -531,7 +531,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     final lastDayOfMonth = DateTime(source.year, source.month + 1, 0);
     
     final daysInMonth = lastDayOfMonth.day;
-    final firstWeekday = firstDayOfMonth.weekday % 7;
+    final firstWeekday = (firstDayOfMonth.weekday - 1);
     
     final days = <DateTime>[];
     
