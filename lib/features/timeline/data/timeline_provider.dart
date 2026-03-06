@@ -177,7 +177,7 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((ref
       case 'idea': type = TimelineEventType.strategy; break;
     }
     
-    // Check if the title explicitly mentions TODO (optional, but matching your design)
+  
     String displayTitle = task.title;
     if (task.scheduledTime == null && !displayTitle.toLowerCase().startsWith('todo')) {
       displayTitle = 'TODO - $displayTitle';

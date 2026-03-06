@@ -117,6 +117,9 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFF7F8FA),
         borderRadius: BorderRadius.circular(24),
+        border: focusState.priority == 'High Priority'
+            ? Border.all(color: const Color(0xFF5473F7).withAlpha(80), width: 1.5)
+            : null,
       ),
       child: Column(
         children: [

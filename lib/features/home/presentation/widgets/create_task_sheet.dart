@@ -53,7 +53,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
       _taskDueDate = widget.initialDate;
       if (_taskDueDate != null) {
         _isTaskAllDay = false; // By default, don't force all-day
-        _taskEndTime = _taskDueDate!.add(const Duration(hours: 1));
+        _taskEndTime = null; // Don't set automatic timer, let user set it
       }
     }
   }
@@ -69,11 +69,12 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
 
   Future<void> _openTimePlannerSheet() async {
     var selectedDate = _taskDueDate ?? DateTime.now();
-    var selectedStartTime = TimeOfDay.fromDateTime(_taskDueDate ?? DateTime.now());
-    var selectedEndTime = TimeOfDay.fromDateTime(
-      _taskEndTime ??
-          (_taskDueDate ?? DateTime.now()).add(const Duration(hours: 1)),
-    );
+    TimeOfDay? selectedStartTime = (_taskDueDate != null && _taskEndTime != null) 
+        ? TimeOfDay.fromDateTime(_taskDueDate!) 
+        : null;
+    TimeOfDay? selectedEndTime = _taskEndTime != null 
+        ? TimeOfDay.fromDateTime(_taskEndTime!) 
+        : null;
     var selectedIsAllDay = _isTaskAllDay;
     var selectedRule = _recurrenceRule;
 
@@ -138,7 +139,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
             Future<void> setTimeRange() async {
               final pickedStartTime = await showTimePicker(
                 context: context,
-                initialTime: selectedStartTime,
+                initialTime: selectedStartTime ?? const TimeOfDay(hour: 9, minute: 0),
                 helpText: 'Select Start Time',
               );
               if (!context.mounted) return;
@@ -154,7 +155,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
               final suggestedEnd = baseDate.add(const Duration(hours: 1));
               final pickedEndTime = await showTimePicker(
                 context: context,
-                initialTime: TimeOfDay.fromDateTime(suggestedEnd),
+                initialTime: selectedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd),
                 helpText: 'Select End Time',
               );
               if (!context.mounted) return;
@@ -177,21 +178,21 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                       selectedDate.year,
                       selectedDate.month,
                       selectedDate.day,
-                      selectedStartTime.hour,
-                      selectedStartTime.minute,
+                      selectedStartTime?.hour ?? 9,
+                      selectedStartTime?.minute ?? 0,
                     );
 
               setState(() {
                 _isTaskAllDay = selectedIsAllDay;
                 _taskDueDate = startsAt;
-                _taskEndTime = selectedIsAllDay
+                _taskEndTime = selectedIsAllDay || selectedEndTime == null
                     ? null
                     : DateTime(
                         selectedDate.year,
                         selectedDate.month,
                         selectedDate.day,
-                        selectedEndTime.hour,
-                        selectedEndTime.minute,
+                        selectedEndTime!.hour,
+                        selectedEndTime!.minute,
                       );
               });
 
@@ -235,8 +236,10 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                           leading: const Icon(Icons.access_time, color: Colors.white70),
                           title: Text(
                             selectedIsAllDay
-                                ? 'Set time'
-                                : '${_formatTimeFromTimeOfDay(selectedStartTime)} - ${_formatTimeFromTimeOfDay(selectedEndTime)}',
+                                ? 'All Day'
+                                : (selectedStartTime == null || selectedEndTime == null
+                                    ? 'Set time'
+                                    : '${_formatTimeFromTimeOfDay(selectedStartTime!)} - ${_formatTimeFromTimeOfDay(selectedEndTime!)}'),
                             style: const TextStyle(
                               color: Color(0xFFE7EBF0),
                               fontSize: 14,
@@ -259,21 +262,21 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                         ),
                         const Divider(height: 1, color: Color(0xFF708090)),
                         // -- Conflict warning inside the dialog --
-                        if (!selectedIsAllDay)
+                        if (!selectedIsAllDay && selectedStartTime != null && selectedEndTime != null)
                           Consumer(builder: (context, dialogRef, _) {
                             final proposedStart = DateTime(
                               selectedDate.year,
                               selectedDate.month,
                               selectedDate.day,
-                              selectedStartTime.hour,
-                              selectedStartTime.minute,
+                              selectedStartTime!.hour,
+                              selectedStartTime!.minute,
                             );
                             final proposedEnd = DateTime(
                               selectedDate.year,
                               selectedDate.month,
                               selectedDate.day,
-                              selectedEndTime.hour,
-                              selectedEndTime.minute,
+                              selectedEndTime!.hour,
+                              selectedEndTime!.minute,
                             );
                             final conflictsAsync = dialogRef.watch(
                               scheduleConflictProvider((
@@ -335,20 +338,29 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                                       );
                                       _taskEndTime = null;
                                     } else {
-                                      _taskDueDate = DateTime(
-                                        selectedDate.year,
-                                        selectedDate.month,
-                                        selectedDate.day,
-                                        selectedStartTime.hour,
-                                        selectedStartTime.minute,
-                                      );
-                                      _taskEndTime = DateTime(
-                                        selectedDate.year,
-                                        selectedDate.month,
-                                        selectedDate.day,
-                                        selectedEndTime.hour,
-                                        selectedEndTime.minute,
-                                      );
+                                      if (selectedStartTime != null && selectedEndTime != null) {
+                                        _taskDueDate = DateTime(
+                                          selectedDate.year,
+                                          selectedDate.month,
+                                          selectedDate.day,
+                                          selectedStartTime!.hour,
+                                          selectedStartTime!.minute,
+                                        );
+                                        _taskEndTime = DateTime(
+                                          selectedDate.year,
+                                          selectedDate.month,
+                                          selectedDate.day,
+                                          selectedEndTime!.hour,
+                                          selectedEndTime!.minute,
+                                        );
+                                      } else {
+                                        _taskDueDate = DateTime(
+                                          selectedDate.year,
+                                          selectedDate.month,
+                                          selectedDate.day,
+                                        );
+                                        _taskEndTime = null;
+                                      }
                                     }
                                   });
                                   Navigator.pop(context);
@@ -670,7 +682,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                     dateSub: _formatDateToSubtitle(_taskDueDate),
                     time: _isTaskAllDay 
                        ? 'All Day' 
-                       : (_taskDueDate == null ? 'Set Time' : '${_formatTime(_taskDueDate)} - ${_formatTime(_taskEndTime)}'),
+                       : (_taskEndTime == null || _taskDueDate == null ? 'Set Time' : '${_formatTime(_taskDueDate)} - ${_formatTime(_taskEndTime)}'),
                     onTap: _openTimePlannerSheet,
                   ),
 
