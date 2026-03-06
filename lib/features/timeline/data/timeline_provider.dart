@@ -9,7 +9,7 @@ final minuteProvider = StreamProvider<int>((ref) {
 
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
-enum TimelineViewMode { daily, weekly, monthly }
+enum TimelineViewMode { daily, weekly, monthly, schedule }
 
 /// Provides the current view mode for the timeline section
 final timelineViewModeProvider = StateProvider<TimelineViewMode>((ref) => TimelineViewMode.weekly);
@@ -133,3 +133,69 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
   }
 }
 
+final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((ref) {
+  final notesAsync = ref.watch(notesProvider);
+  final notes = notesAsync.value ?? [];
+  
+  // Include ALL tasks, even those without a scheduled time
+  final tasks = notes.where((n) => n.isTask).toList();
+  
+  tasks.sort((a, b) {
+    final dateA = a.scheduledTime ?? a.createdAt;
+    final dateB = b.scheduledTime ?? b.createdAt;
+    return dateA.compareTo(dateB);
+  });
+  
+  final grouped = <DateTime, List<TimelineEvent>>{};
+  
+  for (final task in tasks) {
+    final dateToUse = task.scheduledTime ?? task.createdAt;
+    final dateKey = DateTime(
+      dateToUse.year,
+      dateToUse.month,
+      dateToUse.day,
+    );
+    
+    final startFormat = DateFormat('h:mm a');
+    final endFormat = DateFormat('h:mm a');
+    
+    String startTimeString = 'TODO';
+    if (task.isAllDay) {
+      startTimeString = 'All Day';
+    } else if (task.scheduledTime != null) {
+      startTimeString = startFormat.format(task.scheduledTime!);
+    }
+    
+    String endTimeString = task.endTime != null
+        ? endFormat.format(task.endTime!)
+        : startTimeString;
+        
+    TimelineEventType type = TimelineEventType.standard;
+    switch (task.category.name.toLowerCase()) {
+      case 'work': type = TimelineEventType.active; break;
+      case 'personal': type = TimelineEventType.rest; break;
+      case 'idea': type = TimelineEventType.strategy; break;
+    }
+    
+    // Check if the title explicitly mentions TODO (optional, but matching your design)
+    String displayTitle = task.title;
+    if (task.scheduledTime == null && !displayTitle.toLowerCase().startsWith('todo')) {
+      displayTitle = 'TODO - $displayTitle';
+    }
+    
+    final event = TimelineEvent(
+      id: 'task_${task.id}',
+      title: displayTitle,
+      subtitle: task.category.name.toUpperCase(),
+      startTime: startTimeString,
+      endTime: endTimeString,
+      type: type,
+      tag: task.category.name.toUpperCase(),
+      isCompleted: task.isCompleted, 
+    );
+    
+    grouped.putIfAbsent(dateKey, () => []).add(event);
+  }
+  
+  return grouped;
+});

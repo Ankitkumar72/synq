@@ -8,6 +8,7 @@ import '../widgets/calendar_selector.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
 import '../widgets/timeline_hour_row.dart';
 import '../widgets/synq_drawer.dart';
+import '../pages/schedule_timeline_content.dart';
 import '../pages/weekly_timeline_content.dart';
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
@@ -93,6 +94,8 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                 const Expanded(child: CalendarSelector())
               else if (viewMode == TimelineViewMode.weekly)
                 const Expanded(child: WeeklyTimelineContent())
+              else if (viewMode == TimelineViewMode.schedule)
+                const Expanded(child: ScheduleTimelineContent())
               else ...[
                 const CalendarSelector(),
                 Expanded(
