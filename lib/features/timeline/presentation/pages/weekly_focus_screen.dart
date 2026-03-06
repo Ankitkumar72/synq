@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../data/timeline_provider.dart';
 import '../../data/weekly_focus_provider.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
 import '../../../notes/domain/models/note.dart';
 import '../widgets/update_goal_sheet.dart';
+import '../widgets/synq_drawer.dart';
 
 class WeeklyFocusScreen extends ConsumerStatefulWidget {
   const WeeklyFocusScreen({super.key});
@@ -28,6 +30,18 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          Builder(
+            builder: (context) {
+              return IconButton(
+                icon: const Icon(Icons.menu, color: Colors.black),
+                onPressed: () {
+                  Scaffold.of(context).openEndDrawer();
+                },
+              );
+            },
+          ),
+        ],
         title: Text(
           'Weekly Focus',
           style: GoogleFonts.roboto(
@@ -38,6 +52,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
         ),
         centerTitle: true,
       ),
+      endDrawer: const SynqDrawer(),
       body: Stack(
         children: [
           SingleChildScrollView(
