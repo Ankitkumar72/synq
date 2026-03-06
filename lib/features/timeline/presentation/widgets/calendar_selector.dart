@@ -142,16 +142,23 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
               ],
             ),
           ),
-          if (!isMonthly)
-            IconButton(
-              onPressed: onToggle,
-              icon: const Icon(Icons.calendar_view_month, color: AppColors.textPrimary),
-            )
-          else
-            IconButton(
-              onPressed: onToggle,
-              icon: const Icon(Icons.calendar_view_week, color: AppColors.textPrimary),
-            ),
+          Builder(
+            builder: (context) {
+              return GestureDetector(
+                onTap: () {
+                  Scaffold.of(context).openEndDrawer();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF6F8FA),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.menu, color: AppColors.textPrimary, size: 24),
+                ),
+              );
+            }
+          ),
         ],
       ),
     );
