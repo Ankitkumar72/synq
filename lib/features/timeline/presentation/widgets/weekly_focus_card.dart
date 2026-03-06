@@ -22,13 +22,10 @@ class WeeklyFocusCard extends ConsumerWidget {
       },
       child: Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA), // Light grey matching design
-        borderRadius: BorderRadius.circular(24),
-        border: focusState.priority == 'High Priority'
-            ? Border.all(color: const Color(0xFF5473F7).withAlpha(80), width: 1.5)
-            : null,
-      ),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F8FA), 
+          borderRadius: BorderRadius.circular(20),
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -74,10 +71,13 @@ class WeeklyFocusCard extends ConsumerWidget {
               if (focusState.priority.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: focusState.priority == 'High Priority'
+                          ? Border.all(color: const Color(0xFF4B7BFF).withAlpha(80), width: 1.5)
+                          : null,
+                    ),
                   child: Text(
                     focusState.priority,
                     style: GoogleFonts.roboto(

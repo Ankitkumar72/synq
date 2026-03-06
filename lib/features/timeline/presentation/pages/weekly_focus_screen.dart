@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../data/timeline_provider.dart';
 import '../../data/weekly_focus_provider.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
@@ -116,10 +115,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
       decoration: BoxDecoration(
         color: const Color(0xFFF7F8FA),
-        borderRadius: BorderRadius.circular(24),
-        border: focusState.priority == 'High Priority'
-            ? Border.all(color: const Color(0xFF5473F7).withAlpha(80), width: 1.5)
-            : null,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
@@ -183,7 +179,11 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFEEEBFF)),
+                    border: focusState.priority == 'High Priority'
+                        ? Border.all(
+                            color: const Color(0xFF5473F7).withAlpha(80),
+                            width: 1.5)
+                        : Border.all(color: const Color(0xFFEEEBFF)),
                   ),
                   child: Text(
                     focusState.priority,
