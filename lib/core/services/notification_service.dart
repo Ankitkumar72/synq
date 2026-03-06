@@ -161,14 +161,11 @@ class NotificationService {
         priority: Priority.high,
         // Icon setup
         icon: 'ic_stat_synq',
-        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
         // Rich text
         styleInformation: BigTextStyleInformation(
           body,
           contentTitle: title,
-          summaryText: subText,
         ),
-        subText: subText,
         // Action buttons
         actions: const <AndroidNotificationAction>[
           AndroidNotificationAction(
@@ -228,12 +225,10 @@ class NotificationService {
 
     final now = DateTime.now();
     DateTime? notifyTime;
-    String subText = 'Synq Task • Due Now';
-    String bodyText = note.body ?? 'Time to focus!';
-
+    String bodyText = note.body ?? 'Task reminder';
     if (note.reminderTime != null) {
       notifyTime = note.reminderTime;
-      subText = 'Synq Task • Reminder';
+      bodyText = '${note.body ?? "Reminder"} · Due ${_formatTime(note.scheduledTime)}';
     } else if (note.scheduledTime != null) {
       if (note.isAllDay) {
         // Default to 9:00 AM on the scheduled date for all-day tasks
@@ -244,12 +239,10 @@ class NotificationService {
           9,
           0,
         );
-        subText = 'Synq Task • All Day';
         bodyText = note.body ?? 'All day task';
       } else {
         notifyTime = note.scheduledTime;
-        subText = 'Synq Task • Start Time';
-        bodyText = note.body ?? 'Task starting now';
+        bodyText = '${note.body ?? "Task starting now"} · ${_formatTime(note.scheduledTime)}';
       }
     }
 
@@ -260,7 +253,6 @@ class NotificationService {
         title: note.title,
         body: bodyText,
         scheduledDate: notifyTime,
-        subText: subText,
         noteId: note.id,
       );
     } else if (notifyTime != null) {
@@ -268,6 +260,16 @@ class NotificationService {
     } else {
       debugPrint('ℹ️ [NotificationService] Task ${note.title} has no specific time to notify.');
     }
+  }
+
+  String _formatTime(DateTime? dateTime) {
+    if (dateTime == null) return 'No time set';
+    final hour = dateTime.hour > 12
+        ? dateTime.hour - 12
+        : (dateTime.hour == 0 ? 12 : dateTime.hour);
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final period = dateTime.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 
   Future<void> cancelNotification(int id) async {

@@ -687,7 +687,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                   ),
 
                   // -- Inline conflict warning below the schedule card --
-                  if (_taskDueDate != null && !_isTaskAllDay)
+                  if (_taskDueDate != null && _taskEndTime != null && !_isTaskAllDay)
                     Consumer(builder: (context, innerRef, _) {
                       final conflictsAsync = innerRef.watch(
                         scheduleConflictProvider((

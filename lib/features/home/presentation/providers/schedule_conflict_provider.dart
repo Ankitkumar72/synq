@@ -5,14 +5,9 @@ import '../../../notes/domain/models/note.dart';
 /// Default focus-block duration used when a task has no explicit [endTime].
 const _defaultBlockDuration = Duration(hours: 1);
 
-/// Proximity window: two tasks are considered conflicting if their
-/// focus blocks are within this duration of each other.
-const _proximityWindow = Duration(minutes: 60);
-
 /// Returns all scheduled tasks that conflict with the proposed time range.
 ///
-/// A conflict exists when the proposed block and an existing block are
-/// overlapping or within [_proximityWindow] of each other.
+/// A conflict exists when the proposed block and an existing block overlap.
 ///
 /// * [proposedStart] – the start time of the task being created / edited.
 /// * [proposedEnd]   – the end time (nullable; defaults to +1 hour).
@@ -39,11 +34,9 @@ final scheduleConflictProvider = FutureProvider.family<List<Note>,
       final eStart = note.scheduledTime!;
       final eEnd = note.endTime ?? eStart.add(_defaultBlockDuration);
 
-      // Two blocks conflict when they overlap OR are within the proximity
-      // window. Formally:
-      //   pStart < eEnd + proximity  AND  eStart < pEnd + proximity
-      final overlaps = pStart.isBefore(eEnd.add(_proximityWindow)) &&
-          eStart.isBefore(pEnd.add(_proximityWindow));
+      // Two blocks conflict only when they overlap.
+      // Formally: pStart < eEnd AND eStart < pEnd
+      final overlaps = pStart.isBefore(eEnd) && eStart.isBefore(pEnd);
 
       if (overlaps) conflicts.add(note);
     }
