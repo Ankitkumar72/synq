@@ -18,6 +18,46 @@ class WeeklyTimelineContent extends ConsumerStatefulWidget {
 
 class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
   final DateTime _currentWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    
+    // Scroll to today after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final weekDays = List.generate(7, (index) => _currentWeekStart.add(Duration(days: index)));
+        
+        int todayIndex = -1;
+        for (int i = 0; i < weekDays.length; i++) {
+          final d = weekDays[i];
+          if (d.year == today.year && d.month == today.month && d.day == today.day) {
+            todayIndex = i;
+            break;
+          }
+        }
+
+        if (todayIndex > 0) {
+          // Approximate height of DailyScheduleCard (88-100) + separator (12)
+          _scrollController.animateTo(
+            todayIndex * 110.0,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +65,8 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
     final allNotes = notesAsync.value ?? [];
 
     final weekDays = List.generate(7, (index) => _currentWeekStart.add(Duration(days: index)));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
 
     // Group tasks by date for weekly view
     final tasksByDate = <DateTime, List<Note>>{};
@@ -148,6 +190,7 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
           // Days List
           Expanded(
             child: ListView.separated(
+              controller: _scrollController,
               physics: const BouncingScrollPhysics(),
               itemCount: weekDays.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -155,10 +198,12 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
                 final date = weekDays[index];
                 final normalizedDate = DateTime(date.year, date.month, date.day);
                 final dayTasks = tasksByDate[normalizedDate] ?? [];
+                final isToday = normalizedDate.isAtSameMomentAs(today);
 
                 return DailyScheduleCard(
                   date: date,
                   tasks: dayTasks,
+                  isToday: isToday,
                   onTap: () {
                     ref.read(selectedDateProvider.notifier).state = date;
                     ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.daily;

@@ -9,11 +9,14 @@ class DailyScheduleCard extends StatelessWidget {
   final List<Note> tasks;
   final VoidCallback onTap;
 
+  final bool isToday;
+
   const DailyScheduleCard({
     super.key,
     required this.date,
     required this.tasks,
     required this.onTap,
+    this.isToday = false,
   });
 
   @override
@@ -56,8 +59,9 @@ class DailyScheduleCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F8FA),
+          color: isToday ? const Color(0xFFF0F4FF) : const Color(0xFFF7F8FA),
           borderRadius: BorderRadius.circular(24),
+          border: isToday ? Border.all(color: const Color(0xFF5473F7).withAlpha(128), width: 1.5) : null,
         ),
         child: Row(
           children: [
