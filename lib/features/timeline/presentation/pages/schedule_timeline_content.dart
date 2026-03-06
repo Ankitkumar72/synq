@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
+import '../../../notes/data/notes_provider.dart';
+import '../../../notes/presentation/task_detail_screen.dart';
 
 class ScheduleTimelineContent extends ConsumerWidget {
   const ScheduleTimelineContent({super.key});
@@ -90,7 +92,19 @@ class ScheduleTimelineContent extends ConsumerWidget {
                                 padding: const EdgeInsets.only(bottom: 8.0),
                                 child: InkWell(
                                   onTap: () {
-                                    ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
+                                    final noteId = event.id.replaceFirst('task_', '');
+                                    final notes = ref.read(notesProvider).value ?? [];
+                                    try {
+                                      final note = notes.firstWhere((n) => n.id == noteId);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => TaskDetailScreen(task: note),
+                                        ),
+                                      );
+                                    } catch (e) {
+                                      // Note not found
+                                    }
                                   },
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
