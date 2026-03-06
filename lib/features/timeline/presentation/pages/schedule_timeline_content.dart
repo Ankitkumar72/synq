@@ -223,8 +223,6 @@ class ScheduleTimelineContent extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.keyboard_arrow_down, size: 24, color: AppColors.textSecondary),
                       ],
                     ),
                   ],
