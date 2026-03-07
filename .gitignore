@@ -68,3 +68,16 @@ android/keys.txt
 # Generated during signing checks
 android/signing_result.txt
 android/signing_result_utf8.txt
+
+# Firebase Service Account
+paddle_backend/synq-firebase-adminsdk.json
+
+# Backend security files
+paddle_backend/.env
+paddle_backend/.env.*
+paddle_backend/*firebase-adminsdk*.json
+paddle_backend/*.pem
+paddle_backend/*.key
+paddle_backend/*.crt
+paddle_backend/*.p8
+
