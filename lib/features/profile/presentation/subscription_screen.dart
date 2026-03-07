@@ -35,8 +35,6 @@ class SubscriptionScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              const SizedBox(height: 40),
-              
               const Spacer(),
 
               // Pricing Card
@@ -101,7 +99,7 @@ class SubscriptionScreen extends StatelessWidget {
                 ),
               ),
               
-              const Spacer(),
+              const SizedBox(height: 24),
 
               // Features Comparison
               Row(
@@ -172,6 +170,8 @@ class SubscriptionScreen extends StatelessWidget {
                   ),
                 ],
               ),
+              
+              const Spacer(flex: 2),
               
               // Subscription CTA
               SizedBox(
