@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'user_repository.dart';
 
 class AuthRepository {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final UserRepository _userRepository = UserRepository();
   bool _googleSignInInitialized = false;
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
@@ -39,7 +41,17 @@ class AuthRepository {
     );
 
     // 6. Sign in to Firebase with the new credential
-    return await _firebaseAuth.signInWithCredential(credential);
+    final credentialResult = await _firebaseAuth.signInWithCredential(credential);
+
+    if (credentialResult.user != null) {
+      await _userRepository.createUserIfNeeded(
+        uid: credentialResult.user!.uid,
+        email: googleUser.email,
+        name: googleUser.displayName ?? 'User',
+      );
+    }
+
+    return credentialResult;
   }
 
   Future<void> signUp(String email, String password, {String? name}) async {
@@ -51,6 +63,14 @@ class AuthRepository {
     if (name != null && credential.user != null) {
       await credential.user!.updateDisplayName(name);
       await credential.user!.reload();
+    }
+
+    if (credential.user != null) {
+      await _userRepository.createUserIfNeeded(
+        uid: credential.user!.uid,
+        email: email,
+        name: name ?? 'User',
+      );
     }
   }
 
