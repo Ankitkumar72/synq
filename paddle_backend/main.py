@@ -1,13 +1,17 @@
-from fastapi import FastAPI, Depends, Request
+import logging
+from fastapi import FastAPI, Depends, Request, HTTPException
 from pydantic import BaseModel
-from dotenv import load_dotenv
 from fastapi.responses import HTMLResponse
 
+from dotenv import load_dotenv
 load_dotenv()
 
 from auth import get_uid
 from paddle_client import create_checkout_url
 from webhook import handle_paddle_webhook
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Synq Paddle Backend")
 
@@ -61,8 +65,14 @@ async def create_checkout(uid: str = Depends(get_uid)):
     
     Returns a Paddle-hosted checkout URL for the Pro subscription.
     """
-    url = create_checkout_url(uid)
-    return CheckoutResponse(checkout_url=url)
+    logger.info(f"Initiating checkout creation for user: {uid}")
+    try:
+        url = create_checkout_url(uid)
+        logger.info(f"Checkout URL successfully generated for user: {uid}")
+        return CheckoutResponse(checkout_url=url)
+    except Exception as e:
+        logger.error(f"Failed to create checkout URL for user {uid}: {str(e)}")
+        raise HTTPException(status_code=400, detail="Failed to create checkout session")
 
 
 @app.post('/paddle-webhook')

@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../auth/presentation/providers/user_provider.dart';
+import '../../auth/domain/models/synq_user.dart';
 import 'firebase_sync_coordinator.dart';
 import 'folders_repository.dart';
 import 'local_database.dart';
@@ -40,11 +42,15 @@ final localDbFoldersRepositoryProvider = Provider<LocalDbFoldersRepository>((ref
 final useCloudSyncProvider = Provider<bool>((ref) {
   final syncAccess = ref.watch(syncAccessProvider);
   final authState = ref.watch(authProvider);
+  final userAsync = ref.watch(userProvider);
   final user = FirebaseAuth.instance.currentUser;
+  
+  final isPro = userAsync.valueOrNull?.planTier == PlanTier.pro;
 
   return syncAccess.cloudSyncEnabled &&
       authState.isAuthenticated &&
-      user != null;
+      user != null &&
+      isPro;
 });
 
 final syncCoordinatorProvider = Provider<FirebaseSyncCoordinator?>((ref) {

@@ -5,9 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PaddleService {
-  // Pointing to the local FastAPI Uvicorn server for testing.
-  // Change back to Railway URL before production deployment.
-  static const String _baseUrl = 'http://192.168.1.6:8000'; // Wi-Fi IP for physical device / emulator
+  static const String _baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:8000', // Need to pass --dart-define for physical devices
+  );
 
   /// Calls the FastAPI backend to create a Paddle checkout session,
   /// then launches the checkout URL in an external browser.
@@ -36,11 +37,14 @@ class PaddleService {
       throw Exception('Invalid checkout response from server.');
     }
 
-    // Replace default localhost with the local IP for testing
-    final String fixedUrlString = urlString.replaceFirst(
-      'https://localhost/', 
-      '$_baseUrl/paddle-checkout?', 
-    ).replaceFirst('http://localhost/', '$_baseUrl/paddle-checkout?');
+    String fixedUrlString = urlString;
+    // Replace default localhost with the local IP for testing, only in debug mode
+    if (kDebugMode && _baseUrl.startsWith('http://')) {
+      fixedUrlString = urlString.replaceFirst(
+        'https://localhost/', 
+        '$_baseUrl/paddle-checkout?', 
+      ).replaceFirst('http://localhost/', '$_baseUrl/paddle-checkout?');
+    }
 
     final checkoutUrl = Uri.parse(fixedUrlString);
     if (await canLaunchUrl(checkoutUrl)) {

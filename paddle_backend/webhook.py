@@ -34,15 +34,12 @@ def verify_paddle_signature(raw_body: str, signature_header: str, secret_key: st
         return False
 
 
+import logging
+logger = logging.getLogger(__name__)
+
 async def handle_paddle_webhook(request: Request):
     """
     Processes incoming Paddle webhook events.
-    
-    Security flow:
-    1. Validate HMAC signature BEFORE parsing body
-    2. Parse JSON only after validation passes
-    3. Check idempotency on transaction_id
-    4. Merge plan_tier: 'pro' into Firestore
     """
     raw_body = await request.body()
     raw_body_str = raw_body.decode('utf-8')
@@ -50,26 +47,38 @@ async def handle_paddle_webhook(request: Request):
     
     # --- STEP 1: Validate HMAC signature ---
     if not verify_paddle_signature(raw_body_str, signature, os.environ['PADDLE_WEBHOOK_SECRET']):
+        logger.warning(f"Invalid webhook signature received")
         raise HTTPException(status_code=400, detail='Invalid webhook signature')
     
     # --- STEP 2: Parse body only after validation ---
-    payload = json.loads(raw_body_str)
+    try:
+        payload = json.loads(raw_body_str)
+    except Exception:
+        logger.error("Failed to parse webhook JSON body")
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
     event_type = payload.get('event_type')
+    logger.info(f"Received Paddle webhook event: {event_type}")
     
     if event_type == 'transaction.completed':
-        data = payload['data']
-        transaction_id = data['id']
+        data = payload.get('data', {})
+        transaction_id = data.get('id')
+        
+        if not transaction_id:
+            logger.error("Missing transaction_id in completed payload.")
+            return {'status': 'ignored', 'reason': 'missing_transaction_id'}
+            
         custom_data = data.get('custom_data', {})
         firebase_uid = custom_data.get('firebase_uid')
         
         if not firebase_uid:
-            # Log warning but return 200 — don't trigger Paddle retries on bad data
-            print(f'WARNING: No firebase_uid in transaction {transaction_id}')
-            return {'status': 'ignored'}
+            logger.warning(f'No firebase_uid in transaction {transaction_id}. Cannot upgrade user.')
+            return {'status': 'ignored', 'reason': 'missing_uid'}
         
         upgraded = upgrade_user_to_pro(firebase_uid, transaction_id)
         status = 'upgraded' if upgraded else 'duplicate_ignored'
-        print(f'Webhook {transaction_id}: {status} for uid {firebase_uid}')
-    
-    # Always return 200 — Paddle retries on non-200 responses
-    return {'status': 'ok'}
+        logger.info(f'Webhook {transaction_id}: {status} for uid {firebase_uid}')
+        return {'status': status}
+    else:
+        logger.info(f"Ignoring unhandled event type: {event_type}")
+        return {'status': 'ignored', 'reason': 'unhandled_event_type'}

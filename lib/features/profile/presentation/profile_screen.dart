@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../auth/presentation/providers/user_provider.dart';
+import '../../auth/domain/models/synq_user.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../notes/data/repository_provider.dart';
 import 'subscription_screen.dart';
 
@@ -72,29 +75,41 @@ class ProfileScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            const Text(
-                              'Alex Chen',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Text(
-                                'PRO',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final userAsync = ref.watch(userProvider);
+                                final isPro = userAsync.valueOrNull?.planTier == PlanTier.pro;
+                                final email = FirebaseAuth.instance.currentUser?.email ?? 'User';
+                                return Column(
+                                  children: [
+                                    Text(
+                                      email,
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    if (isPro)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary,
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: const Text(
+                                          'PRO',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              }
                             ),
                           ],
                         ),

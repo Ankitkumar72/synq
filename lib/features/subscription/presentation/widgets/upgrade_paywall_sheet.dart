@@ -26,15 +26,15 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
     });
     try {
       await ref.read(paddleServiceProvider).launchCheckout();
-      // After returning from the browser, show a pending state.
-      // The StreamProvider will auto-update when the webhook fires.
+      // Keep _isLoading = true even after returning from browser launch.
+      // The StreamProvider logic in build() will auto-dismiss this sheet 
+      // when the Firebase stream detects plan_tier == pro.
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
-    } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _error = e.toString();
+          _isLoading = false; // Only reset on error
+        });
       }
     }
   }
