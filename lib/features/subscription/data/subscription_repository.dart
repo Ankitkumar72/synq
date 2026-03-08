@@ -5,9 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PaddleService {
+  // RECOMMENDATION: Replace 'https://your-app.hf.space' with your actual Hugging Face URL
   static const String _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000', // Need to pass --dart-define for physical devices
+    defaultValue: kReleaseMode 
+      ? 'https://your-app.hf.space' 
+      : 'http://localhost:8000',
   );
 
   /// Calls the FastAPI backend to create a Paddle checkout session,
@@ -38,8 +41,9 @@ class PaddleService {
     }
 
     String fixedUrlString = urlString;
-    // Replace default localhost with the local IP for testing, only in debug mode
-    if (kDebugMode && _baseUrl.startsWith('http://')) {
+    // Rewrite localhost redirects to our backend simulator so it works on physical devices
+    // We do this if the base URL is pointing to Hugging Face or a custom IP.
+    if (urlString.contains('localhost') && !_baseUrl.contains('localhost')) {
       fixedUrlString = urlString.replaceFirst(
         'https://localhost/', 
         '$_baseUrl/paddle-checkout?', 
