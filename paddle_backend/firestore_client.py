@@ -48,3 +48,19 @@ def upgrade_user_to_pro(firebase_uid: str, transaction_id: str) -> bool:
     if upgraded:
         logger.info(f"Successfully upgraded user {firebase_uid} to pro via transaction {transaction_id}")
     return upgraded
+
+def downgrade_user_to_free(firebase_uid: str) -> bool:
+    """
+    Sets plan_tier to 'free' in the user's Firestore document.
+    """
+    user_ref = db.collection('users').document(firebase_uid)
+    try:
+        user_ref.set({
+            'plan_tier': 'free',
+            'downgraded_at': firestore.SERVER_TIMESTAMP,
+        }, merge=True)
+        logger.info(f"Successfully downgraded user {firebase_uid} to free")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to downgrade user {firebase_uid}: {str(e)}")
+        return False

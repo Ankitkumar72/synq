@@ -5,7 +5,7 @@ import os
 
 import time
 from fastapi import Request, HTTPException
-from firestore_client import upgrade_user_to_pro
+from firestore_client import upgrade_user_to_pro, downgrade_user_to_free
 
 
 def verify_paddle_signature(raw_body: str, signature_header: str, secret_key: str) -> bool:
@@ -76,11 +76,16 @@ async def handle_paddle_webhook(request: Request):
 
     event_type = payload.get('event_type')
     logger.info(f"Received Paddle webhook event: {event_type}")
+
+    data = payload.get('data', {})
     
+    # helper for UID extraction
+    def get_firebase_uid(source_data):
+        return source_data.get('custom_data', {}).get('firebase_uid')
+
+    # --- HANDLE INITIAL PURCHASE ---
     if event_type == 'transaction.completed':
-        data = payload.get('data', {})
         transaction_id = data.get('id')
-        
         if not transaction_id:
             logger.error("Missing transaction_id in completed payload.")
             return {'status': 'ignored', 'reason': 'missing_transaction_id'}
@@ -91,7 +96,6 @@ async def handle_paddle_webhook(request: Request):
             logger.warning(f"Transaction {transaction_id} has no items. Ignoring.")
             return {"status": "ignored", "reason": "missing_items"}
 
-        # Get price_id from the first item
         price_id = items[0].get("price_id")
         expected_price_id = os.environ.get("PADDLE_PRICE_ID")
 
@@ -99,9 +103,7 @@ async def handle_paddle_webhook(request: Request):
             logger.warning(f"Unexpected price_id {price_id} for transaction {transaction_id}. Expected {expected_price_id}")
             return {"status": "ignored", "reason": "wrong_product"}
             
-        custom_data = data.get('custom_data', {})
-        firebase_uid = custom_data.get('firebase_uid')
-        
+        firebase_uid = get_firebase_uid(data)
         if not firebase_uid:
             logger.warning(f'No firebase_uid in transaction {transaction_id}. Cannot upgrade user.')
             return {'status': 'ignored', 'reason': 'missing_uid'}
@@ -110,6 +112,44 @@ async def handle_paddle_webhook(request: Request):
         status = 'upgraded' if upgraded else 'duplicate_ignored'
         logger.info(f'Webhook {transaction_id}: {status} for uid {firebase_uid}')
         return {'status': status}
+
+    # --- HANDLE SUBSCRIPTION UPDATES & RENEWALS ---
+    elif event_type in ['subscription.activated', 'subscription.updated']:
+        # --- Improvement 2: Validate Product Price ---
+        items = data.get("items", [])
+        if items:
+            price_id = items[0].get("price_id")
+            expected_price_id = os.environ.get("PADDLE_PRICE_ID")
+            if expected_price_id and price_id != expected_price_id:
+                logger.info(f"Subscription {data.get('id')} has different price_id {price_id}. Ignoring.")
+                return {'status': 'ignored', 'reason': 'wrong_product'}
+
+        sub_status = data.get('status')
+        firebase_uid = get_firebase_uid(data)
+        
+        if not firebase_uid:
+            logger.warning(f"Received {event_type} for sub {data.get('id')} with no firebase_uid.")
+            return {'status': 'ignored'}
+
+        if sub_status == 'active':
+            # Ensure user is Pro (e.g. on renewal)
+            upgrade_user_to_pro(firebase_uid, f"sub_event_{data.get('id')}_{int(time.time())}")
+            return {'status': 'confirmed_active'}
+        elif sub_status == 'past_due':
+            logger.warning(f"Subscription {data.get('id')} is past_due for user {firebase_uid}")
+            # Optional: Add field to firestore to show warning in app
+            return {'status': 'logged_past_due'}
+        
+        return {'status': 'ignored', 'reason': f'unhandled_sub_status_{sub_status}'}
+
+    # --- HANDLE CANCELLATION/TERMINATION ---
+    elif event_type == 'subscription.canceled':
+        firebase_uid = get_firebase_uid(data)
+        if firebase_uid:
+            downgrade_user_to_free(firebase_uid)
+            return {'status': 'downgraded'}
+        return {'status': 'ignored', 'reason': 'missing_uid'}
+
     else:
         logger.info(f"Ignoring unhandled event type: {event_type}")
         return {'status': 'ignored', 'reason': 'unhandled_event_type'}
