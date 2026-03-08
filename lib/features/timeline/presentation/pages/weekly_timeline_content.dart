@@ -30,7 +30,7 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
       if (mounted) {
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
-        final weekDays = List.generate(7, (index) => _currentWeekStart.add(Duration(days: index)));
+        final weekDays = List.generate(8, (index) => _currentWeekStart.add(Duration(days: index)));
         
         int todayIndex = -1;
         for (int i = 0; i < weekDays.length; i++) {
@@ -69,7 +69,7 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
     final notesAsync = ref.watch(notesProvider);
     final allNotes = notesAsync.value ?? [];
 
-    final weekDays = List.generate(7, (index) => _currentWeekStart.add(Duration(days: index)));
+    final weekDays = List.generate(8, (index) => _currentWeekStart.add(Duration(days: index)));
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
