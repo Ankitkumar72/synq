@@ -17,24 +17,16 @@ class UpgradePaywallSheet extends ConsumerStatefulWidget {
 
 class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
   bool _isLoading = false;
-  String? _error;
-  String _selectedPriceId = PaddleService.yearlyPriceId; // Yearly by default
+  String _selectedPlanSlug = 'yearly'; // Yearly by default
 
   Future<void> _handleUpgrade() async {
     setState(() {
       _isLoading = true;
-      _error = null;
     });
     try {
-      await ref.read(paddleServiceProvider).launchCheckout(_selectedPriceId);
-      // Keep _isLoading = true even after returning from browser launch.
-      // The StreamProvider logic in build() will auto-dismiss this sheet 
-      // when the Firebase stream detects plan_tier == pro.
+      await ref.read(paddleServiceProvider).launchCheckout(_selectedPlanSlug);
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false; // Only reset on error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
         );
