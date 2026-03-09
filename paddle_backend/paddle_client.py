@@ -15,9 +15,9 @@ paddle = Client(
     options=Options(_env),
 )
 
-def create_checkout_url(firebase_uid: str) -> str:
+def create_checkout_url(firebase_uid: str, price_id: str) -> str:
     """
-    Creates a Paddle transaction for the Pro subscription price.
+    Creates a Paddle transaction for a specific subscription price.
     Embeds the firebase_uid in custom_data so the webhook knows who paid.
     Returns the hosted checkout URL.
     """
@@ -26,7 +26,7 @@ def create_checkout_url(firebase_uid: str) -> str:
             transaction_ops.CreateTransaction(
                 items=[
                     TransactionCreateItem(
-                        price_id=os.environ['PADDLE_PRICE_ID'],
+                        price_id=price_id,
                         quantity=1,
                     ),
                 ],

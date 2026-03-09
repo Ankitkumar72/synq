@@ -97,10 +97,14 @@ async def handle_paddle_webhook(request: Request):
             return {"status": "ignored", "reason": "missing_items"}
 
         price_id = items[0].get("price_id")
-        expected_price_id = os.environ.get("PADDLE_PRICE_ID")
+        # --- Changed to support multiple prices ---
+        allowed_prices = [
+            os.environ.get("PADDLE_MONTHLY_PRICE_ID"),
+            os.environ.get("PADDLE_YEARLY_PRICE_ID")
+        ]
 
-        if expected_price_id and price_id != expected_price_id:
-            logger.warning(f"Unexpected price_id {price_id} for transaction {transaction_id}. Expected {expected_price_id}")
+        if not any(price_id == p for p in allowed_prices if p):
+            logger.warning(f"Unexpected price_id {price_id} for transaction {transaction_id}. Allowed: {allowed_prices}")
             return {"status": "ignored", "reason": "wrong_product"}
             
         firebase_uid = get_firebase_uid(data)
@@ -119,9 +123,13 @@ async def handle_paddle_webhook(request: Request):
         items = data.get("items", [])
         if items:
             price_id = items[0].get("price_id")
-            expected_price_id = os.environ.get("PADDLE_PRICE_ID")
-            if expected_price_id and price_id != expected_price_id:
-                logger.info(f"Subscription {data.get('id')} has different price_id {price_id}. Ignoring.")
+            # --- Changed to support multiple prices ---
+            allowed_prices = [
+                os.environ.get("PADDLE_MONTHLY_PRICE_ID"),
+                os.environ.get("PADDLE_YEARLY_PRICE_ID")
+            ]
+            if not any(price_id == p for p in allowed_prices if p):
+                logger.info(f"Subscription {data.get('id')} has unexpected price_id {price_id}. Ignoring.")
                 return {'status': 'ignored', 'reason': 'wrong_product'}
 
         sub_status = data.get('status')

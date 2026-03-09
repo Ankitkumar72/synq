@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Synq Paddle Backend")
 
 
+class CheckoutRequest(BaseModel):
+    price_id: str
+
 class CheckoutResponse(BaseModel):
     checkout_url: str
 
@@ -103,21 +106,22 @@ async def paddle_checkout_page(request: Request):
 
 
 @app.post("/create-checkout", response_model=CheckoutResponse)
-async def create_checkout(uid: str = Depends(get_uid)):
+async def create_checkout(request: CheckoutRequest, uid: str = Depends(get_uid)):
     """
     Authenticated endpoint.
 
     uid comes from verified Firebase ID token.
     Flutter sends:
         Authorization: Bearer <firebase_id_token>
+        Body: {"price_id": "pri_..."}
 
-    Returns a Paddle-hosted checkout URL for the Pro subscription.
+    Returns a Paddle-hosted checkout URL for the selected subscription plan.
     """
 
-    logger.info(f"Initiating checkout creation for user: {uid}")
+    logger.info(f"Initiating checkout creation for user: {uid}, price: {request.price_id}")
 
     try:
-        url = create_checkout_url(uid)
+        url = create_checkout_url(uid, request.price_id)
         logger.info(f"Checkout URL successfully generated for user: {uid}")
         return CheckoutResponse(checkout_url=url)
 

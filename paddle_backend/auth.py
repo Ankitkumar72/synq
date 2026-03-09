@@ -11,7 +11,9 @@ firebase_b64 = os.environ.get("FIREBASE_ADMIN_BASE64")
 if not firebase_admin._apps:
     if firebase_b64:
         # Decode the Base64 string back into a JSON dictionary
-        decoded_bytes = base64.b64decode(firebase_b64)
+        # Strip whitespace/newlines that might have been added during copy-paste
+        clean_b64 = "".join(firebase_b64.split())
+        decoded_bytes = base64.b64decode(clean_b64)
         cred_dict = json.loads(decoded_bytes.decode('utf-8'))
         
         # Initialize the Firebase Admin SDK using the dictionary
