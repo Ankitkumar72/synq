@@ -5,17 +5,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PaddleService {
-  // RECOMMENDATION: Replace 'https://your-app.hf.space' with your actual Hugging Face URL
   static const String _baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: kReleaseMode 
-      ? 'https://your-app.hf.space' 
+      ? 'https://synq-synq-paddle-webhook.hf.space' 
       : 'http://localhost:8000',
   );
 
-  /// Calls the FastAPI backend to create a Paddle checkout session,
-  /// then launches the checkout URL in an external browser.
-  Future<void> launchCheckout() async {
+
+
+
+  
+  /// for a specific [planSlug] (e.g. 'monthly', 'yearly'), then launches the checkout URL.
+  Future<void> launchCheckout(String planSlug) async {
     // 1. Get a fresh Firebase ID token
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('User not authenticated');
@@ -24,7 +26,11 @@ class PaddleService {
     // 2. Call FastAPI to create checkout
     final response = await http.post(
       Uri.parse('$_baseUrl/create-checkout'),
-      headers: {'Authorization': 'Bearer $token'},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'plan_slug': planSlug}),
     );
 
     if (response.statusCode != 200) {
@@ -41,8 +47,7 @@ class PaddleService {
     }
 
     String fixedUrlString = urlString;
-    // Rewrite localhost redirects to our backend simulator so it works on physical devices
-    // We do this if the base URL is pointing to Hugging Face or a custom IP.
+    
     if (urlString.contains('localhost') && !_baseUrl.contains('localhost')) {
       fixedUrlString = urlString.replaceFirst(
         'https://localhost/', 

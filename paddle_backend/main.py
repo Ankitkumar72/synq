@@ -113,15 +113,30 @@ async def create_checkout(request: CheckoutRequest, uid: str = Depends(get_uid))
     uid comes from verified Firebase ID token.
     Flutter sends:
         Authorization: Bearer <firebase_id_token>
-        Body: {"price_id": "pri_..."}
+        Body: {"plan_slug": "monthly"}
 
     Returns a Paddle-hosted checkout URL for the selected subscription plan.
     """
 
-    logger.info(f"Initiating checkout creation for user: {uid}, price: {request.price_id}")
+    # --- Security: Map Slugs to internal Price IDs ---
+    slug_to_price = {
+        'monthly': os.environ.get('PADDLE_MONTHLY_PRICE_ID'),
+        'yearly': os.environ.get('PADDLE_YEARLY_PRICE_ID'),
+    }
+
+    price_id = slug_to_price.get(request.plan_slug)
+
+    if not price_id:
+        logger.error(f"Invalid plan_slug provided: {request.plan_slug}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid plan selection: {request.plan_slug}"
+        )
+
+    logger.info(f"Initiating checkout creation for user: {uid}, plan: {request.plan_slug}")
 
     try:
-        url = create_checkout_url(uid, request.price_id)
+        url = create_checkout_url(uid, price_id)
         logger.info(f"Checkout URL successfully generated for user: {uid}")
         return CheckoutResponse(checkout_url=url)
 
