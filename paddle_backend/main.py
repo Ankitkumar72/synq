@@ -170,8 +170,9 @@ async def paddle_webhook(request: Request):
 
 if __name__ == "__main__":
 
-    host = os.environ.get("HOST", "0.0.0.0")
-    port = int(os.environ.get("PORT", 7860))
+    # Hugging Face Spaces requires port 7860
+    host = "0.0.0.0"
+    port = 7860
 
     logger.info(f"Starting Synq Paddle Backend Server on {host}:{port}")
 

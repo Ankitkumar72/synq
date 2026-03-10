@@ -9,31 +9,54 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Fetch the Base64 string from the environment
-firebase_b64 = os.environ.get("FIREBASE_ADMIN_BASE64")
+def _initialize_firebase_admin() -> None:
+    firebase_b64 = os.environ.get("FIREBASE_ADMIN_BASE64")
+    project_id = os.environ.get("FIREBASE_PROJECT_ID")
 
-if not firebase_admin._apps:
+    # 1) Preferred explicit secret path for most hosts.
     if firebase_b64:
-        # Decode the Base64 string back into a JSON dictionary
-        # Strip whitespace/newlines that might have been added during copy-paste
         clean_b64 = "".join(firebase_b64.split())
         decoded_bytes = base64.b64decode(clean_b64)
-        cred_dict = json.loads(decoded_bytes.decode('utf-8'))
-        
-        # Initialize the Firebase Admin SDK using the dictionary
+        cred_dict = json.loads(decoded_bytes.decode("utf-8"))
         cred = credentials.Certificate(cred_dict)
-        firebase_admin.initialize_app(cred)
-    else:
-        # Fallback for local development if developers haven't set BASE64 yet
-        cred_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS', 'synq-firebase-adminsdk.json')
-        if not os.path.isabs(cred_path):
-            cred_path = os.path.join(os.path.dirname(__file__), cred_path)
-        cred_path = os.path.normpath(cred_path)
-        if os.path.exists(cred_path):
-            cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred)
-        else:
-            raise ValueError("FIREBASE_ADMIN_BASE64 env var is missing and no local JSON found.")
+        options = {"projectId": project_id} if project_id else None
+        firebase_admin.initialize_app(cred, options)
+        logger.info("Firebase Admin initialized via FIREBASE_ADMIN_BASE64")
+        return
+
+    # 2) Local development file fallback.
+    cred_path = os.environ.get(
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        "synq-firebase-adminsdk.json",
+    )
+    if not os.path.isabs(cred_path):
+        cred_path = os.path.join(os.path.dirname(__file__), cred_path)
+    cred_path = os.path.normpath(cred_path)
+
+    if os.path.exists(cred_path):
+        cred = credentials.Certificate(cred_path)
+        options = {"projectId": project_id} if project_id else None
+        firebase_admin.initialize_app(cred, options)
+        logger.info("Firebase Admin initialized via service account file")
+        return
+
+    # 3) Cloud Run / GCP fallback via workload identity.
+    try:
+        cred = credentials.ApplicationDefault()
+        options = {"projectId": project_id} if project_id else None
+        firebase_admin.initialize_app(cred, options)
+        logger.info("Firebase Admin initialized via Application Default Credentials")
+        return
+    except Exception as exc:
+        raise ValueError(
+            "Failed to initialize Firebase Admin credentials. Provide "
+            "FIREBASE_ADMIN_BASE64, a valid GOOGLE_APPLICATION_CREDENTIALS file, "
+            "or configure Application Default Credentials in the runtime."
+        ) from exc
+
+
+if not firebase_admin._apps:
+    _initialize_firebase_admin()
 
 
 from typing import Optional

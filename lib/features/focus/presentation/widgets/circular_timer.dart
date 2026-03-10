@@ -35,15 +35,23 @@ class CircularTimer extends StatelessWidget {
             ),
           ),
         // Timer Text
-        Text(
-          formattedTime,
-          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                fontSize: 64,
-                fontWeight: FontWeight.normal,
-                fontFamily: GoogleFonts.robotoMono().fontFamily, // Monospace for numbers
-                letterSpacing: -2,
-                color: Colors.black,
-              ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              formattedTime,
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontSize: 80, // Larger base size, scaled down by FittedBox
+                    fontWeight: FontWeight.normal,
+                    fontFamily: GoogleFonts.robotoMono().fontFamily,
+                    letterSpacing: -2,
+                    color: Colors.black,
+                  ),
+              maxLines: 1,
+              softWrap: false,
+            ),
+          ),
         ),
       ],
     );
