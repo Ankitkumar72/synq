@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Literal
 
 from fastapi import FastAPI, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse
@@ -25,7 +26,7 @@ app = FastAPI(title="Synq Paddle Backend")
 
 
 class CheckoutRequest(BaseModel):
-    price_id: str
+    plan_slug: Literal['monthly', 'yearly']
 
 class CheckoutResponse(BaseModel):
     checkout_url: str
@@ -127,10 +128,10 @@ async def create_checkout(request: CheckoutRequest, uid: str = Depends(get_uid))
     price_id = slug_to_price.get(request.plan_slug)
 
     if not price_id:
-        logger.error(f"Invalid plan_slug provided: {request.plan_slug}")
+        logger.error("Price ID missing for configured plan: %s", request.plan_slug)
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid plan selection: {request.plan_slug}"
+            status_code=500,
+            detail="Selected plan is currently unavailable"
         )
 
     logger.info(f"Initiating checkout creation for user: {uid}, plan: {request.plan_slug}")

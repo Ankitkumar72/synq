@@ -4,6 +4,10 @@ from fastapi import Header, HTTPException
 import os
 import base64
 import json
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # Fetch the Base64 string from the environment
 firebase_b64 = os.environ.get("FIREBASE_ADMIN_BASE64")
@@ -49,5 +53,6 @@ async def get_uid(authorization: Optional[str] = Header(None)) -> str:
     try:
         decoded = auth.verify_id_token(id_token)
         return decoded['uid']
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=f'Invalid or expired token: {str(e)}')
+    except Exception:
+        logger.warning("Failed to verify Firebase ID token")
+        raise HTTPException(status_code=401, detail='Invalid or expired token')

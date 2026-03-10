@@ -71,11 +71,10 @@ class NotificationService {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Got a message whilst in the foreground!');
-      debugPrint('Message data: ${message.data}');
-
-      if (message.notification != null) {
-        debugPrint('Message also contained a notification: ${message.notification}');
+      if (kDebugMode) {
+        debugPrint(
+          '[NotificationService] Foreground message received: ${message.messageId}',
+        );
       }
     });
   }
@@ -85,17 +84,23 @@ class NotificationService {
     final actionId = response.actionId;
     final payload = response.payload;
 
-    debugPrint('🔔 [NotificationService] Notification clicked! Action: $actionId, Payload: $payload');
+    if (kDebugMode) {
+      debugPrint('[NotificationService] Notification action: $actionId');
+    }
 
     if (actionId != null &&
         actionId.isNotEmpty &&
         payload != null &&
         payload.isNotEmpty) {
       if (onAction != null) {
-        debugPrint('🔔 [NotificationService] Routing action to handler...');
+        if (kDebugMode) {
+          debugPrint('[NotificationService] Routing action to handler');
+        }
         await onAction!(actionId, payload);
       } else {
-        debugPrint('⚠️ [NotificationService] onAction handler is null!');
+        if (kDebugMode) {
+          debugPrint('[NotificationService] onAction handler is null');
+        }
       }
     }
   }
@@ -210,9 +215,13 @@ class NotificationService {
         payload: noteId,
       );
 
-      debugPrint('✅ [NotificationService] Scheduled "$title" for $scheduledDate (Exact: $canScheduleExact)');
+      if (kDebugMode) {
+        debugPrint('[NotificationService] Notification scheduled successfully.');
+      }
     } catch (e) {
-      debugPrint('❌ [NotificationService] Error scheduling notification: $e');
+      if (kDebugMode) {
+        debugPrint('[NotificationService] Error scheduling notification: $e');
+      }
     }
   }
 
@@ -250,7 +259,9 @@ class NotificationService {
     }
 
     if (notifyTime != null && notifyTime.isAfter(now)) {
-      debugPrint('📅 [NotificationService] Scheduling notification for ${note.title} at $notifyTime');
+      if (kDebugMode) {
+        debugPrint('[NotificationService] Scheduling notification for task id ${note.id}');
+      }
       await scheduleNotification(
         id: notifId,
         title: note.title,
@@ -259,9 +270,13 @@ class NotificationService {
         noteId: note.id,
       );
     } else if (notifyTime != null) {
-      debugPrint('⏭️ [NotificationService] Notify time $notifyTime is in the past for ${note.title}, skipping.');
+      if (kDebugMode) {
+        debugPrint('[NotificationService] Notify time is in the past, skipping.');
+      }
     } else {
-      debugPrint('ℹ️ [NotificationService] Task ${note.title} has no specific time to notify.');
+      if (kDebugMode) {
+        debugPrint('[NotificationService] Task has no specific notification time.');
+      }
     }
   }
 

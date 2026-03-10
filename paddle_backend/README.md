@@ -24,7 +24,8 @@ Deploy the backend to Hugging Face Spaces for a robust, free Docker environment 
 2. Click **New secret**. Add the following secrets:
    - `PADDLE_API_KEY`: Your Paddle Production/Sandbox API Key
    - `PADDLE_WEBHOOK_SECRET`: Your Paddle Webhook Secret
-   - `PADDLE_PRICE_ID`: The Price ID of your Pro subscription product
+   - `PADDLE_MONTHLY_PRICE_ID`: Price ID for the monthly plan
+   - `PADDLE_YEARLY_PRICE_ID`: Price ID for the yearly plan
    - `FIREBASE_PROJECT_ID`: `synq-task-app`
    - `FIREBASE_ADMIN_BASE64`: The giant Base64 string output from your conversion script.
    - `ENVIRONMENT`: `production`
