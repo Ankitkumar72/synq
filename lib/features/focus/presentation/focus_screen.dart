@@ -8,6 +8,8 @@ import 'widgets/circular_timer.dart';
 import 'widgets/waveform_graph.dart';
 import 'session_complete_screen.dart';
 import '../../notes/data/notes_provider.dart';
+import 'widgets/ambient_sound_selector.dart';
+import 'providers/ambient_sound_provider.dart';
 
 class FocusScreen extends ConsumerStatefulWidget {
   const FocusScreen({super.key});
@@ -51,6 +53,16 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         ),
       ),
     );
+
+    // Stop ambient sound when session ends
+    ref.read(ambientSoundProvider.notifier).stop();
+  }
+
+  @override
+  void dispose() {
+    // Stop ambient sound when screen is disposed
+    ref.read(ambientSoundProvider.notifier).stop();
+    super.dispose();
   }
 
   @override
@@ -166,10 +178,28 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                       
                       // Waveform
                       const SizedBox(
-                        height: 80, // Slightly reduced to fit better
+                        height: 80,
                         width: double.infinity,
                         child: WaveformGraph(),
                       ),
+                      const SizedBox(height: 32),
+
+                      // Ambient Sound Section
+                      Row(
+                        children: [
+                          Text(
+                            "AMBIENT SOUND",
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      const AmbientSoundSelector(),
                       const SizedBox(height: 32),
                     ],
                   ),
