@@ -7,6 +7,7 @@ import '../../auth/domain/models/synq_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../notes/data/repository_provider.dart';
 import 'subscription_screen.dart';
+import 'device_management_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -153,6 +154,17 @@ class ProfileScreen extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => const SubscriptionScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildSettingItem(
+                              'Devices',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const DeviceManagementScreen(),
                                   ),
                                 );
                               },

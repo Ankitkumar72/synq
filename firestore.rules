@@ -1,6 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ── Helper Functions ──────────────────────────────────────────
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -9,30 +12,122 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Base user document for plan streams
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isPro(userId) {
+      return getUserData(userId).plan_tier == 'pro';
+    }
+
+    function isDeviceAllowed(userId) {
+      let userData = getUserData(userId);
+      let deviceId = request.resource.data.deviceLastEdited;
+      // Check if the device exists in active_device_ids flat list
+      return deviceId in userData.get('active_device_ids', []);
+    }
+
+    function withinStorageLimit(userId) {
+      let userData = getUserData(userId);
+      let used = userData.get('storage_used_bytes', 0);
+      return used <= 5368709120; // 5GB in bytes
+    }
+
+    function isValidNoteWrite() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['title', 'updated_at', 'deviceLastEdited'])
+        && data.title is string
+        && data.title.size() <= 500
+        && data.updated_at is timestamp;
+    }
+
+    function deviceCountAllowed(incomingData, currentData) {
+      // Free users can only ever have 1 device
+      let tier = currentData.get('plan_tier', 'free');
+      let newDevices = incomingData.get('active_devices', []);
+      let newDeviceIds = incomingData.get('active_device_ids', []);
+      return tier == 'pro' || (newDevices.size() <= 1 && newDeviceIds.size() <= 1);
+    }
+
+    // ── Users Collection ─────────────────────────────────────────
+
     match /users/{userId} {
       allow read: if isOwner(userId);
+
       allow create: if isOwner(userId)
-                    && request.resource.data.plan_tier == 'free'
-                    && (!('id' in request.resource.data)
-                        || request.resource.data.id == userId);
+        && request.resource.data.plan_tier == 'free'
+        && request.resource.data.get('storage_used_bytes', 0) == 0
+        && (!('id' in request.resource.data) 
+            || request.resource.data.id == userId);
+
       allow update: if isOwner(userId)
-                    && request.resource.data.plan_tier == resource.data.plan_tier
-                    && (!('id' in request.resource.data)
-                        || request.resource.data.id == resource.data.id);
+        // ID can never change
+        && (!('id' in request.resource.data) 
+            || request.resource.data.id == resource.data.id)
+        // plan_tier can only be changed by admin (backend/webhook)
+        && (request.resource.data.plan_tier == resource.data.plan_tier 
+            || isAdmin())
+        // storage_used_bytes can only be changed by admin (backend)
+        && (request.resource.data.get('storage_used_bytes', 0) 
+            == resource.data.get('storage_used_bytes', 0) 
+            || isAdmin())
+        // Enforce device limits based on plan
+        && deviceCountAllowed(request.resource.data, resource.data);
+
       allow delete: if false;
     }
 
+    // ── Notes Collection ─────────────────────────────────────────
+
     match /users/{userId}/notes/{noteId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+        && isValidNoteWrite()
+        && (isPro(userId) || (withinStorageLimit(userId) && isDeviceAllowed(userId)));
+
+      allow update: if isOwner(userId)
+        && isValidNoteWrite()
+        // Last write wins — client must send current timestamp
+        && request.resource.data.updated_at >= resource.data.updated_at
+        && (isPro(userId) || isDeviceAllowed(userId));
+
+      allow delete: if isOwner(userId);
     }
+
+    // ── Tasks Collection ─────────────────────────────────────────
+
+    match /users/{userId}/tasks/{taskId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasAll(['title', 'created_at'])
+        && request.resource.data.title is string;
+
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    // ── Folders Collection ────────────────────────────────────────
+
     match /users/{userId}/folders/{folderId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
     }
-    
-    // Paddle webhook storage
+
+    // ── Paddle Transactions ───────────────────────────────────────
+
     match /paddle_transactions/{document=**} {
-      allow read, write: if false; // Only backend can access
+      allow read, write: if false; // Backend only via Admin SDK
+    }
+
+    // ── Catch-All: Deny Everything Else ──────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

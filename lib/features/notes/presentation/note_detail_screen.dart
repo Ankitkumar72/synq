@@ -21,6 +21,10 @@ import 'package:synq/core/navigation/fade_page_route.dart';
 import 'package:synq/core/utils/icon_utils.dart';
 import 'package:synq/features/notes/presentation/folders_screen.dart';
 import 'package:synq/features/notes/presentation/widgets/note_options_sheet.dart';
+import 'package:synq/core/services/device_service.dart';
+import 'package:synq/features/auth/presentation/providers/user_provider.dart';
+import 'package:synq/features/auth/domain/models/synq_user.dart';
+import 'package:synq/features/notes/data/repository_provider.dart';
 
 class NoteDetailScreen extends ConsumerStatefulWidget {
   final Note? noteToEdit;
@@ -51,6 +55,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   DateTime? _scheduledTime;
 
   final MediaService _mediaService = MediaService();
+  final DeviceService _deviceService = DeviceService();
 
   late final String _draftKey;
   String? _draftNoteId;
@@ -58,6 +63,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   bool _isSaving = false;
   String _saveStatus = 'Saved';
   Timer? _autoSaveTimer;
+  StreamSubscription<Note?>? _noteSubscription;
+  String? _deviceId;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -122,6 +129,42 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         );
 
     _animationController.forward();
+    _loadDeviceId();
+    _setupNoteSubscription();
+  }
+
+  Future<void> _loadDeviceId() async {
+    final info = await _deviceService.getDeviceInfo();
+    if (mounted) {
+      setState(() => _deviceId = info['id']);
+    }
+  }
+
+  void _setupNoteSubscription() {
+    if (widget.noteToEdit == null) return;
+    
+    _noteSubscription = ref.read(notesRepositoryProvider).watchNote(widget.noteToEdit!.id).listen((note) {
+      if (note == null || !mounted) return;
+      
+      // Merge logic: only update if the remote note is newer and edited by a different device
+      if (_editingNote != null && 
+          note.updatedAt != null && 
+          (_editingNote!.updatedAt == null || note.updatedAt!.isAfter(_editingNote!.updatedAt!)) &&
+          note.deviceLastEdited != _deviceId) {
+        
+        setState(() {
+          _editingNote = note;
+          _titleController.text = note.title;
+          _quillController.document = MarkdownBridge.deltaFromMarkdown(note.body);
+          _selectedFolderId = note.folderId;
+          _tags.clear();
+          _tags.addAll(note.tags);
+          _attachments.clear();
+          _attachments.addAll(note.attachments);
+          _saveStatus = 'Synced';
+        });
+      }
+    });
   }
 
   void _restoreDraftIfAvailable() {
@@ -198,6 +241,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     _titleFocusNode.dispose();
     _bodyFocusNode.dispose();
     _autoSaveTimer?.cancel();
+    _noteSubscription?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -225,6 +269,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           links: _links,
           attachments: _attachments,
           updatedAt: now,
+          deviceLastEdited: _deviceId,
           isTask: _isTask,
           scheduledTime: _scheduledTime,
         ) ??
@@ -235,6 +280,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           category: NoteCategory.work, // Default or derived from folder?
           createdAt: now,
           updatedAt: now,
+          deviceLastEdited: _deviceId,
           folderId: _selectedFolderId,
           tags: _tags,
           links: _links,
@@ -281,6 +327,18 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   }
 
   Future<void> _pickImage() async {
+    final user = ref.read(userProvider).valueOrNull;
+    if (user != null && user.planTier == PlanTier.free) {
+      _showToast(context, 'Upgrade to Pro to attach files.');
+      return;
+    }
+
+    // Proactive check (in a real app, you'd call the backend /check-storage-limit here)
+    if (user != null && user.storageUsedBytes > 5 * 1024 * 1024 * 1024) {
+      _showToast(context, 'Storage limit reached.');
+      return;
+    }
+
     final path = await _mediaService.pickAndSaveImage(
       source: ImageSource.gallery,
     );

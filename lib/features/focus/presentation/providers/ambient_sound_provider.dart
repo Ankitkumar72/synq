@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'dart:async';
@@ -82,7 +83,7 @@ class AmbientSoundNotifier extends StateNotifier<AmbientSoundState> {
         await _player.play();
       } catch (e) {
         // Fallback for missing assets during development
-        print('Error playing audio: $e');
+        debugPrint('Error playing audio: $e');
         state = state.copyWith(isPlaying: false);
       }
     }

@@ -83,6 +83,33 @@ class LocalDatabase {
     yield* _notesChangedController.stream.asyncMap((_) => getNotes());
   }
 
+  Stream<Note?> watchNote(String id) async* {
+    yield await getNote(id);
+    yield* _notesChangedController.stream.asyncMap((_) => getNote(id));
+  }
+
+  Future<Note?> getNote(String id) async {
+    final db = await _openDatabase();
+    final rows = await db.query(
+      'notes',
+      columns: <String>['payload'],
+      where: 'id = ? AND is_deleted = 0',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (rows.isEmpty) return null;
+    final rawPayload = rows.first['payload'] as String;
+    if (rawPayload.isEmpty) return null;
+
+    try {
+      final payload = jsonDecode(rawPayload) as Map<String, dynamic>;
+      return Note.fromJson(payload);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Stream<List<Folder>> watchFolders() async* {
     yield await getFolders();
     yield* _foldersChangedController.stream.asyncMap((_) => getFolders());

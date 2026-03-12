@@ -214,6 +214,7 @@ mixin _$Note {
   List<SubTask> get subtasks => throw _privateConstructorUsedError;
   String? get folderId => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
+  String? get deviceLastEdited => throw _privateConstructorUsedError;
   int get order => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -250,6 +251,7 @@ abstract class $NoteCopyWith<$Res> {
       List<SubTask> subtasks,
       String? folderId,
       DateTime? updatedAt,
+      String? deviceLastEdited,
       int order});
 
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
@@ -291,6 +293,7 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? subtasks = null,
     Object? folderId = freezed,
     Object? updatedAt = freezed,
+    Object? deviceLastEdited = freezed,
     Object? order = null,
   }) {
     return _then(_value.copyWith(
@@ -386,6 +389,10 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      deviceLastEdited: freezed == deviceLastEdited
+          ? _value.deviceLastEdited
+          : deviceLastEdited // ignore: cast_nullable_to_non_nullable
+              as String?,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
@@ -437,6 +444,7 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       List<SubTask> subtasks,
       String? folderId,
       DateTime? updatedAt,
+      String? deviceLastEdited,
       int order});
 
   @override
@@ -476,6 +484,7 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? subtasks = null,
     Object? folderId = freezed,
     Object? updatedAt = freezed,
+    Object? deviceLastEdited = freezed,
     Object? order = null,
   }) {
     return _then(_$NoteImpl(
@@ -571,6 +580,10 @@ class __$$NoteImplCopyWithImpl<$Res>
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      deviceLastEdited: freezed == deviceLastEdited
+          ? _value.deviceLastEdited
+          : deviceLastEdited // ignore: cast_nullable_to_non_nullable
+              as String?,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
@@ -607,6 +620,7 @@ class _$NoteImpl extends _Note {
       final List<SubTask> subtasks = const [],
       this.folderId,
       this.updatedAt,
+      this.deviceLastEdited,
       this.order = 0})
       : _tags = tags,
         _attachments = attachments,
@@ -697,12 +711,14 @@ class _$NoteImpl extends _Note {
   @override
   final DateTime? updatedAt;
   @override
+  final String? deviceLastEdited;
+  @override
   @JsonKey()
   final int order;
 
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, order: $order)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, deviceLastEdited: $deviceLastEdited, order: $order)';
   }
 
   @override
@@ -748,6 +764,8 @@ class _$NoteImpl extends _Note {
                 other.folderId == folderId) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
+            (identical(other.deviceLastEdited, deviceLastEdited) ||
+                other.deviceLastEdited == deviceLastEdited) &&
             (identical(other.order, order) || other.order == order));
   }
 
@@ -778,6 +796,7 @@ class _$NoteImpl extends _Note {
         const DeepCollectionEquality().hash(_subtasks),
         folderId,
         updatedAt,
+        deviceLastEdited,
         order
       ]);
 
@@ -820,6 +839,7 @@ abstract class _Note extends Note {
       final List<SubTask> subtasks,
       final String? folderId,
       final DateTime? updatedAt,
+      final String? deviceLastEdited,
       final int order}) = _$NoteImpl;
   const _Note._() : super._();
 
@@ -871,6 +891,8 @@ abstract class _Note extends Note {
   String? get folderId;
   @override
   DateTime? get updatedAt;
+  @override
+  String? get deviceLastEdited;
   @override
   int get order;
   @override

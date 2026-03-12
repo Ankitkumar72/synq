@@ -53,6 +53,7 @@ class Note with _$Note {
     @Default([]) List<SubTask> subtasks, 
     String? folderId, 
     DateTime? updatedAt, 
+    String? deviceLastEdited,
     @Default(0) int order,
   }) = _Note;
 

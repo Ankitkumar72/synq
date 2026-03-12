@@ -18,11 +18,21 @@ class FirestoreNotesRepository implements NotesRepository {
   @override
   Stream<List<Note>> watchNotes() {
     return _notesCollection
-      .orderBy('createdAt', descending: true)
+      .orderBy('updatedAt', descending: true)
       .snapshots()
       .map((snapshot) => snapshot.docs
           .map((doc) => Note.fromJson(doc.data()))
           .toList());
+  }
+
+  @override
+  Stream<Note?> watchNote(String id) {
+    return _notesCollection.doc(id).snapshots().map((snapshot) {
+      if (snapshot.exists && snapshot.data() != null) {
+        return Note.fromJson(snapshot.data()!);
+      }
+      return null;
+    });
   }
   
   // CRUD operations work offline - auto-sync when online

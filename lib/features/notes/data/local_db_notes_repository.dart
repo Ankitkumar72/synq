@@ -13,6 +13,11 @@ class LocalDbNotesRepository implements NotesRepository {
   }
 
   @override
+  Stream<Note?> watchNote(String id) {
+    return _database.watchNote(id);
+  }
+
+  @override
   Future<void> addNote(Note note) async {
     final stamped = note.copyWith(updatedAt: DateTime.now());
     await _database.upsertNote(

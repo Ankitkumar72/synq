@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:collection/collection.dart';
 
 import 'package:path_provider/path_provider.dart';
 
@@ -29,6 +30,15 @@ class LocalVaultNotesRepository implements NotesRepository {
     await _ensureInitialized();
     yield List<Note>.unmodifiable(_cache);
     yield* _controller.stream;
+  }
+
+  @override
+  Stream<Note?> watchNote(String id) async* {
+    await _ensureInitialized();
+    yield _cache.firstWhereOrNull((note) => note.id == id);
+    yield* _controller.stream.map(
+      (notes) => notes.firstWhereOrNull((note) => note.id == id),
+    );
   }
 
   @override

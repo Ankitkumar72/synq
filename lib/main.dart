@@ -13,12 +13,22 @@ import 'package:synq/core/widgets/responsive_wrapper.dart';
 import 'package:synq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:synq/features/auth/presentation/screens/login_screen.dart';
 import 'package:synq/features/notes/data/sync_access_provider.dart';
+import 'package:synq/features/auth/presentation/widgets/device_enforcement_guard.dart';
+import 'package:synq/features/auth/presentation/widgets/downgrade_handler.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   String? firebaseError;
   try {
     WidgetsFlutterBinding.ensureInitialized();
     await FirebaseService.initialize();
+    
+    // Enable offline persistence
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+
     await NotificationService().init();
   } catch (e, stack) {
     if (kDebugMode) {
@@ -121,7 +131,11 @@ class _SynqAppState extends ConsumerState<SynqApp> {
           : shouldShowLoading
               ? Scaffold(backgroundColor: AppColors.background, body: const Center(child: CircularProgressIndicator()))
               : canEnterApp
-                  ? const MainShell()
+                  ? const DeviceEnforcementGuard(
+                      child: DowngradeHandler(
+                        child: MainShell(),
+                      ),
+                    )
                   : const LoginScreen(),
     );
   }

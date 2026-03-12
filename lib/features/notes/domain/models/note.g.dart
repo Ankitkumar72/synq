@@ -70,6 +70,7 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       updatedAt: json['updatedAt'] == null
           ? null
           : DateTime.parse(json['updatedAt'] as String),
+      deviceLastEdited: json['deviceLastEdited'] as String?,
       order: (json['order'] as num?)?.toInt() ?? 0,
     );
 
@@ -99,6 +100,7 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'subtasks': instance.subtasks.map((e) => e.toJson()).toList(),
       'folderId': instance.folderId,
       'updatedAt': instance.updatedAt?.toIso8601String(),
+      'deviceLastEdited': instance.deviceLastEdited,
       'order': instance.order,
     };
 

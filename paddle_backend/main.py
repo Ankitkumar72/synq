@@ -12,6 +12,8 @@ load_dotenv()
 from auth import get_uid
 from paddle_client import create_checkout_url
 from webhook import handle_paddle_webhook
+from firestore_client import db
+from firebase_admin import firestore
 
 
 # Logging configuration
@@ -162,6 +164,61 @@ async def paddle_webhook(request: Request):
     """
 
     return await handle_paddle_webhook(request)
+
+
+# --- Storage Enforcement ---
+
+@app.post("/check-storage-limit")
+async def check_storage_limit(file_size: int, uid: str = Depends(get_uid)):
+    """
+    Checks if the user has enough storage left before an upload starts.
+    Free users: No file attachments allowed (must upgrade).
+    Pro users: 5GB cap.
+    """
+    user_ref = db.collection('users').document(uid)
+    user_doc = user_ref.get()
+    
+    if not user_doc.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user_data = user_doc.to_dict()
+    plan_tier = user_data.get('plan_tier', 'free')
+    storage_used = user_data.get('storage_used_bytes', 0)
+    
+    if plan_tier != 'pro':
+        raise HTTPException(
+            status_code=403, 
+            detail="Upgrade to Pro to upload file attachments"
+        )
+        
+    # 5GB limit = 5 * 1024 * 1024 * 1024 bytes
+    LIMIT_5GB = 5 * 1024 * 1024 * 1024
+    
+    if storage_used + file_size > LIMIT_5GB:
+        raise HTTPException(
+            status_code=403,
+            detail="Storage limit (5GB) reached. Please delete old attachments."
+        )
+        
+    return {"status": "allowed"}
+
+
+@app.post("/increment-storage")
+async def increment_storage(file_size: int, uid: str = Depends(get_uid)):
+    """
+    Atomically increments the user's storage usage after a successful upload.
+    Uses firestore.Increment for race-condition safety.
+    """
+    user_ref = db.collection('users').document(uid)
+    
+    try:
+        user_ref.update({
+            'storage_used_bytes': firestore.Increment(file_size)
+        })
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Failed to increment storage for user {uid}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update storage counter")
 
 
 # -------------------------------
