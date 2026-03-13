@@ -60,7 +60,7 @@ class TimelineHourRow extends ConsumerWidget {
               constraints: const BoxConstraints(minHeight: 66),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey.withAlpha(20)),
                 boxShadow: [
                   BoxShadow(

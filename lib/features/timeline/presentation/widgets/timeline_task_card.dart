@@ -42,7 +42,7 @@ class TimelineTaskCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFFA5B4FC), // Soft Periwinkle/Blue from image
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withAlpha(15),
@@ -142,10 +142,10 @@ class TimelineTaskCard extends StatelessWidget {
              left: BorderSide(color: AppColors.activeCardBorder, width: 4),
           ),
           borderRadius: const BorderRadius.only(
-            topRight: Radius.circular(12),
-            bottomRight: Radius.circular(12),
-            bottomLeft: Radius.circular(12),
-            topLeft: Radius.circular(12),
+            topRight: Radius.circular(8),
+            bottomRight: Radius.circular(8),
+            bottomLeft: Radius.circular(8),
+            topLeft: Radius.circular(8),
           ),
           boxShadow: [
             BoxShadow(
@@ -210,7 +210,7 @@ class TimelineTaskCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isCompleted ? AppColors.surface.withAlpha(150) : AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           boxShadow: const [
             BoxShadow(
               color: AppColors.shadow,
