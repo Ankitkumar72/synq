@@ -29,13 +29,13 @@ class TimelineHourRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       key: focusKey,
-      margin: const EdgeInsets.only(bottom: 6),
+      margin: const EdgeInsets.only(bottom: 3),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Time Column
           SizedBox(
-            width: 60,
+            width: 50,
             child: Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
@@ -56,8 +56,8 @@ class TimelineHourRow extends ConsumerWidget {
           // Main Content Area (The Box)
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              constraints: const BoxConstraints(minHeight: 80),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              constraints: const BoxConstraints(minHeight: 66),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),

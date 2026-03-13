@@ -144,7 +144,7 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                         ),
                       ),
                         SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           sliver: SliverList(
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
