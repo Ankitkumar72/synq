@@ -8,8 +8,10 @@ import '../widgets/calendar_selector.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
 import '../widgets/timeline_hour_row.dart';
 import '../widgets/synq_drawer.dart';
+import '../../../shell/presentation/main_shell.dart';
 import '../pages/schedule_timeline_content.dart';
 import '../pages/weekly_timeline_content.dart';
+import '../pages/create_event_page.dart';
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
 class DailyTimelineContent extends ConsumerStatefulWidget {
@@ -72,19 +74,35 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
       }
     });
     
+    // Auto-reset to current date when navigating to timeline tab
+    ref.listen(currentNavIndexProvider, (previous, next) {
+      if (next == 1) { // 1 is the timeline index
+        final now = DateTime.now();
+        final selectedDate = ref.read(selectedDateProvider);
+        if (selectedDate.year != now.year || 
+            selectedDate.month != now.month || 
+            selectedDate.day != now.day) {
+          ref.read(selectedDateProvider.notifier).state = now;
+        }
+      }
+    });
+    
     final viewMode = ref.watch(timelineViewModeProvider);
     
     return Scaffold(
       backgroundColor: AppColors.background,
       endDrawer: const SynqDrawer(),
-      floatingActionButton: viewMode == TimelineViewMode.monthly 
-          ? null 
-          : FloatingActionButton(
-              onPressed: () => showCreateTaskSheet(context, initialDate: selectedDate),
-              backgroundColor: AppColors.primary,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
+      floatingActionButton: GestureDetector(
+        onLongPress: () => showCreateTaskSheet(context, initialDate: selectedDate),
+        child: FloatingActionButton(
+          onPressed: () {
+            showCreateEventSheet(context);
+          },
+          backgroundColor: AppColors.primary,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.only(top: 24),

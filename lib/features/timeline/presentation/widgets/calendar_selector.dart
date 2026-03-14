@@ -17,6 +17,8 @@ class CalendarSelector extends ConsumerStatefulWidget {
 class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
   late DateTime _visibleMonth;
   late PageController _monthPageController;
+  late ScrollController _weekScrollController;
+  bool _hasInitialWeekScroll = false;
   final DateTime _today = DateTime.now();
 
   @override
@@ -24,12 +26,41 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     super.initState();
     _visibleMonth = DateTime(_today.year, _today.month);
     _monthPageController = PageController(initialPage: 0);
+    _weekScrollController = ScrollController();
   }
 
   @override
   void dispose() {
     _monthPageController.dispose();
+    _weekScrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToSelectedDate({bool animate = true}) {
+    if (!mounted || !_weekScrollController.hasClients) return;
+    
+    final selectedDate = ref.read(selectedDateProvider);
+    final weekDays = _getWeekDays(selectedDate);
+    final index = weekDays.indexWhere((d) => _isSameDay(d, selectedDate));
+    
+    if (index >= 0) {
+      final itemWidth = 70.0; // 60 width + 5*2 margin
+      final screenWidth = MediaQuery.of(context).size.width;
+      final targetOffset = (index * itemWidth) + 16.0 - (screenWidth / 2) + (itemWidth / 2);
+      
+      double maxScroll = _weekScrollController.position.maxScrollExtent;
+      double offset = targetOffset.clamp(0.0, maxScroll);
+      
+      if (animate) {
+        _weekScrollController.animateTo(
+          offset,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        _weekScrollController.jumpTo(offset);
+      }
+    }
   }
 
   void _toggleView() {
@@ -56,6 +87,22 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     final isMonthly = viewMode == TimelineViewMode.monthly;
     final notesAsync = ref.watch(notesProvider);
     final allNotes = notesAsync.value ?? [];
+
+    ref.listen(selectedDateProvider, (previous, next) {
+      if (previous != next && !isMonthly) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToSelectedDate(animate: true);
+        });
+      }
+    });
+
+    ref.listen(timelineViewModeProvider, (previous, next) {
+      if (previous == TimelineViewMode.monthly && next != TimelineViewMode.monthly) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToSelectedDate(animate: false);
+        });
+      }
+    });
 
     // Group tasks by date for monthly view
     final tasksByDate = <DateTime, List<Note>>{};
@@ -169,6 +216,13 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     final weekDays = _getWeekDays(selectedDate);
     final weekNumber = _getWeekNumber(selectedDate);
 
+    if (!_hasInitialWeekScroll) {
+      _hasInitialWeekScroll = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToSelectedDate(animate: false);
+      });
+    }
+
     return Column(
       key: const ValueKey('weekly'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,6 +236,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
         SizedBox(
           height: 100,
           child: ListView.builder(
+            controller: _weekScrollController,
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -381,6 +436,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
 
 
   Widget _buildDayItem(BuildContext context, DateTime date, bool isSelected, bool hasTasks) {
+    final isToday = _isSameDay(date, DateTime.now());
     return GestureDetector(
       onTap: () => ref.read(selectedDateProvider.notifier).state = date,
       child: Container(
@@ -389,6 +445,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF5473F7) : const Color(0xFFF5F7FF),
           borderRadius: BorderRadius.circular(35),
+          border: isToday && !isSelected ? Border.all(color: const Color(0xFF5473F7).withValues(alpha: 0.5), width: 1.5) : null,
           boxShadow: isSelected ? [
             BoxShadow(
               color: const Color(0xFF5473F7).withValues(alpha: 0.3),
@@ -436,6 +493,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
 
   Widget _buildGridDayItem(
       BuildContext context, DateTime date, bool isSelected, List<Note> tasks, bool isPadding) {
+    final isToday = _isSameDay(date, DateTime.now());
     return GestureDetector(
       onTap: () {
         ref.read(selectedDateProvider.notifier).state = date;
@@ -450,6 +508,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
             decoration: BoxDecoration(
               color: isSelected ? const Color(0xFF1E1E1E) : Colors.transparent,
               shape: BoxShape.circle,
+              border: isToday && !isSelected ? Border.all(color: const Color(0xFF5473F7).withValues(alpha: 0.5), width: 1.5) : null,
             ),
             child: Text(
               date.day.toString(),

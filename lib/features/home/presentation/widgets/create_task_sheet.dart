@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../notes/domain/models/recurrence_rule.dart';
 import '../../../notes/domain/models/note.dart';
 import '../../../notes/data/notes_provider.dart';
+import '../../../timeline/presentation/pages/create_event_page.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../providers/schedule_conflict_provider.dart';
 import 'repeat_settings_screen.dart';
 
@@ -672,12 +675,15 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                     ),
                   ),
 
+                  const SizedBox(height: 16),
+                  _buildTypeChips(),
+
                   const SizedBox(height: 12), // Reduced spacing
 
                   // Schedule Section
                   _buildSectionLabel('SCHEDULE'),
                   const SizedBox(height: 8),
-                  _buildScheduleCard(
+                   _buildScheduleCard(
                     date: _formatDateToTitle(_taskDueDate),
                     dateSub: _formatDateToSubtitle(_taskDueDate),
                     time: _isTaskAllDay 
@@ -798,11 +804,77 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
       style: const TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.bold,
-        color: Colors.black, // Changed from Color(0xFF8A9099)
-        letterSpacing: 1.0,
+        color: AppColors.textSecondary,
+        letterSpacing: 1.2,
       ),
     );
   }
+
+  Widget _buildTypeChips() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          _buildChip('Event', 0, Icons.event_note),
+          const SizedBox(width: 8),
+          _buildChip('Task', 1, Icons.check_circle_outline),
+          const SizedBox(width: 8),
+          _buildChip('Working location', 2, Icons.work_outline),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChip(String label, int index, IconData icon) {
+    bool isSelected = index == 1; // Task is the current sheet
+    return GestureDetector(
+      onTap: () {
+        if (index == 0 || index == 2) {
+          Navigator.pop(context);
+          showCreateEventSheet(context);
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFE2E8F0) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.transparent : Colors.grey.shade200,
+            width: 1.5,
+          ),
+          boxShadow: isSelected ? [] : [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: const Color(0xFF334155),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.roboto(
+                color: const Color(0xFF334155),
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildScheduleCard({
     required String date,
