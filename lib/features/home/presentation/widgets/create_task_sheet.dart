@@ -690,6 +690,8 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                       decoration: const InputDecoration(
                         filled: false, // Prevent theme override
                         border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
                         hintText: 'What needs to be done?',
                         hintStyle: TextStyle(color: Color(0xFF9AA0A6), fontSize: 16, fontWeight: FontWeight.w600),
@@ -777,6 +779,8 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                       decoration: const InputDecoration(
                         filled: false, // Prevent theme override
                         border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
                         hintText: 'Add details, subtasks, or links...',
                         hintStyle: TextStyle(color: Colors.grey),

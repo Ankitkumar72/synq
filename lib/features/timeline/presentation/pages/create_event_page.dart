@@ -129,9 +129,35 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                   ),
                   const SizedBox(height: 16),
                   _buildDescriptionBento(),
-                  const SizedBox(height: 16),
-                  _buildOptionsGrid(),
+                  const SizedBox(height: 24),
                 ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: Add save logic here later
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5473F7), // Bright blue
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 4,
+                  shadowColor: const Color(0x405473F7),
+                ),
+                icon: const Icon(Icons.add_circle, size: 20),
+                label: const Text(
+                  'Create Event',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ),
@@ -142,39 +168,27 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: AppColors.textPrimary, size: 24),
+            icon: const Icon(Icons.close),
             onPressed: () => Navigator.pop(context),
+            color: Colors.black54,
           ),
-          Text(
+          const Text(
             'New Event',
-            style: GoogleFonts.roboto(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0F172A),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(
-              'Save Event',
-              style: GoogleFonts.roboto(fontWeight: FontWeight.w600, fontSize: 15),
-            ),
+          IconButton(
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () {}, // Event reminders would go here
+            color: Colors.black54,
           ),
         ],
       ),
@@ -744,42 +758,30 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   }
 
   Widget _buildDescriptionBento() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100, width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED), // very light orange
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.notes, color: Color(0xFFF97316), size: 18), // orange line icon
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Description & Attachments',
-                style: GoogleFonts.roboto(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E3A8A), // dark blue text
-                ),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.notes, size: 18, color: Colors.grey),
+            const SizedBox(width: 8),
+            _buildSectionLabel('DESCRIPTION'),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 140, // Maximized height
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade100, width: 1.5),
           ),
-          const SizedBox(height: 16),
-          TextField(
+          child: TextField(
             controller: _descriptionController,
-            maxLines: 3,
-            minLines: 1,
+            maxLines: null,
+            expands: true,
+            textAlignVertical: TextAlignVertical.top,
             style: GoogleFonts.roboto(
               fontSize: 16,
               color: AppColors.textPrimary,
@@ -797,87 +799,12 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
               contentPadding: EdgeInsets.zero,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOptionsGrid() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSmallOptionCard(
-            Icons.person_outline,
-            'Guests',
-            'Add people',
-            const Color(0xFFEFF6FF), // bg light blue
-            const Color(0xFF3B82F6), // icon blue
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildSmallOptionCard(
-            Icons.notifications_none,
-            'Alert',
-            '30 min before',
-            const Color(0xFFFEF2F2), // bg light red
-            const Color(0xFFEF4444), // icon red
-          ),
         ),
       ],
     );
   }
 
-  Widget _buildSmallOptionCard(IconData icon, String title, String subtitle, Color bgColor, Color iconColor) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: bgColor,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.roboto(
-                    fontSize: 12,
-                    color: const Color(0xFF94A3B8), // gray-blue for titles
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.roboto(
-                    fontSize: 14,
-                    color: const Color(0xFF0F172A), // very dark navy
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   String _formatTime(TimeOfDay time) {
     final amPm = time.hour < 12 ? 'AM' : 'PM';
