@@ -4,6 +4,9 @@ import '../../../../core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
+import '../../../notes/domain/models/recurrence_rule.dart';
+// Adjust this path to where your repeat_settings_screen.dart is located
+import '../../../home/presentation/widgets/repeat_settings_screen.dart'; 
 
 class CreateEventPage extends ConsumerStatefulWidget {
   const CreateEventPage({super.key});
@@ -21,6 +24,9 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   DateTime _endDate = DateTime.now();
   TimeOfDay _endTime = TimeOfDay.now().replacing(hour: (TimeOfDay.now().hour + 1) % 24);
   int _selectedChipIndex = 0; // 0: Event, 1: Task, 2: Working location, 3: Out of office
+  
+  // Added recurrence rule state
+  RecurrenceRule? _recurrenceRule;
 
   @override
   void dispose() {
@@ -216,8 +222,6 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
           _buildChip('Event', 0, Icons.event_note),
           const SizedBox(width: 8),
           _buildChip('Task', 1, Icons.check_circle_outline),
-          const SizedBox(width: 8),
-          _buildChip('Working location', 2, Icons.work_outline),
         ],
       ),
     );
@@ -414,11 +418,56 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     return '$hour:$minute';
   }
 
+  // --- Recurrence Helper Methods ---
+  Future<({bool applied, RecurrenceRule? rule})> _showRecurrenceDialog({
+    RecurrenceRule? initialRule,
+    required DateTime startsAt,
+  }) async {
+    final result = await Navigator.of(context).push<RepeatSettingsResult>(
+      MaterialPageRoute(
+        builder: (_) => RepeatSettingsScreen(
+          initialRule: initialRule,
+          startsAt: startsAt,
+        ),
+      ),
+    );
+
+    if (!mounted || result == null) {
+      return (applied: false, rule: initialRule);
+    }
+
+    return (applied: true, rule: result.rule);
+  }
+
+  String _formatRecurrenceLabelForRule(RecurrenceRule? rule) {
+    if (rule == null) return 'No Repeat';
+
+    final unit = _recurrenceUnitLabel(rule.unit);
+    if (rule.interval <= 1) {
+      return 'Every $unit';
+    }
+    return 'Every ${rule.interval} ${unit}s';
+  }
+
+  String _recurrenceUnitLabel(RecurrenceUnit unit) {
+    switch (unit) {
+      case RecurrenceUnit.day:
+        return 'day';
+      case RecurrenceUnit.week:
+        return 'week';
+      case RecurrenceUnit.month:
+        return 'month';
+      case RecurrenceUnit.year:
+        return 'year';
+    }
+  }
+
   Future<void> _openTimePlannerSheet() async {
     var selectedDate = _startDate;
     TimeOfDay? selectedStartTime = _startTime;
     TimeOfDay? selectedEndTime = _endTime;
     var selectedIsAllDay = _isAllDay;
+    var selectedRule = _recurrenceRule;
 
     await showDialog<void>(
       context: context,
@@ -509,6 +558,46 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
               });
             }
 
+            Future<void> setRepeatRule() async {
+              final startsAt = selectedIsAllDay
+                  ? DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                    )
+                  : DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      selectedStartTime?.hour ?? 9,
+                      selectedStartTime?.minute ?? 0,
+                    );
+
+              setState(() {
+                _isAllDay = selectedIsAllDay;
+                _startDate = selectedDate;
+                _endDate = selectedDate; // Sync end date for events
+                if (selectedIsAllDay) {
+                  _startTime = const TimeOfDay(hour: 0, minute: 0);
+                  _endTime = const TimeOfDay(hour: 23, minute: 59);
+                } else if (selectedStartTime != null && selectedEndTime != null) {
+                  _startTime = selectedStartTime!;
+                  _endTime = selectedEndTime!;
+                }
+              });
+
+              Navigator.of(context).pop();
+
+              final result = await _showRecurrenceDialog(
+                initialRule: selectedRule,
+                startsAt: startsAt,
+              );
+              if (!mounted || !result.applied) return;
+              setState(() {
+                _recurrenceRule = result.rule;
+              });
+            }
+
             return Theme(
               data: schedulerTheme,
               child: Dialog(
@@ -552,19 +641,14 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                         ListTile(
                           visualDensity: const VisualDensity(vertical: -4),
                           leading: const Icon(Icons.repeat, color: Colors.white70),
-                          title: const Text(
-                            'No Repeat', // Defaulting to No Repeat since events don't have recurrence yet
-                            style: TextStyle(
+                          title: Text(
+                            _formatRecurrenceLabelForRule(selectedRule),
+                            style: const TextStyle(
                               color: Color(0xFFE7EBF0),
                               fontSize: 14,
                             ),
                           ),
-                          onTap: () {
-                            // Events recurrence not fully implemented in UI yet
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Event recurrence coming soon!')),
-                            );
-                          },
+                          onTap: setRepeatRule,
                         ),
                         const Divider(height: 1, color: Color(0xFF708090)),
                         Padding(
@@ -588,6 +672,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                                     _startTime = TimeOfDay.now();
                                     _endTime = TimeOfDay.now().replacing(hour: (TimeOfDay.now().hour + 1) % 24);
                                     _isAllDay = false;
+                                    _recurrenceRule = null; // Clear rule as well
                                   });
                                   Navigator.pop(context);
                                 },
@@ -603,6 +688,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                                     _isAllDay = selectedIsAllDay;
                                     _startDate = selectedDate;
                                     _endDate = selectedDate; // Sync end date for events for now
+                                    _recurrenceRule = selectedRule;
                                     if (selectedIsAllDay) {
                                       _startTime = const TimeOfDay(hour: 0, minute: 0);
                                       _endTime = const TimeOfDay(hour: 23, minute: 59);
@@ -634,8 +720,6 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
       },
     );
   }
-
-
 
   Widget _buildDescriptionBento() {
     return Container(

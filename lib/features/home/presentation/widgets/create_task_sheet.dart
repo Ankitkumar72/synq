@@ -819,8 +819,6 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
           _buildChip('Event', 0, Icons.event_note),
           const SizedBox(width: 8),
           _buildChip('Task', 1, Icons.check_circle_outline),
-          const SizedBox(width: 8),
-          _buildChip('Working location', 2, Icons.work_outline),
         ],
       ),
     );
