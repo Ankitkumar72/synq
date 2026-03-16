@@ -55,24 +55,61 @@ class TimelineHourRow extends ConsumerWidget {
 
           // Main Content Area (The Box)
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              constraints: const BoxConstraints(minHeight: 66),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withAlpha(20)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  constraints: const BoxConstraints(minHeight: 66),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.withAlpha(20)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: tasksStartingNow.isNotEmpty
-                  ? _buildTaskBlocks(context, tasksStartingNow, ref)
-                  : const SizedBox.shrink(), // Empty slot is just the white box
+                  child: tasksStartingNow.isNotEmpty
+                      ? _buildTaskBlocks(context, tasksStartingNow, ref)
+                      : const SizedBox.shrink(), // Empty slot is just the white box
+                ),
+                if (isSelectedDateToday && currentHour == hour)
+                  Positioned(
+                    left: -4,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Align(
+                      alignment: Alignment(-1.0, -1.0 + 2.0 * (DateTime.now().minute / 60)),
+                      child: FractionalTranslation(
+                        translation: const Offset(0, -0.5),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                height: 1.5,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
