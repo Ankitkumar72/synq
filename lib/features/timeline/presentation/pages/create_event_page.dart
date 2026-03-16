@@ -196,34 +196,42 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   }
 
   Widget _buildTitleInput() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade100, width: 1.5),
-      ),
-      child: TextField(
-        controller: _titleController,
-        style: GoogleFonts.roboto(
-          fontSize: 22,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textPrimary,
-        ),
-        decoration: InputDecoration(
-          hintText: 'What\'s happening?',
-          hintStyle: GoogleFonts.roboto(
-            fontSize: 22,
-            fontWeight: FontWeight.w500,
-            color: const Color(0xFF94A3B8),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionLabel('EVENT TITLE'),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade100, width: 1.5),
           ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-          fillColor: Colors.transparent,
+          child: TextField(
+            controller: _titleController,
+            maxLines: null,
+            style: GoogleFonts.roboto(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              hintText: 'What\'s happening?',
+              hintStyle: GoogleFonts.roboto(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF9AA0A6),
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+              fillColor: Colors.transparent,
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
