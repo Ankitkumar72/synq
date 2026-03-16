@@ -619,6 +619,15 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
       ),
       child: Column(
         children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

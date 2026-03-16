@@ -27,6 +27,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   
   // Added recurrence rule state
   RecurrenceRule? _recurrenceRule;
+  DateTime? _eventReminderTime;
 
   @override
   void dispose() {
@@ -186,13 +187,120 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {}, // Event reminders would go here
-            color: Colors.black54,
-          ),
+             icon: Icon(
+               _eventReminderTime == null
+                   ? Icons.notifications_none
+                   : Icons.notifications_active_outlined,
+             ),
+             onPressed: _pickReminderTime,
+             color: _eventReminderTime == null
+                 ? Colors.black54
+                 : const Color(0xFF5473F7),
+             tooltip: _formatReminderLabel(),
+           ),
         ],
       ),
     );
+  }
+
+  String _formatReminderLabel() {
+     if (_eventReminderTime == null) return 'Add reminder';
+     final now = DateTime.now();
+     if (_eventReminderTime!.year == now.year && _eventReminderTime!.day == now.day) {
+       return 'Today, ${_formatTimeFromTimeOfDay(TimeOfDay.fromDateTime(_eventReminderTime!))}';
+     }
+     return '${_eventReminderTime!.month}/${_eventReminderTime!.day}, ${_formatTimeFromTimeOfDay(TimeOfDay.fromDateTime(_eventReminderTime!))}';
+  }
+
+  Future<void> _pickReminderTime() async {
+    final selection = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.notifications_off_outlined, color: Colors.black87),
+                title: const Text('No reminder', style: TextStyle(color: Colors.black87)),
+                onTap: () => Navigator.pop(context, 'none'),
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading: const Icon(Icons.alarm, color: Colors.black87),
+                title: const Text('At event start', style: TextStyle(color: Colors.black87)),
+                onTap: () => Navigator.pop(context, '0m'),
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading: const Icon(Icons.schedule, color: Colors.black87),
+                title: const Text('15 minutes before', style: TextStyle(color: Colors.black87)),
+                onTap: () => Navigator.pop(context, '15m'),
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading: const Icon(Icons.schedule, color: Colors.black87),
+                title: const Text('1 hour before', style: TextStyle(color: Colors.black87)),
+                onTap: () => Navigator.pop(context, '1h'),
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading: const Icon(Icons.schedule, color: Colors.black87),
+                title: const Text('1 day before', style: TextStyle(color: Colors.black87)),
+                onTap: () => Navigator.pop(context, '1d'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selection == null) return;
+
+    if (selection == 'none') {
+      setState(() => _eventReminderTime = null);
+      return;
+    }
+
+    Duration delta = Duration.zero;
+    switch (selection) {
+      case '15m':
+        delta = const Duration(minutes: 15);
+      case '1h':
+        delta = const Duration(hours: 1);
+      case '1d':
+        delta = const Duration(days: 1);
+      case '0m':
+      default:
+        delta = Duration.zero;
+    }
+
+    final startDate = DateTime(
+      _startDate.year,
+      _startDate.month,
+      _startDate.day,
+      _startTime.hour,
+      _startTime.minute,
+    );
+
+    setState(() {
+      _eventReminderTime = startDate.subtract(delta);
+    });
   }
 
   Widget _buildTitleInput() {
