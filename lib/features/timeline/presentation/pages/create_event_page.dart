@@ -111,7 +111,16 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                   const SizedBox(height: 20),
                   _buildTypeChips(),
                   const SizedBox(height: 24),
-                  _buildDateTimeBento(),
+                  _buildSectionLabel('SCHEDULE'),
+                  const SizedBox(height: 8),
+                  _buildScheduleCard(
+                    date: _formatDateToTitle(_startDate),
+                    dateSub: _formatDateToSubtitle(_startDate),
+                    time: _isAllDay 
+                       ? 'All Day' 
+                       : '${_formatTimeFromTimeOfDay(_startTime)} - ${_formatTimeFromTimeOfDay(_endTime)}',
+                    onTap: _openTimePlannerSheet,
+                  ),
                   const SizedBox(height: 16),
                   _buildDescriptionBento(),
                   const SizedBox(height: 16),
@@ -260,194 +269,369 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     );
   }
 
-  Widget _buildDateTimeBento() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100, width: 1.5),
+  Widget _buildSectionLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: AppColors.textSecondary,
+        letterSpacing: 1.2,
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9), // Light grayish background
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.access_time, color: Color(0xFF475569), size: 18),
+    );
+  }
+
+  Widget _buildScheduleCard({
+    required String date,
+    String? dateSub,
+    required String time,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Date Section
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F4FF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.calendar_today_outlined, color: Color(0xFF5473F7), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'DATE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8A9099),
+                      letterSpacing: 0.5,
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Schedule',
-                      style: GoogleFonts.roboto(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1E3A8A), // Deep blue label
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Text(
-                      'All-day',
-                      style: GoogleFonts.roboto(
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      dateSub != null ? '$date, $dateSub' : date,
+                      style: const TextStyle(
                         fontSize: 14,
-                        color: const Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Switch(
-                      value: _isAllDay,
-                      onChanged: (val) {
-                        setState(() { _isAllDay = val; });
-                      },
-                      activeThumbColor: Colors.white,
-                      activeTrackColor: const Color(0xFF3B82F6), // bright blue
-                      inactiveTrackColor: const Color(0xFFE2E8F0), // light gray
-                      inactiveThumbColor: Colors.white,
-                      trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Divider
+            Container(
+              height: 40,
+              width: 1,
+              color: Colors.grey[200],
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+            
+            // Time Section
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'TIME',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8A9099),
+                      letterSpacing: 0.5,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      time,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Divider(height: 1, color: Color(0xFFF1F5F9), thickness: 1.5),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'FROM',
-                        style: GoogleFonts.roboto(
-                          fontSize: 12,
-                          color: const Color(0xFF94A3B8), // very light grayish blue
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: () => _selectDate(context, true),
-                        child: Text(
-                          DateFormat('MMM d, yyyy').format(_startDate),
-                          style: GoogleFonts.roboto(
-                            fontSize: 16,
-                            color: const Color(0xFF1E3A8A), // dark blue for date
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      if (!_isAllDay) ...[
-                        const SizedBox(height: 6),
-                        GestureDetector(
-                          onTap: () => _selectTime(context, true),
-                          child: Text(
-                            _formatTime(_startTime),
-                            style: GoogleFonts.roboto(
-                              fontSize: 22,
-                              color: const Color(0xFF0F172A), // very dark navy
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ]
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'TO',
-                        style: GoogleFonts.roboto(
-                          fontSize: 12,
-                          color: const Color(0xFF94A3B8),
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: () => _selectDate(context, false),
-                        child: Text(
-                          DateFormat('MMM d, yyyy').format(_endDate),
-                          style: GoogleFonts.roboto(
-                            fontSize: 16,
-                            color: const Color(0xFF1E3A8A),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      if (!_isAllDay) ...[
-                        const SizedBox(height: 6),
-                        GestureDetector(
-                          onTap: () => _selectTime(context, false),
-                          child: Text(
-                            _formatTime(_endTime),
-                            style: GoogleFonts.roboto(
-                              fontSize: 22,
-                              color: const Color(0xFF0F172A),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ]
-                    ],
-                  ),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F4FF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.access_time, color: Color(0xFF5473F7), size: 22),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-            child: Row(
-              children: [
-                Icon(Icons.repeat, size: 18, color: const Color(0xFF94A3B8)),
-                const SizedBox(width: 8),
-                Text(
-                  'Does not repeat',
-                  style: GoogleFonts.roboto(
-                    fontSize: 14,
-                    color: const Color(0xFF94A3B8),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const Spacer(),
-                Icon(Icons.language, size: 18, color: const Color(0xFF94A3B8)), // Globe icon
-                const SizedBox(width: 8),
-                Text(
-                  'IST',
-                  style: GoogleFonts.roboto(
-                    fontSize: 14,
-                    color: const Color(0xFF94A3B8),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          )
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  String _formatDateToTitle(DateTime? dt) {
+     if (dt == null) return 'Set Date'; 
+     final now = DateTime.now();
+     if (dt.year == now.year && dt.month == now.month && dt.day == now.day) return 'Today';
+     if (dt.year == now.year && dt.month == now.month && dt.day == now.day + 1) return 'Tomorrow';
+     return '${dt.day}/${dt.month}';
+  }
+   
+  String? _formatDateToSubtitle(DateTime? dt) {
+     if (dt == null) return null;
+     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+     return '${months[dt.month - 1]} ${dt.day}';
+  }
+  
+  String _formatTimeFromTimeOfDay(TimeOfDay time) {
+    final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  Future<void> _openTimePlannerSheet() async {
+    var selectedDate = _startDate;
+    TimeOfDay? selectedStartTime = _startTime;
+    TimeOfDay? selectedEndTime = _endTime;
+    var selectedIsAllDay = _isAllDay;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final schedulerTheme = Theme.of(context).copyWith(
+              brightness: Brightness.dark,
+              colorScheme: const ColorScheme.dark(
+                primary: Color(0xFF5473F7),
+                onPrimary: Colors.white,
+                surface: Color(0xFF242B35),
+                onSurface: Color(0xFFE7EBF0),
+              ),
+              dividerColor: const Color(0xFF708090),
+              textTheme: Theme.of(context).textTheme.copyWith(
+                titleLarge: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFE7EBF0),
+                ),
+                bodyLarge: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFFE7EBF0),
+                ),
+                bodyMedium: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFFBFC7D1),
+                ),
+              ),
+              datePickerTheme: DatePickerThemeData(
+                backgroundColor: const Color(0xFF242B35),
+                weekdayStyle: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFFBFC7D1),
+                  fontWeight: FontWeight.w500,
+                ),
+                dayStyle: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFFE7EBF0),
+                ),
+                dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return const Color(0xFF5473F7);
+                  }
+                  return null;
+                }),
+                dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.white;
+                  }
+                  return const Color(0xFFE7EBF0);
+                }),
+                todayForegroundColor: const WidgetStatePropertyAll(Color(0xFFE7EBF0)),
+                todayBorder: const BorderSide(color: Color(0xFF5473F7)),
+              ),
+            );
+
+            Future<void> setTimeRange() async {
+              final pickedStartTime = await showTimePicker(
+                context: context,
+                initialTime: selectedStartTime ?? const TimeOfDay(hour: 9, minute: 0),
+                helpText: 'Select Start Time',
+              );
+              if (!context.mounted) return;
+              if (pickedStartTime == null) return;
+
+              final baseDate = DateTime(
+                selectedDate.year,
+                selectedDate.month,
+                selectedDate.day,
+                pickedStartTime.hour,
+                pickedStartTime.minute,
+              );
+              final suggestedEnd = baseDate.add(const Duration(hours: 1));
+              final pickedEndTime = await showTimePicker(
+                context: context,
+                initialTime: selectedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd),
+                helpText: 'Select End Time',
+              );
+              if (!context.mounted) return;
+
+              setModalState(() {
+                selectedStartTime = pickedStartTime;
+                selectedEndTime = pickedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd);
+                selectedIsAllDay = false;
+              });
+            }
+
+            return Theme(
+              data: schedulerTheme,
+              child: Dialog(
+                backgroundColor: const Color(0xFF242B35),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CalendarDatePicker(
+                          initialDate: selectedDate,
+                          firstDate: DateTime.now().subtract(const Duration(days: 3650)),
+                          lastDate: DateTime.now().add(const Duration(days: 3650)),
+                          onDateChanged: (date) {
+                            setModalState(() => selectedDate = date);
+                          },
+                        ),
+                        const Divider(height: 1, color: Color(0xFF708090)),
+                        ListTile(
+                          visualDensity: const VisualDensity(vertical: -4),
+                          leading: const Icon(Icons.access_time, color: Colors.white70),
+                          title: Text(
+                            selectedIsAllDay
+                                ? 'All Day'
+                                : (selectedStartTime == null || selectedEndTime == null
+                                    ? 'Set time'
+                                    : '${_formatTimeFromTimeOfDay(selectedStartTime!)} - ${_formatTimeFromTimeOfDay(selectedEndTime!)}'),
+                            style: const TextStyle(
+                              color: Color(0xFFE7EBF0),
+                              fontSize: 14,
+                            ),
+                          ),
+                          onTap: setTimeRange,
+                        ),
+                        const Divider(height: 1, color: Color(0xFF708090)),
+                        ListTile(
+                          visualDensity: const VisualDensity(vertical: -4),
+                          leading: const Icon(Icons.repeat, color: Colors.white70),
+                          title: const Text(
+                            'No Repeat', // Defaulting to No Repeat since events don't have recurrence yet
+                            style: TextStyle(
+                              color: Color(0xFFE7EBF0),
+                              fontSize: 14,
+                            ),
+                          ),
+                          onTap: () {
+                            // Events recurrence not fully implemented in UI yet
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Event recurrence coming soon!')),
+                            );
+                          },
+                        ),
+                        const Divider(height: 1, color: Color(0xFF708090)),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _startDate = DateTime.now();
+                                    _endDate = DateTime.now();
+                                    _startTime = TimeOfDay.now();
+                                    _endTime = TimeOfDay.now().replacing(hour: (TimeOfDay.now().hour + 1) % 24);
+                                    _isAllDay = false;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                child: const Text(
+                                  'Clear',
+                                  style: TextStyle(fontSize: 14, color: Colors.red),
+                                ),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _isAllDay = selectedIsAllDay;
+                                    _startDate = selectedDate;
+                                    _endDate = selectedDate; // Sync end date for events for now
+                                    if (selectedIsAllDay) {
+                                      _startTime = const TimeOfDay(hour: 0, minute: 0);
+                                      _endTime = const TimeOfDay(hour: 23, minute: 59);
+                                    } else {
+                                      if (selectedStartTime != null && selectedEndTime != null) {
+                                        _startTime = selectedStartTime!;
+                                        _endTime = selectedEndTime!;
+                                      }
+                                    }
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                child: const Text(
+                                  'Done',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
