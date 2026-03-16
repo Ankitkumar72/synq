@@ -501,29 +501,33 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
               ),
               datePickerTheme: DatePickerThemeData(
                 backgroundColor: const Color(0xFF242B35),
+                headerForegroundColor: const Color(0xFF8A94A6),
                 weekdayStyle: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFFBFC7D1),
                   fontWeight: FontWeight.w500,
                 ),
                 dayStyle: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFFE7EBF0),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
                 ),
-                dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return const Color(0xFF5473F7);
-                  }
-                  return null;
-                }),
                 dayForegroundColor: WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.selected)) {
                     return Colors.white;
                   }
+                  if (states.contains(WidgetState.disabled)) {
+                    return const Color(0xFF475569);
+                  }
                   return const Color(0xFFE7EBF0);
                 }),
-                todayForegroundColor: const WidgetStatePropertyAll(Color(0xFFE7EBF0)),
-                todayBorder: const BorderSide(color: Color(0xFF5473F7)),
+                todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) return Colors.white;
+                  return const Color(0xFF5473F7);
+                }),
+                todayBorder: BorderSide.none,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
               ),
             );
 
@@ -652,18 +656,10 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                         ),
                         const Divider(height: 1, color: Color(0xFF708090)),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text(
-                                  'Cancel',
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
                               TextButton(
                                 onPressed: () {
                                   setState(() {
@@ -676,35 +672,61 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                                   });
                                   Navigator.pop(context);
                                 },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFEF4444), // red
+                                ),
                                 child: const Text(
                                   'Clear',
-                                  style: TextStyle(fontSize: 14, color: Colors.red),
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                                 ),
                               ),
-                              const Spacer(),
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _isAllDay = selectedIsAllDay;
-                                    _startDate = selectedDate;
-                                    _endDate = selectedDate; // Sync end date for events for now
-                                    _recurrenceRule = selectedRule;
-                                    if (selectedIsAllDay) {
-                                      _startTime = const TimeOfDay(hour: 0, minute: 0);
-                                      _endTime = const TimeOfDay(hour: 23, minute: 59);
-                                    } else {
-                                      if (selectedStartTime != null && selectedEndTime != null) {
-                                        _startTime = selectedStartTime!;
-                                        _endTime = selectedEndTime!;
-                                      }
-                                    }
-                                  });
-                                  Navigator.pop(context);
-                                },
-                                child: const Text(
-                                  'Done',
-                                  style: TextStyle(fontSize: 14),
-                                ),
+                              Row(
+                                children: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFFE7EBF0), // light text
+                                    ),
+                                    child: const Text(
+                                      'Cancel',
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _isAllDay = selectedIsAllDay;
+                                        _startDate = selectedDate;
+                                        _endDate = selectedDate; // Sync end date for events for now
+                                        _recurrenceRule = selectedRule;
+                                        if (selectedIsAllDay) {
+                                          _startTime = const TimeOfDay(hour: 0, minute: 0);
+                                          _endTime = const TimeOfDay(hour: 23, minute: 59);
+                                        } else {
+                                          if (selectedStartTime != null && selectedEndTime != null) {
+                                            _startTime = selectedStartTime!;
+                                            _endTime = selectedEndTime!;
+                                          }
+                                        }
+                                      });
+                                      Navigator.pop(context);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF5473F7),
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(100),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Done',
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
