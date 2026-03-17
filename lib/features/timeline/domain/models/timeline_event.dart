@@ -18,5 +18,6 @@ class TimelineEvent with _$TimelineEvent {
     String? category, // E.g., "Personal", "Work"
     @Default(false) bool isCompleted,
     @Default(false) bool isCurrent,
+    int? color,
   }) = _TimelineEvent;
 }

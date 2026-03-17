@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
-import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
 import '../../../notes/domain/models/recurrence_rule.dart';
@@ -21,7 +20,6 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   bool _isAllDay = false;
   DateTime _startDate = DateTime.now();
   TimeOfDay _startTime = TimeOfDay.now();
-  DateTime _endDate = DateTime.now();
   TimeOfDay _endTime = TimeOfDay.now().replacing(hour: (TimeOfDay.now().hour + 1) % 24);
   int _selectedChipIndex = 0; // 0: Event, 1: Task, 2: Working location, 3: Out of office
   
@@ -29,60 +27,23 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   RecurrenceRule? _recurrenceRule;
   DateTime? _eventReminderTime;
 
+  int? _selectedColor;
+  final List<Map<String, dynamic>> _eventColors = [
+    {'name': 'Midnight Velvet', 'color': 0xFF9c528b},
+    {'name': 'Neon Blush', 'color': 0xFFf42272},
+    {'name': 'Arctic Breeze', 'color': 0xFF9fffcb},
+    {'name': 'Solar Ember', 'color': 0xFFc44900},
+    {'name': 'Electric Zest', 'color': 0xFFffff3f},
+    {'name': 'Candy Aura', 'color': 0xFFFFBBE1},
+    {'name': 'Sunset Coral', 'color': 0xFFFF8C9E},
+    {'name': 'Cosmic Orchid', 'color': 0xFF7E30E1},
+  ];
+
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
-  }
-
-  Future<void> _selectDate(BuildContext context, bool isStart) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: isStart ? _startDate : _endDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-      builder: (context, child) {
-        return Theme(
-          data: AppTheme.lightTheme,
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() {
-        if (isStart) {
-          _startDate = picked;
-          if (_endDate.isBefore(_startDate)) {
-            _endDate = _startDate;
-          }
-        } else {
-          _endDate = picked;
-        }
-      });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context, bool isStart) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: isStart ? _startTime : _endTime,
-      builder: (context, child) {
-        return Theme(
-          data: AppTheme.lightTheme,
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() {
-        if (isStart) {
-          _startTime = picked;
-        } else {
-          _endTime = picked;
-        }
-      });
-    }
   }
 
   @override
@@ -130,6 +91,8 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                   ),
                   const SizedBox(height: 16),
                   _buildDescriptionBento(),
+                  const SizedBox(height: 16),
+                  _buildColorPicker(),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -710,7 +673,6 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
               setState(() {
                 _isAllDay = selectedIsAllDay;
                 _startDate = selectedDate;
-                _endDate = selectedDate; // Sync end date for events
                 if (selectedIsAllDay) {
                   _startTime = const TimeOfDay(hour: 0, minute: 0);
                   _endTime = const TimeOfDay(hour: 23, minute: 59);
@@ -794,7 +756,6 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                                 onPressed: () {
                                   setState(() {
                                     _startDate = DateTime.now();
-                                    _endDate = DateTime.now();
                                     _startTime = TimeOfDay.now();
                                     _endTime = TimeOfDay.now().replacing(hour: (TimeOfDay.now().hour + 1) % 24);
                                     _isAllDay = false;
@@ -828,7 +789,6 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                                       setState(() {
                                         _isAllDay = selectedIsAllDay;
                                         _startDate = selectedDate;
-                                        _endDate = selectedDate; // Sync end date for events for now
                                         _recurrenceRule = selectedRule;
                                         if (selectedIsAllDay) {
                                           _startTime = const TimeOfDay(hour: 0, minute: 0);
@@ -920,13 +880,153 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     );
   }
 
+  Widget _buildColorPicker() {
+    String selectedColorName = 'Core Blue';
+    Color selectedColorIcon = const Color(0xFF5473F7);
+    
+    if (_selectedColor != null) {
+      final match = _eventColors.firstWhere((e) => e['color'] == _selectedColor, orElse: () => _eventColors.first);
+      selectedColorName = match['name'] as String;
+      selectedColorIcon = Color(match['color'] as int);
+    }
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _showColorPickerDialog,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade100, width: 1.5),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: selectedColorIcon,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  selectedColorName,
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-  String _formatTime(TimeOfDay time) {
-    final amPm = time.hour < 12 ? 'AM' : 'PM';
-    int h = time.hour == 0 ? 12 : (time.hour > 12 ? time.hour - 12 : time.hour);
-    String m = time.minute.toString().padLeft(2, '0');
-    return '$h:$m $amPm';
+  void _showColorPickerDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: AppColors.surface,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 340, maxHeight: 500),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ..._eventColors.map((colorMap) {
+                    final colorInt = colorMap['color'] as int;
+                    final colorName = colorMap['name'] as String;
+                    final isSelected = _selectedColor == colorInt;
+                    
+                    return InkWell(
+                      onTap: () {
+                        setState(() => _selectedColor = colorInt);
+                        Navigator.pop(context);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: isSelected ? Color(colorInt) : Colors.transparent,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Color(colorInt),
+                                  width: isSelected ? 0 : 3.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Text(
+                              colorName,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isSelected ? Colors.black87 : Colors.black54,
+                                fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () {
+                      setState(() => _selectedColor = null);
+                      Navigator.pop(context);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: _selectedColor == null ? const Color(0xFF5473F7) : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF5473F7),
+                                width: _selectedColor == null ? 0 : 3.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Text(
+                            'Core Blue',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: _selectedColor == null ? Colors.black87 : Colors.black54,
+                              fontWeight: _selectedColor == null ? FontWeight.w500 : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

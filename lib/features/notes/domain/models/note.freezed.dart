@@ -215,6 +215,7 @@ mixin _$Note {
   String? get folderId => throw _privateConstructorUsedError;
   DateTime? get updatedAt => throw _privateConstructorUsedError;
   String? get deviceLastEdited => throw _privateConstructorUsedError;
+  int? get color => throw _privateConstructorUsedError;
   int get order => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -252,6 +253,7 @@ abstract class $NoteCopyWith<$Res> {
       String? folderId,
       DateTime? updatedAt,
       String? deviceLastEdited,
+      int? color,
       int order});
 
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
@@ -294,6 +296,7 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? folderId = freezed,
     Object? updatedAt = freezed,
     Object? deviceLastEdited = freezed,
+    Object? color = freezed,
     Object? order = null,
   }) {
     return _then(_value.copyWith(
@@ -393,6 +396,10 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
           ? _value.deviceLastEdited
           : deviceLastEdited // ignore: cast_nullable_to_non_nullable
               as String?,
+      color: freezed == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as int?,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
@@ -445,6 +452,7 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       String? folderId,
       DateTime? updatedAt,
       String? deviceLastEdited,
+      int? color,
       int order});
 
   @override
@@ -485,6 +493,7 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? folderId = freezed,
     Object? updatedAt = freezed,
     Object? deviceLastEdited = freezed,
+    Object? color = freezed,
     Object? order = null,
   }) {
     return _then(_$NoteImpl(
@@ -584,6 +593,10 @@ class __$$NoteImplCopyWithImpl<$Res>
           ? _value.deviceLastEdited
           : deviceLastEdited // ignore: cast_nullable_to_non_nullable
               as String?,
+      color: freezed == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as int?,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
@@ -621,6 +634,7 @@ class _$NoteImpl extends _Note {
       this.folderId,
       this.updatedAt,
       this.deviceLastEdited,
+      this.color,
       this.order = 0})
       : _tags = tags,
         _attachments = attachments,
@@ -713,12 +727,14 @@ class _$NoteImpl extends _Note {
   @override
   final String? deviceLastEdited;
   @override
+  final int? color;
+  @override
   @JsonKey()
   final int order;
 
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, deviceLastEdited: $deviceLastEdited, order: $order)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, deviceLastEdited: $deviceLastEdited, color: $color, order: $order)';
   }
 
   @override
@@ -766,6 +782,7 @@ class _$NoteImpl extends _Note {
                 other.updatedAt == updatedAt) &&
             (identical(other.deviceLastEdited, deviceLastEdited) ||
                 other.deviceLastEdited == deviceLastEdited) &&
+            (identical(other.color, color) || other.color == color) &&
             (identical(other.order, order) || other.order == order));
   }
 
@@ -797,6 +814,7 @@ class _$NoteImpl extends _Note {
         folderId,
         updatedAt,
         deviceLastEdited,
+        color,
         order
       ]);
 
@@ -840,6 +858,7 @@ abstract class _Note extends Note {
       final String? folderId,
       final DateTime? updatedAt,
       final String? deviceLastEdited,
+      final int? color,
       final int order}) = _$NoteImpl;
   const _Note._() : super._();
 
@@ -893,6 +912,8 @@ abstract class _Note extends Note {
   DateTime? get updatedAt;
   @override
   String? get deviceLastEdited;
+  @override
+  int? get color;
   @override
   int get order;
   @override

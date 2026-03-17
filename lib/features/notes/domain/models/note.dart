@@ -54,6 +54,7 @@ class Note with _$Note {
     String? folderId, 
     DateTime? updatedAt, 
     String? deviceLastEdited,
+    int? color,
     @Default(0) int order,
   }) = _Note;
 

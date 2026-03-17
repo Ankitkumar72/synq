@@ -5,7 +5,6 @@ import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/providers/user_provider.dart';
 import '../../auth/domain/models/synq_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../notes/data/repository_provider.dart';
 import 'subscription_screen.dart';
 import 'device_management_screen.dart';
 
