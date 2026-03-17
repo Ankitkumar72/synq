@@ -71,6 +71,7 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
           ? null
           : DateTime.parse(json['updatedAt'] as String),
       deviceLastEdited: json['deviceLastEdited'] as String?,
+      color: (json['color'] as num?)?.toInt(),
       order: (json['order'] as num?)?.toInt() ?? 0,
     );
 
@@ -101,6 +102,7 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'folderId': instance.folderId,
       'updatedAt': instance.updatedAt?.toIso8601String(),
       'deviceLastEdited': instance.deviceLastEdited,
+      'color': instance.color,
       'order': instance.order,
     };
 

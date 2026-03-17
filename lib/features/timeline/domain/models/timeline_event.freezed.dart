@@ -27,6 +27,7 @@ mixin _$TimelineEvent {
       throw _privateConstructorUsedError; // E.g., "Personal", "Work"
   bool get isCompleted => throw _privateConstructorUsedError;
   bool get isCurrent => throw _privateConstructorUsedError;
+  int? get color => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $TimelineEventCopyWith<TimelineEvent> get copyWith =>
@@ -49,7 +50,8 @@ abstract class $TimelineEventCopyWith<$Res> {
       String? tag,
       String? category,
       bool isCompleted,
-      bool isCurrent});
+      bool isCurrent,
+      int? color});
 }
 
 /// @nodoc
@@ -75,6 +77,7 @@ class _$TimelineEventCopyWithImpl<$Res, $Val extends TimelineEvent>
     Object? category = freezed,
     Object? isCompleted = null,
     Object? isCurrent = null,
+    Object? color = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -117,6 +120,10 @@ class _$TimelineEventCopyWithImpl<$Res, $Val extends TimelineEvent>
           ? _value.isCurrent
           : isCurrent // ignore: cast_nullable_to_non_nullable
               as bool,
+      color: freezed == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -139,7 +146,8 @@ abstract class _$$TimelineEventImplCopyWith<$Res>
       String? tag,
       String? category,
       bool isCompleted,
-      bool isCurrent});
+      bool isCurrent,
+      int? color});
 }
 
 /// @nodoc
@@ -163,6 +171,7 @@ class __$$TimelineEventImplCopyWithImpl<$Res>
     Object? category = freezed,
     Object? isCompleted = null,
     Object? isCurrent = null,
+    Object? color = freezed,
   }) {
     return _then(_$TimelineEventImpl(
       id: null == id
@@ -205,6 +214,10 @@ class __$$TimelineEventImplCopyWithImpl<$Res>
           ? _value.isCurrent
           : isCurrent // ignore: cast_nullable_to_non_nullable
               as bool,
+      color: freezed == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -222,7 +235,8 @@ class _$TimelineEventImpl implements _TimelineEvent {
       this.tag,
       this.category,
       this.isCompleted = false,
-      this.isCurrent = false});
+      this.isCurrent = false,
+      this.color});
 
   @override
   final String id;
@@ -247,10 +261,12 @@ class _$TimelineEventImpl implements _TimelineEvent {
   @override
   @JsonKey()
   final bool isCurrent;
+  @override
+  final int? color;
 
   @override
   String toString() {
-    return 'TimelineEvent(id: $id, title: $title, startTime: $startTime, endTime: $endTime, type: $type, subtitle: $subtitle, tag: $tag, category: $category, isCompleted: $isCompleted, isCurrent: $isCurrent)';
+    return 'TimelineEvent(id: $id, title: $title, startTime: $startTime, endTime: $endTime, type: $type, subtitle: $subtitle, tag: $tag, category: $category, isCompleted: $isCompleted, isCurrent: $isCurrent, color: $color)';
   }
 
   @override
@@ -272,12 +288,13 @@ class _$TimelineEventImpl implements _TimelineEvent {
             (identical(other.isCompleted, isCompleted) ||
                 other.isCompleted == isCompleted) &&
             (identical(other.isCurrent, isCurrent) ||
-                other.isCurrent == isCurrent));
+                other.isCurrent == isCurrent) &&
+            (identical(other.color, color) || other.color == color));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, id, title, startTime, endTime,
-      type, subtitle, tag, category, isCompleted, isCurrent);
+      type, subtitle, tag, category, isCompleted, isCurrent, color);
 
   @JsonKey(ignore: true)
   @override
@@ -297,7 +314,8 @@ abstract class _TimelineEvent implements TimelineEvent {
       final String? tag,
       final String? category,
       final bool isCompleted,
-      final bool isCurrent}) = _$TimelineEventImpl;
+      final bool isCurrent,
+      final int? color}) = _$TimelineEventImpl;
 
   @override
   String get id;
@@ -319,6 +337,8 @@ abstract class _TimelineEvent implements TimelineEvent {
   bool get isCompleted;
   @override
   bool get isCurrent;
+  @override
+  int? get color;
   @override
   @JsonKey(ignore: true)
   _$$TimelineEventImplCopyWith<_$TimelineEventImpl> get copyWith =>

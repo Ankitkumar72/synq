@@ -73,6 +73,7 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
         type: _mapCategoryToType(task.category.name),
         tag: task.category.name.toUpperCase(),
         isCompleted: task.isCompleted, 
+        color: task.color,
       ));
     }
 
@@ -192,6 +193,7 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((ref
       type: type,
       tag: task.category.name.toUpperCase(),
       isCompleted: task.isCompleted, 
+      color: task.color,
     );
     
     grouped.putIfAbsent(dateKey, () => []).add(event);

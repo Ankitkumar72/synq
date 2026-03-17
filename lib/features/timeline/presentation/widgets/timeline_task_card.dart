@@ -10,6 +10,7 @@ class TimelineTaskCard extends StatelessWidget {
   final TaskType type;
   final String? tag;
   final bool isCompleted;
+  final int? color;
   final bool compact;
   final bool isActive;
   final VoidCallback? onTap;
@@ -23,6 +24,7 @@ class TimelineTaskCard extends StatelessWidget {
     required this.type,
     this.tag,
     this.isCompleted = false,
+    this.color,
     this.compact = false,
     this.isActive = false,
     this.onTap,
@@ -41,7 +43,7 @@ class TimelineTaskCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFA5B4FC), // Soft Periwinkle/Blue from image
+            color: color != null ? Color(color!) : const Color(0xFFA5B4FC), // Soft Periwinkle/Blue from image
             borderRadius: BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
@@ -79,7 +81,7 @@ class TimelineTaskCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: color != null ? Color(color!).withValues(alpha: 0.1) : AppColors.surface,
           borderRadius: BorderRadius.circular(100), // Pill shape
         ),
         child: Row(
@@ -87,8 +89,8 @@ class TimelineTaskCard extends StatelessWidget {
             Container(
               width: 8,
               height: 8,
-              decoration: const BoxDecoration(
-                color: AppColors.restGreen,
+              decoration: BoxDecoration(
+                color: color != null ? Color(color!) : AppColors.restGreen,
                 shape: BoxShape.circle,
               ),
             ),
@@ -137,9 +139,9 @@ class TimelineTaskCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: AppColors.activeCardBg,
+          color: color != null ? Color(color!).withValues(alpha: 0.1) : AppColors.activeCardBg,
            border: Border(
-             left: BorderSide(color: AppColors.activeCardBorder, width: 4),
+             left: BorderSide(color: color != null ? Color(color!) : AppColors.activeCardBorder, width: 4),
           ),
           borderRadius: const BorderRadius.only(
             topRight: Radius.circular(8),
@@ -209,8 +211,11 @@ class TimelineTaskCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isCompleted ? AppColors.surface.withAlpha(150) : AppColors.surface,
+          color: color != null 
+              ? (isCompleted ? Color(color!).withValues(alpha: 0.05) : Color(color!).withValues(alpha: 0.1))
+              : (isCompleted ? AppColors.surface.withAlpha(150) : AppColors.surface),
           borderRadius: BorderRadius.circular(8),
+          border: color != null ? Border.all(color: Color(color!).withValues(alpha: 0.3)) : null,
           boxShadow: const [
             BoxShadow(
               color: AppColors.shadow,

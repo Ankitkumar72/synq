@@ -129,6 +129,7 @@ class TimelineHourRow extends ConsumerWidget {
           type: TaskType.values.byName(event.type.name),
           tag: event.tag,
           isCompleted: event.isCompleted,
+          color: event.color,
           compact: true,
           isActive: isSelectedDateToday && _isTaskCurrentlyActive(event.startTime, event.endTime),
           onTap: () {
