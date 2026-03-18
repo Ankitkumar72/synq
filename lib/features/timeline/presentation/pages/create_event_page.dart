@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
+import '../../../notes/data/notes_provider.dart';
+import '../../../notes/domain/models/note.dart';
 import '../../../notes/domain/models/recurrence_rule.dart';
+import '../../data/timeline_provider.dart';
 // Adjust this path to where your repeat_settings_screen.dart is located
-import '../../../home/presentation/widgets/repeat_settings_screen.dart'; 
+import '../../../home/presentation/widgets/repeat_settings_screen.dart';
 
 class CreateEventPage extends ConsumerStatefulWidget {
   const CreateEventPage({super.key});
@@ -20,9 +23,12 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   bool _isAllDay = false;
   DateTime _startDate = DateTime.now();
   TimeOfDay _startTime = TimeOfDay.now();
-  TimeOfDay _endTime = TimeOfDay.now().replacing(hour: (TimeOfDay.now().hour + 1) % 24);
-  int _selectedChipIndex = 0; // 0: Event, 1: Task, 2: Working location, 3: Out of office
-  
+  TimeOfDay _endTime = TimeOfDay.now().replacing(
+    hour: (TimeOfDay.now().hour + 1) % 24,
+  );
+  int _selectedChipIndex =
+      0; // 0: Event, 1: Task, 2: Working location, 3: Out of office
+
   // Added recurrence rule state
   RecurrenceRule? _recurrenceRule;
   DateTime? _eventReminderTime;
@@ -49,7 +55,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height * 0.9;
-    
+
     return Container(
       height: height,
       decoration: const BoxDecoration(
@@ -84,9 +90,9 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                   _buildScheduleCard(
                     date: _formatDateToTitle(_startDate),
                     dateSub: _formatDateToSubtitle(_startDate),
-                    time: _isAllDay 
-                       ? 'All Day' 
-                       : '${_formatTimeFromTimeOfDay(_startTime)} - ${_formatTimeFromTimeOfDay(_endTime)}',
+                    time: _isAllDay
+                        ? 'All Day'
+                        : '${_formatTimeFromTimeOfDay(_startTime)} - ${_formatTimeFromTimeOfDay(_endTime)}',
                     onTap: _openTimePlannerSheet,
                   ),
                   const SizedBox(height: 16),
@@ -99,15 +105,17 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(24, 0, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.fromLTRB(
+              24,
+              0,
+              24,
+              24 + MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: SizedBox(
               width: double.infinity,
               height: 56,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Add save logic here later
-                  Navigator.pop(context);
-                },
+                onPressed: _handleCreateEvent,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5473F7), // Bright blue
                   foregroundColor: Colors.white,
@@ -130,6 +138,77 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     );
   }
 
+  Future<void> _handleCreateEvent() async {
+    final title = _titleController.text.trim();
+    final description = _descriptionController.text.trim();
+
+    if (title.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter an event title'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final startDateTime = DateTime(
+      _startDate.year,
+      _startDate.month,
+      _startDate.day,
+      _isAllDay ? 0 : _startTime.hour,
+      _isAllDay ? 0 : _startTime.minute,
+    );
+
+    DateTime endDateTime = DateTime(
+      _startDate.year,
+      _startDate.month,
+      _startDate.day,
+      _isAllDay ? 23 : _endTime.hour,
+      _isAllDay ? 59 : _endTime.minute,
+    );
+    if (!_isAllDay && !endDateTime.isAfter(startDateTime)) {
+      endDateTime = startDateTime.add(const Duration(hours: 1));
+    }
+
+    final event = Note(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: title,
+      body: description.isEmpty ? null : description,
+      category: NoteCategory.work,
+      createdAt: DateTime.now(),
+      scheduledTime: startDateTime,
+      endTime: endDateTime,
+      reminderTime: _eventReminderTime,
+      recurrenceRule: _recurrenceRule,
+      isTask: false,
+      isAllDay: _isAllDay,
+      color: _selectedColor,
+    );
+
+    try {
+      await ref.read(notesProvider.notifier).addNote(event);
+      ref.read(selectedDateProvider.notifier).state = DateTime(
+        _startDate.year,
+        _startDate.month,
+        _startDate.day,
+      );
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save event: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -150,29 +229,30 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
             ),
           ),
           IconButton(
-             icon: Icon(
-               _eventReminderTime == null
-                   ? Icons.notifications_none
-                   : Icons.notifications_active_outlined,
-             ),
-             onPressed: _pickReminderTime,
-             color: _eventReminderTime == null
-                 ? Colors.black54
-                 : const Color(0xFF5473F7),
-             tooltip: _formatReminderLabel(),
-           ),
+            icon: Icon(
+              _eventReminderTime == null
+                  ? Icons.notifications_none
+                  : Icons.notifications_active_outlined,
+            ),
+            onPressed: _pickReminderTime,
+            color: _eventReminderTime == null
+                ? Colors.black54
+                : const Color(0xFF5473F7),
+            tooltip: _formatReminderLabel(),
+          ),
         ],
       ),
     );
   }
 
   String _formatReminderLabel() {
-     if (_eventReminderTime == null) return 'Add reminder';
-     final now = DateTime.now();
-     if (_eventReminderTime!.year == now.year && _eventReminderTime!.day == now.day) {
-       return 'Today, ${_formatTimeFromTimeOfDay(TimeOfDay.fromDateTime(_eventReminderTime!))}';
-     }
-     return '${_eventReminderTime!.month}/${_eventReminderTime!.day}, ${_formatTimeFromTimeOfDay(TimeOfDay.fromDateTime(_eventReminderTime!))}';
+    if (_eventReminderTime == null) return 'Add reminder';
+    final now = DateTime.now();
+    if (_eventReminderTime!.year == now.year &&
+        _eventReminderTime!.day == now.day) {
+      return 'Today, ${_formatTimeFromTimeOfDay(TimeOfDay.fromDateTime(_eventReminderTime!))}';
+    }
+    return '${_eventReminderTime!.month}/${_eventReminderTime!.day}, ${_formatTimeFromTimeOfDay(TimeOfDay.fromDateTime(_eventReminderTime!))}';
   }
 
   Future<void> _pickReminderTime() async {
@@ -199,32 +279,50 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
               ),
               const SizedBox(height: 12),
               ListTile(
-                leading: const Icon(Icons.notifications_off_outlined, color: Colors.black87),
-                title: const Text('No reminder', style: TextStyle(color: Colors.black87)),
+                leading: const Icon(
+                  Icons.notifications_off_outlined,
+                  color: Colors.black87,
+                ),
+                title: const Text(
+                  'No reminder',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, 'none'),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 leading: const Icon(Icons.alarm, color: Colors.black87),
-                title: const Text('At event start', style: TextStyle(color: Colors.black87)),
+                title: const Text(
+                  'At event start',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, '0m'),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 leading: const Icon(Icons.schedule, color: Colors.black87),
-                title: const Text('15 minutes before', style: TextStyle(color: Colors.black87)),
+                title: const Text(
+                  '15 minutes before',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, '15m'),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 leading: const Icon(Icons.schedule, color: Colors.black87),
-                title: const Text('1 hour before', style: TextStyle(color: Colors.black87)),
+                title: const Text(
+                  '1 hour before',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, '1h'),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 leading: const Icon(Icons.schedule, color: Colors.black87),
-                title: const Text('1 day before', style: TextStyle(color: Colors.black87)),
+                title: const Text(
+                  '1 day before',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, '1d'),
               ),
             ],
@@ -346,11 +444,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: const Color(0xFF334155),
-            ),
+            Icon(icon, size: 16, color: const Color(0xFF334155)),
             const SizedBox(width: 8),
             Text(
               label,
@@ -408,7 +502,11 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                 color: const Color(0xFFF0F4FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.calendar_today_outlined, color: Color(0xFF5473F7), size: 22),
+              child: const Icon(
+                Icons.calendar_today_outlined,
+                color: Color(0xFF5473F7),
+                size: 22,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -439,7 +537,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                 ],
               ),
             ),
-            
+
             // Divider
             Container(
               height: 40,
@@ -447,7 +545,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
               color: Colors.grey[200],
               margin: const EdgeInsets.symmetric(horizontal: 16),
             ),
-            
+
             // Time Section
             Expanded(
               child: Column(
@@ -483,7 +581,11 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                 color: const Color(0xFFF0F4FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.access_time, color: Color(0xFF5473F7), size: 22),
+              child: const Icon(
+                Icons.access_time,
+                color: Color(0xFF5473F7),
+                size: 22,
+              ),
             ),
           ],
         ),
@@ -492,21 +594,42 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   }
 
   String _formatDateToTitle(DateTime? dt) {
-     if (dt == null) return 'Set Date'; 
-     final now = DateTime.now();
-     if (dt.year == now.year && dt.month == now.month && dt.day == now.day) return 'Today';
-     if (dt.year == now.year && dt.month == now.month && dt.day == now.day + 1) return 'Tomorrow';
-     return '${dt.day}/${dt.month}';
+    if (dt == null) {
+      return 'Set Date';
+    }
+    final now = DateTime.now();
+    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
+      return 'Today';
+    }
+    if (dt.year == now.year && dt.month == now.month && dt.day == now.day + 1) {
+      return 'Tomorrow';
+    }
+    return '${dt.day}/${dt.month}';
   }
-   
+
   String? _formatDateToSubtitle(DateTime? dt) {
-     if (dt == null) return null;
-     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-     return '${months[dt.month - 1]} ${dt.day}';
+    if (dt == null) return null;
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[dt.month - 1]} ${dt.day}';
   }
-  
+
   String _formatTimeFromTimeOfDay(TimeOfDay time) {
-    final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final hour = time.hour > 12
+        ? time.hour - 12
+        : (time.hour == 0 ? 12 : time.hour);
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
   }
@@ -518,10 +641,8 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   }) async {
     final result = await Navigator.of(context).push<RepeatSettingsResult>(
       MaterialPageRoute(
-        builder: (_) => RepeatSettingsScreen(
-          initialRule: initialRule,
-          startsAt: startsAt,
-        ),
+        builder: (_) =>
+            RepeatSettingsScreen(initialRule: initialRule, startsAt: startsAt),
       ),
     );
 
@@ -614,7 +735,9 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                   return const Color(0xFFE7EBF0);
                 }),
                 todayForegroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) return Colors.white;
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.white;
+                  }
                   return const Color(0xFF5473F7);
                 }),
                 todayBorder: BorderSide.none,
@@ -627,7 +750,8 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
             Future<void> setTimeRange() async {
               final pickedStartTime = await showTimePicker(
                 context: context,
-                initialTime: selectedStartTime ?? const TimeOfDay(hour: 9, minute: 0),
+                initialTime:
+                    selectedStartTime ?? const TimeOfDay(hour: 9, minute: 0),
                 helpText: 'Select Start Time',
               );
               if (!context.mounted) return;
@@ -643,14 +767,16 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
               final suggestedEnd = baseDate.add(const Duration(hours: 1));
               final pickedEndTime = await showTimePicker(
                 context: context,
-                initialTime: selectedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd),
+                initialTime:
+                    selectedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd),
                 helpText: 'Select End Time',
               );
               if (!context.mounted) return;
 
               setModalState(() {
                 selectedStartTime = pickedStartTime;
-                selectedEndTime = pickedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd);
+                selectedEndTime =
+                    pickedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd);
                 selectedIsAllDay = false;
               });
             }
@@ -676,7 +802,8 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                 if (selectedIsAllDay) {
                   _startTime = const TimeOfDay(hour: 0, minute: 0);
                   _endTime = const TimeOfDay(hour: 23, minute: 59);
-                } else if (selectedStartTime != null && selectedEndTime != null) {
+                } else if (selectedStartTime != null &&
+                    selectedEndTime != null) {
                   _startTime = selectedStartTime!;
                   _endTime = selectedEndTime!;
                 }
@@ -701,7 +828,10 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                 ),
-                insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: SingleChildScrollView(
@@ -710,8 +840,12 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                       children: [
                         CalendarDatePicker(
                           initialDate: selectedDate,
-                          firstDate: DateTime.now().subtract(const Duration(days: 3650)),
-                          lastDate: DateTime.now().add(const Duration(days: 3650)),
+                          firstDate: DateTime.now().subtract(
+                            const Duration(days: 3650),
+                          ),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 3650),
+                          ),
                           onDateChanged: (date) {
                             setModalState(() => selectedDate = date);
                           },
@@ -719,13 +853,17 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                         const Divider(height: 1, color: Color(0xFF708090)),
                         ListTile(
                           visualDensity: const VisualDensity(vertical: -4),
-                          leading: const Icon(Icons.access_time, color: Colors.white70),
+                          leading: const Icon(
+                            Icons.access_time,
+                            color: Colors.white70,
+                          ),
                           title: Text(
                             selectedIsAllDay
                                 ? 'All Day'
-                                : (selectedStartTime == null || selectedEndTime == null
-                                    ? 'Set time'
-                                    : '${_formatTimeFromTimeOfDay(selectedStartTime!)} - ${_formatTimeFromTimeOfDay(selectedEndTime!)}'),
+                                : (selectedStartTime == null ||
+                                          selectedEndTime == null
+                                      ? 'Set time'
+                                      : '${_formatTimeFromTimeOfDay(selectedStartTime!)} - ${_formatTimeFromTimeOfDay(selectedEndTime!)}'),
                             style: const TextStyle(
                               color: Color(0xFFE7EBF0),
                               fontSize: 14,
@@ -736,7 +874,10 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                         const Divider(height: 1, color: Color(0xFF708090)),
                         ListTile(
                           visualDensity: const VisualDensity(vertical: -4),
-                          leading: const Icon(Icons.repeat, color: Colors.white70),
+                          leading: const Icon(
+                            Icons.repeat,
+                            color: Colors.white70,
+                          ),
                           title: Text(
                             _formatRecurrenceLabelForRule(selectedRule),
                             style: const TextStyle(
@@ -757,18 +898,26 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                                   setState(() {
                                     _startDate = DateTime.now();
                                     _startTime = TimeOfDay.now();
-                                    _endTime = TimeOfDay.now().replacing(hour: (TimeOfDay.now().hour + 1) % 24);
+                                    _endTime = TimeOfDay.now().replacing(
+                                      hour: (TimeOfDay.now().hour + 1) % 24,
+                                    );
                                     _isAllDay = false;
-                                    _recurrenceRule = null; // Clear rule as well
+                                    _recurrenceRule =
+                                        null; // Clear rule as well
                                   });
                                   Navigator.pop(context);
                                 },
                                 style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFFEF4444), // red
+                                  foregroundColor: const Color(
+                                    0xFFEF4444,
+                                  ), // red
                                 ),
                                 child: const Text(
                                   'Clear',
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                               Row(
@@ -776,11 +925,16 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                                   TextButton(
                                     onPressed: () => Navigator.pop(context),
                                     style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFFE7EBF0), // light text
+                                      foregroundColor: const Color(
+                                        0xFFE7EBF0,
+                                      ), // light text
                                     ),
                                     child: const Text(
                                       'Cancel',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -791,10 +945,17 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                                         _startDate = selectedDate;
                                         _recurrenceRule = selectedRule;
                                         if (selectedIsAllDay) {
-                                          _startTime = const TimeOfDay(hour: 0, minute: 0);
-                                          _endTime = const TimeOfDay(hour: 23, minute: 59);
+                                          _startTime = const TimeOfDay(
+                                            hour: 0,
+                                            minute: 0,
+                                          );
+                                          _endTime = const TimeOfDay(
+                                            hour: 23,
+                                            minute: 59,
+                                          );
                                         } else {
-                                          if (selectedStartTime != null && selectedEndTime != null) {
+                                          if (selectedStartTime != null &&
+                                              selectedEndTime != null) {
                                             _startTime = selectedStartTime!;
                                             _endTime = selectedEndTime!;
                                           }
@@ -806,14 +967,22 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                                       backgroundColor: const Color(0xFF5473F7),
                                       foregroundColor: Colors.white,
                                       elevation: 0,
-                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(100),
+                                        borderRadius: BorderRadius.circular(
+                                          100,
+                                        ),
                                       ),
                                     ),
                                     child: const Text(
                                       'Done',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -883,9 +1052,12 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   Widget _buildColorPicker() {
     String selectedColorName = 'Core Blue';
     Color selectedColorIcon = const Color(0xFF5473F7);
-    
+
     if (_selectedColor != null) {
-      final match = _eventColors.firstWhere((e) => e['color'] == _selectedColor, orElse: () => _eventColors.first);
+      final match = _eventColors.firstWhere(
+        (e) => e['color'] == _selectedColor,
+        orElse: () => _eventColors.first,
+      );
       selectedColorName = match['name'] as String;
       selectedColorIcon = Color(match['color'] as int);
     }
@@ -949,21 +1121,26 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                     final colorInt = colorMap['color'] as int;
                     final colorName = colorMap['name'] as String;
                     final isSelected = _selectedColor == colorInt;
-                    
+
                     return InkWell(
                       onTap: () {
                         setState(() => _selectedColor = colorInt);
                         Navigator.pop(context);
                       },
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                         child: Row(
                           children: [
                             Container(
                               width: 20,
                               height: 20,
                               decoration: BoxDecoration(
-                                color: isSelected ? Color(colorInt) : Colors.transparent,
+                                color: isSelected
+                                    ? Color(colorInt)
+                                    : Colors.transparent,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: Color(colorInt),
@@ -976,8 +1153,12 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                               colorName,
                               style: TextStyle(
                                 fontSize: 16,
-                                color: isSelected ? Colors.black87 : Colors.black54,
-                                fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                color: isSelected
+                                    ? Colors.black87
+                                    : Colors.black54,
+                                fontWeight: isSelected
+                                    ? FontWeight.w500
+                                    : FontWeight.normal,
                               ),
                             ),
                           ],
@@ -992,14 +1173,19 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                       Navigator.pop(context);
                     },
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           Container(
                             width: 20,
                             height: 20,
                             decoration: BoxDecoration(
-                              color: _selectedColor == null ? const Color(0xFF5473F7) : Colors.transparent,
+                              color: _selectedColor == null
+                                  ? const Color(0xFF5473F7)
+                                  : Colors.transparent,
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: const Color(0xFF5473F7),
@@ -1012,8 +1198,12 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
                             'Core Blue',
                             style: TextStyle(
                               fontSize: 16,
-                              color: _selectedColor == null ? Colors.black87 : Colors.black54,
-                              fontWeight: _selectedColor == null ? FontWeight.w500 : FontWeight.normal,
+                              color: _selectedColor == null
+                                  ? Colors.black87
+                                  : Colors.black54,
+                              fontWeight: _selectedColor == null
+                                  ? FontWeight.w500
+                                  : FontWeight.normal,
                             ),
                           ),
                         ],

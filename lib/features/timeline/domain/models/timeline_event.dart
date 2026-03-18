@@ -5,6 +5,9 @@ part 'timeline_event.freezed.dart';
 
 enum TimelineEventType { strategy, active, rest, standard, admin, design }
 
+/// Distinguishes tasks (rendered as chips) from events (rendered as blocks).
+enum EventKind { event, task }
+
 @freezed
 class TimelineEvent with _$TimelineEvent {
   const factory TimelineEvent({
@@ -13,6 +16,7 @@ class TimelineEvent with _$TimelineEvent {
     required String startTime,
     required String endTime,
     required TimelineEventType type,
+    @Default(EventKind.event) EventKind kind,
     String? subtitle,
     String? tag,
     String? category, // E.g., "Personal", "Work"

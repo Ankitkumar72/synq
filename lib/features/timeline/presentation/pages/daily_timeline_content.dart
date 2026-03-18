@@ -2,102 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
+import '../../domain/models/timeline_event.dart';
 import '../widgets/calendar_selector.dart';
-import '../../../home/presentation/widgets/create_task_sheet.dart';
-import '../widgets/timeline_hour_row.dart';
+import '../widgets/daily_timeline_view.dart';
 import '../widgets/synq_drawer.dart';
+import '../../../home/presentation/widgets/create_task_sheet.dart';
+import '../../../notes/data/notes_provider.dart';
+import '../../../notes/domain/models/note.dart';
+import '../../../notes/presentation/task_detail_screen.dart';
 import '../../../shell/presentation/main_shell.dart';
+import '../pages/create_event_page.dart';
 import '../pages/schedule_timeline_content.dart';
 import '../pages/weekly_timeline_content.dart';
-import '../pages/create_event_page.dart';
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
 class DailyTimelineContent extends ConsumerStatefulWidget {
   const DailyTimelineContent({super.key});
 
   @override
-  ConsumerState<DailyTimelineContent> createState() => _DailyTimelineContentState();
+  ConsumerState<DailyTimelineContent> createState() =>
+      _DailyTimelineContentState();
 }
 
 class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
-  final ScrollController _scrollController = ScrollController();
-  final GlobalKey _currentHourKey = GlobalKey();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToCurrentHour();
-    });
-  }
-
-  void _scrollToCurrentHour() {
-    if (_currentHourKey.currentContext != null) {
-      Scrollable.ensureVisible(
-        _currentHourKey.currentContext!,
-        alignment: 0.1, // Near the top
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final events = ref.watch(timelineEventsProvider);
     final selectedDate = ref.watch(selectedDateProvider);
-    
-    // Auto-scroll to current hour when switching to today
-    ref.listen(selectedDateProvider, (previous, next) {
-      final now = DateTime.now();
-      if (next.year == now.year && next.month == now.month && next.day == now.day) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToCurrentHour();
-        });
-      }
-    });
 
-    // Auto-scroll when switching from monthly or weekly to daily view
-    ref.listen(timelineViewModeProvider, (previous, next) {
-      if (next == TimelineViewMode.daily) { // Switched to daily
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToCurrentHour();
-        });
-      }
-    });
-    
-    // Auto-reset to current date when navigating to timeline tab
     ref.listen(currentNavIndexProvider, (previous, next) {
-      if (next == 1) { // 1 is the timeline index
+      if (next == 1) {
         final now = DateTime.now();
         final selectedDate = ref.read(selectedDateProvider);
-        if (selectedDate.year != now.year || 
-            selectedDate.month != now.month || 
+        if (selectedDate.year != now.year ||
+            selectedDate.month != now.month ||
             selectedDate.day != now.day) {
           ref.read(selectedDateProvider.notifier).state = now;
         }
       }
     });
-    
+
     final viewMode = ref.watch(timelineViewModeProvider);
-    
+
     return Scaffold(
       backgroundColor: AppColors.background,
       endDrawer: const SynqDrawer(),
       floatingActionButton: GestureDetector(
-        onLongPress: () => showCreateTaskSheet(context, initialDate: selectedDate),
+        onLongPress: () =>
+            showCreateTaskSheet(context, initialDate: selectedDate),
         child: FloatingActionButton(
-          onPressed: () {
-            showCreateEventSheet(context);
-          },
+          onPressed: () => showCreateEventSheet(context),
           backgroundColor: AppColors.primary,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white),
@@ -116,116 +73,68 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                 const Expanded(child: ScheduleTimelineContent())
               else ...[
                 const CalendarSelector(),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _scrollToCurrentHour,
-                    behavior: HitTestBehavior.translucent, // Allow taps on empty space to trigger scroll
-                    child: CustomScrollView(
-                      controller: _scrollController,
-                      cacheExtent: 3000, // Ensure current hour block is built even if off-screen
-                      physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                        sliver: SliverToBoxAdapter(
-                          child: GestureDetector(
-                            onTap: _scrollToCurrentHour,
-                            behavior: HitTestBehavior.opaque,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _formatSelectedDate(selectedDate),
-                                      style: GoogleFonts.roboto(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${events.length} tasks scheduled',
-                                      style: GoogleFonts.roboto(
-                                        fontSize: 14,
-                                        color: AppColors.textSecondary,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _formatSelectedDate(selectedDate),
+                            style: GoogleFonts.roboto(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${events.length} scheduled',
+                            style: GoogleFonts.roboto(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                        SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final hour = index;
-                                final now = DateTime.now();
-                                final isSelectedDateToday = selectedDate.year == now.year && 
-                                                         selectedDate.month == now.month && 
-                                                         selectedDate.day == now.day;
-                                final currentHour = now.hour;
-
-                                
-                                final hourStartMinutes = hour * 60;
-                                final hourEndMinutes = (hour + 1) * 60;
-
-                                // Check if this hour is covered by a task that started previously
-                                bool isCoveredByPreviousTask = false;
-                                for (final event in events) {
-                                  final startMins = _parseMinutes(event.startTime);
-                                  final endMins = _parseMinutes(event.endTime);
-                                  if (startMins < hourStartMinutes && endMins > hourStartMinutes) {
-                                    isCoveredByPreviousTask = true;
-                                    break;
-                                  }
-                                }
-
-                                if (isCoveredByPreviousTask) return const SizedBox.shrink();
-
-                                // Find tasks starting in this specific hour
-                                final tasksStartingNow = events.where((e) {
-                                  final startMins = _parseMinutes(e.startTime);
-                                  return startMins >= hourStartMinutes && startMins < hourEndMinutes;
-                                }).toList();
-
-                                // Logic to determine if this is the block that should be focused for "now"
-                                bool isFocusBlock = false;
-                                if (isSelectedDateToday) {
-                                  if (hour == currentHour) {
-                                    isFocusBlock = !isCoveredByPreviousTask;
-                                  } else if (tasksStartingNow.isNotEmpty) {
-                                    // If a task starts now and spans over the actual current hour
-                                    for (final task in tasksStartingNow) {
-                                      final endMins = _parseMinutes(task.endTime);
-                                      if (currentHour * 60 >= hourStartMinutes && currentHour * 60 < endMins) {
-                                        isFocusBlock = true;
-                                        break;
-                                      }
-                                    }
-                                  }
-                                }
-
-                                return TimelineHourRow(
-                                  hour: hour,
-                                  tasksStartingNow: tasksStartingNow,
-                                  isSelectedDateToday: isSelectedDateToday,
-                                  currentHour: currentHour,
-                                  focusKey: isFocusBlock ? _currentHourKey : null,
-                                );
-                              },
-                              childCount: 24,
-                            ),
-                          ),
-                        ),
-                      ],
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    child: DailyTimelineView(
+                      key: ValueKey(
+                        '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}',
+                      ),
+                      events: events,
+                      date: selectedDate,
+                      onEventRescheduled: (event, newStart, newEnd) {
+                        ref
+                            .read(timelineEventsProvider.notifier)
+                            .rescheduleEvent(
+                              eventId: event.id,
+                              date: selectedDate,
+                              newStartTime: newStart,
+                              newEndTime: newEnd,
+                            );
+                      },
+                      onEventResized: (event, newEnd) {
+                        ref
+                            .read(timelineEventsProvider.notifier)
+                            .resizeEvent(
+                              eventId: event.id,
+                              date: selectedDate,
+                              newEndTime: newEnd,
+                            );
+                      },
+                      onEventTapped: (event) =>
+                          _openTaskDetails(context, event),
+                      onEmptySlotTap: (tappedTime) =>
+                          _showCreateChoiceSheet(context, tappedTime),
                     ),
                   ),
                 ),
@@ -237,22 +146,203 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
     );
   }
 
-  String _formatSelectedDate(DateTime date) {
-    final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
-      return DateFormat("EEEE, d'th'").format(date); // Simplified suffix logic for design
+  void _showCreateChoiceSheet(BuildContext context, String tappedTime) {
+    final selectedDate = ref.read(selectedDateProvider);
+    // Parse tapped time into a DateTime for pre-filling.
+    DateTime? initialDateTime;
+    try {
+      final parsed = DateFormat('h:mm a').parse(tappedTime.trim().toUpperCase());
+      initialDateTime = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+        parsed.hour,
+        parsed.minute,
+      );
+    } catch (_) {
+      initialDateTime = selectedDate;
     }
-    return DateFormat("EEEE, d'th'").format(date);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Create at $tappedTime',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _ChoiceTile(
+                    icon: Icons.event_note_rounded,
+                    label: 'Event',
+                    subtitle: 'With duration',
+                    color: const Color(0xFF1A73E8),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      showCreateEventSheet(context);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _ChoiceTile(
+                    icon: Icons.check_circle_outline_rounded,
+                    label: 'Task',
+                    subtitle: 'Due at time',
+                    color: const Color(0xFF0F9D58),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      showCreateTaskSheet(
+                        context,
+                        initialDate: initialDateTime,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  int _parseMinutes(String timeStr) {
-    try {
-      final format = DateFormat("h:mm a");
-      final date = format.parse(timeStr.trim().toUpperCase());
-      return date.hour * 60 + date.minute;
-    } catch (e) {
-      return 0;
+  void _openTaskDetails(BuildContext context, TimelineEvent event) {
+    final task = _findTaskForEvent(event);
+    if (task == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task details not found'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)),
+    );
+  }
+
+  Note? _findTaskForEvent(TimelineEvent event) {
+    final tasks = ref.read(notesProvider).value ?? const <Note>[];
+    final separatorIndex = event.id.indexOf('_');
+    final noteId = separatorIndex > 0 && separatorIndex < event.id.length - 1
+        ? event.id.substring(separatorIndex + 1)
+        : event.id;
+
+    for (final task in tasks) {
+      if (task.id == noteId) {
+        return task;
+      }
+    }
+
+    for (final task in tasks) {
+      if (task.isTask && task.title == event.title) {
+        return task;
+      }
+    }
+
+    return null;
+  }
+
+  String _formatSelectedDate(DateTime date) {
+    final day = date.day;
+    final suffix = (day >= 11 && day <= 13) ? 'th' : _ordinalSuffix(day % 10);
+    return '${DateFormat('EEEE, d').format(date)}$suffix';
+  }
+
+  String _ordinalSuffix(int digit) {
+    switch (digit) {
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
     }
   }
 }
 
+// ---------------------------------------------------------------------------
+// _ChoiceTile — used by the empty-slot bottom sheet
+// ---------------------------------------------------------------------------
+
+class _ChoiceTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ChoiceTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                color: color.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

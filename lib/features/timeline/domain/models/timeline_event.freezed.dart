@@ -21,6 +21,7 @@ mixin _$TimelineEvent {
   String get startTime => throw _privateConstructorUsedError;
   String get endTime => throw _privateConstructorUsedError;
   TimelineEventType get type => throw _privateConstructorUsedError;
+  EventKind get kind => throw _privateConstructorUsedError;
   String? get subtitle => throw _privateConstructorUsedError;
   String? get tag => throw _privateConstructorUsedError;
   String? get category =>
@@ -46,6 +47,7 @@ abstract class $TimelineEventCopyWith<$Res> {
       String startTime,
       String endTime,
       TimelineEventType type,
+      EventKind kind,
       String? subtitle,
       String? tag,
       String? category,
@@ -72,6 +74,7 @@ class _$TimelineEventCopyWithImpl<$Res, $Val extends TimelineEvent>
     Object? startTime = null,
     Object? endTime = null,
     Object? type = null,
+    Object? kind = null,
     Object? subtitle = freezed,
     Object? tag = freezed,
     Object? category = freezed,
@@ -100,6 +103,10 @@ class _$TimelineEventCopyWithImpl<$Res, $Val extends TimelineEvent>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as TimelineEventType,
+      kind: null == kind
+          ? _value.kind
+          : kind // ignore: cast_nullable_to_non_nullable
+              as EventKind,
       subtitle: freezed == subtitle
           ? _value.subtitle
           : subtitle // ignore: cast_nullable_to_non_nullable
@@ -142,6 +149,7 @@ abstract class _$$TimelineEventImplCopyWith<$Res>
       String startTime,
       String endTime,
       TimelineEventType type,
+      EventKind kind,
       String? subtitle,
       String? tag,
       String? category,
@@ -166,6 +174,7 @@ class __$$TimelineEventImplCopyWithImpl<$Res>
     Object? startTime = null,
     Object? endTime = null,
     Object? type = null,
+    Object? kind = null,
     Object? subtitle = freezed,
     Object? tag = freezed,
     Object? category = freezed,
@@ -194,6 +203,10 @@ class __$$TimelineEventImplCopyWithImpl<$Res>
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
               as TimelineEventType,
+      kind: null == kind
+          ? _value.kind
+          : kind // ignore: cast_nullable_to_non_nullable
+              as EventKind,
       subtitle: freezed == subtitle
           ? _value.subtitle
           : subtitle // ignore: cast_nullable_to_non_nullable
@@ -231,6 +244,7 @@ class _$TimelineEventImpl implements _TimelineEvent {
       required this.startTime,
       required this.endTime,
       required this.type,
+      this.kind = EventKind.event,
       this.subtitle,
       this.tag,
       this.category,
@@ -249,6 +263,9 @@ class _$TimelineEventImpl implements _TimelineEvent {
   @override
   final TimelineEventType type;
   @override
+  @JsonKey()
+  final EventKind kind;
+  @override
   final String? subtitle;
   @override
   final String? tag;
@@ -266,7 +283,7 @@ class _$TimelineEventImpl implements _TimelineEvent {
 
   @override
   String toString() {
-    return 'TimelineEvent(id: $id, title: $title, startTime: $startTime, endTime: $endTime, type: $type, subtitle: $subtitle, tag: $tag, category: $category, isCompleted: $isCompleted, isCurrent: $isCurrent, color: $color)';
+    return 'TimelineEvent(id: $id, title: $title, startTime: $startTime, endTime: $endTime, type: $type, kind: $kind, subtitle: $subtitle, tag: $tag, category: $category, isCompleted: $isCompleted, isCurrent: $isCurrent, color: $color)';
   }
 
   @override
@@ -280,6 +297,7 @@ class _$TimelineEventImpl implements _TimelineEvent {
                 other.startTime == startTime) &&
             (identical(other.endTime, endTime) || other.endTime == endTime) &&
             (identical(other.type, type) || other.type == type) &&
+            (identical(other.kind, kind) || other.kind == kind) &&
             (identical(other.subtitle, subtitle) ||
                 other.subtitle == subtitle) &&
             (identical(other.tag, tag) || other.tag == tag) &&
@@ -294,7 +312,7 @@ class _$TimelineEventImpl implements _TimelineEvent {
 
   @override
   int get hashCode => Object.hash(runtimeType, id, title, startTime, endTime,
-      type, subtitle, tag, category, isCompleted, isCurrent, color);
+      type, kind, subtitle, tag, category, isCompleted, isCurrent, color);
 
   @JsonKey(ignore: true)
   @override
@@ -310,6 +328,7 @@ abstract class _TimelineEvent implements TimelineEvent {
       required final String startTime,
       required final String endTime,
       required final TimelineEventType type,
+      final EventKind kind,
       final String? subtitle,
       final String? tag,
       final String? category,
@@ -327,6 +346,8 @@ abstract class _TimelineEvent implements TimelineEvent {
   String get endTime;
   @override
   TimelineEventType get type;
+  @override
+  EventKind get kind;
   @override
   String? get subtitle;
   @override
