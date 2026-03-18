@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../domain/models/timeline_event.dart';
@@ -187,12 +188,9 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         // --- Active drag snap line position ---
         final snapLineTop = _liveDragTop ?? _liveDragTaskTop;
 
-        return Scrollbar(
+        return SingleChildScrollView(
           controller: _scrollController,
-          thumbVisibility: true,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            physics: const ClampingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
             child: SizedBox(
               height: totalHeight,
               child: Row(
@@ -200,9 +198,16 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                 children: [
                   SizedBox(
                     width: widget.gutterWidth,
-                    child: _HourGutter(
-                      totalHeight: totalHeight,
-                      colorScheme: colorScheme,
+                    child: ValueListenableBuilder<DateTime>(
+                      valueListenable: _now,
+                      builder: (context, now, child) {
+                        return _HourGutter(
+                          totalHeight: totalHeight,
+                          colorScheme: colorScheme,
+                          now: now,
+                          isToday: _isToday(),
+                        );
+                      },
                     ),
                   ),
                   SizedBox(width: widget.gutterPadding),
@@ -343,8 +348,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                 ],
               ),
             ),
-          ),
-        );
+          );
       },
     );
   }
@@ -505,8 +509,15 @@ class _TaskChipData {
 class _HourGutter extends StatelessWidget {
   final double totalHeight;
   final ColorScheme colorScheme;
+  final DateTime now;
+  final bool isToday;
 
-  const _HourGutter({required this.totalHeight, required this.colorScheme});
+  const _HourGutter({
+    required this.totalHeight,
+    required this.colorScheme,
+    required this.now,
+    required this.isToday,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -515,25 +526,28 @@ class _HourGutter extends StatelessWidget {
       child: Stack(
         children: List.generate(24, (hour) {
           final top = hour * TimelineLayoutEngine.pixelsPerHour;
-          final label = hour == 0
-              ? ''
-              : hour < 12
-              ? '$hour AM'
-              : hour == 12
-              ? '12 PM'
-              : '${hour - 12} PM';
+          final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+          final amPm = hour < 12 ? 'am' : 'pm';
+          final label = '$displayHour $amPm';
+
+          // Skip 12 am to keep it clean like the design
+          if (hour == 0) return const SizedBox.shrink();
+
+          final isCurrentHour = isToday && now.hour == hour;
 
           return Positioned(
             top: top - 7,
-            right: 4,
+            left: 4,
+            right: 0,
             child: Text(
               label,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 11,
-                color: colorScheme.onSurface.withValues(alpha: 0.45),
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.2,
+              textAlign: TextAlign.left,
+              style: GoogleFonts.roboto(
+                fontSize: 13,
+                color: isCurrentHour
+                    ? const Color(0xFF4B7BFF)
+                    : const Color(0xFF94A3B8), // Slate grey
+                fontWeight: isCurrentHour ? FontWeight.bold : FontWeight.w600,
               ),
             ),
           );
@@ -578,18 +592,23 @@ class _HourSlots extends StatelessWidget {
       height: totalHeight,
       child: Stack(
         children: List.generate(24, (hour) {
-          final top = hour * TimelineLayoutEngine.pixelsPerHour + 2;
+          final top = hour * TimelineLayoutEngine.pixelsPerHour + 1;
           return Positioned(
             top: top,
             left: 0,
             right: 0,
-            height: TimelineLayoutEngine.pixelsPerHour - 4,
-            child: DecoratedBox(
+            height: TimelineLayoutEngine.pixelsPerHour - 2,
+            child: Container(
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.35,
-                ),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
             ),
           );
@@ -610,26 +629,12 @@ class _GridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final hourPaint = Paint()
-      ..color = colorScheme.onSurface.withValues(alpha: 0.12)
-      ..strokeWidth = 1;
-
-    final halfPaint = Paint()
-      ..color = colorScheme.onSurface.withValues(alpha: 0.05)
-      ..strokeWidth = 0.5;
-
-    for (var hour = 0; hour < 24; hour++) {
-      final y = hour * TimelineLayoutEngine.pixelsPerHour;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), hourPaint);
-
-      final halfY = y + TimelineLayoutEngine.pixelsPerHour / 2;
-      canvas.drawLine(Offset(0, halfY), Offset(size.width, halfY), halfPaint);
-    }
+    // Hidden to match the clean card look in design 1
   }
 
   @override
   bool shouldRepaint(_GridPainter oldDelegate) {
-    return oldDelegate.colorScheme != colorScheme;
+    return false;
   }
 }
 
@@ -672,20 +677,25 @@ class _CurrentTimeLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: top - 1,
-      left: 0,
+      top: top - 4, // Center the 8px dot exactly on the current time
+      left: -4, // Shift left so the center of the dot hits the card's edge
       right: 0,
       child: Row(
         children: [
           Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: colorScheme.error,
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: Color(0xFF4B7BFF), // Deep blue matching the active block
               shape: BoxShape.circle,
             ),
           ),
-          Expanded(child: Container(height: 2, color: colorScheme.error)),
+          Expanded(
+            child: Container(
+              height: 1.5,
+              color: const Color(0xFF4B7BFF).withValues(alpha: 0.8), // Faint blue line
+            ),
+          ),
         ],
       ),
     );

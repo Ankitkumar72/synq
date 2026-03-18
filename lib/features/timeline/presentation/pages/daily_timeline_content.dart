@@ -74,39 +74,9 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                 const Expanded(child: ScheduleTimelineContent())
               else ...[
                 const CalendarSelector(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _formatSelectedDate(selectedDate),
-                            style: GoogleFonts.roboto(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${events.length} scheduled',
-                            style: GoogleFonts.roboto(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
                     child: DailyTimelineView(
                       key: ValueKey(
                         '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}',
