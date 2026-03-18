@@ -36,8 +36,8 @@ class DailyTimelineView extends StatefulWidget {
     this.onEventResized,
     this.onEventTapped,
     this.onEmptySlotTap,
-    this.gutterWidth = 52,
-    this.gutterPadding = 8,
+    this.gutterWidth = 46,
+    this.gutterPadding = 4,
   });
 
   @override

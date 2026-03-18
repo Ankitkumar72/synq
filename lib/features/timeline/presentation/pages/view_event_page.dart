@@ -348,6 +348,7 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
     return GestureDetector(
       onTap: () {
         ref.read(notesProvider.notifier).toggleCompleted(event.id);
+        Navigator.pop(context); // Go back immediately to daily timeline
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -374,7 +375,7 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
             ),
             const SizedBox(width: 8),
             Text(
-              isCompleted ? 'Completed' : 'Complete Event',
+              isCompleted ? 'Event Completed' : 'Complete Event',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,

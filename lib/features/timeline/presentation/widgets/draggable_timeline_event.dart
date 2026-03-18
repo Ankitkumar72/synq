@@ -333,7 +333,6 @@ class _EventBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showTime = height >= 44;
-    final showSubtitle = height >= 70 && (event.subtitle?.isNotEmpty ?? false);
 
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
@@ -358,7 +357,7 @@ class _EventBody extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: textColor,
-                  fontSize: 12,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
                   height: 1.2,
                 ),
@@ -373,18 +372,8 @@ class _EventBody extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: textColor.withValues(alpha: 0.8),
-              fontSize: 11,
+              fontSize: 14,
               height: 1.2,
-            ),
-          ),
-        if (showSubtitle)
-          Text(
-            event.subtitle!,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: textColor.withValues(alpha: 0.7),
-              fontSize: 11,
             ),
           ),
         ],
