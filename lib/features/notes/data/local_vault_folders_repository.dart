@@ -36,7 +36,10 @@ class LocalVaultFoldersRepository implements FoldersRepository {
     final directory = await _createDirectoryForFolder(folder);
     await _writeMetadata(directory, folder);
 
-    _recordsById[folder.id] = _FolderRecord(folder: folder, directory: directory);
+    _recordsById[folder.id] = _FolderRecord(
+      folder: folder,
+      directory: directory,
+    );
     _emit();
   }
 
@@ -64,7 +67,10 @@ class LocalVaultFoldersRepository implements FoldersRepository {
     }
 
     await _writeMetadata(targetDirectory, folder);
-    _recordsById[folder.id] = _FolderRecord(folder: folder, directory: targetDirectory);
+    _recordsById[folder.id] = _FolderRecord(
+      folder: folder,
+      directory: targetDirectory,
+    );
     _emit();
   }
 
@@ -124,10 +130,14 @@ class LocalVaultFoldersRepository implements FoldersRepository {
       if (!await metadataFile.exists()) continue;
 
       try {
-        final json = jsonDecode(await metadataFile.readAsString())
-            as Map<String, dynamic>;
+        final json =
+            jsonDecode(await metadataFile.readAsString())
+                as Map<String, dynamic>;
         final folder = Folder.fromJson(json);
-        _recordsById[folder.id] = _FolderRecord(folder: folder, directory: entity);
+        _recordsById[folder.id] = _FolderRecord(
+          folder: folder,
+          directory: entity,
+        );
       } catch (_) {
         continue;
       }
@@ -202,10 +212,7 @@ class LocalVaultFoldersRepository implements FoldersRepository {
 }
 
 class _FolderRecord {
-  _FolderRecord({
-    required this.folder,
-    required this.directory,
-  });
+  _FolderRecord({required this.folder, required this.directory});
 
   final Folder folder;
   final Directory directory;

@@ -97,8 +97,10 @@ class LocalVaultNotesRepository implements NotesRepository {
     _cache.clear();
     _noteFilesById.clear();
 
-    await for (final entity
-        in _vaultRoot!.list(recursive: true, followLinks: false)) {
+    await for (final entity in _vaultRoot!.list(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (entity is! File) continue;
       if (!_isMarkdown(entity.path)) continue;
       if (_isHiddenPath(entity.path)) continue;
@@ -115,7 +117,10 @@ class LocalVaultNotesRepository implements NotesRepository {
 
   Future<void> _writeNote(Note note) async {
     final folderDirectories = await _folderDirectoriesById();
-    final targetDirectory = _resolveTargetDirectory(note.folderId, folderDirectories);
+    final targetDirectory = _resolveTargetDirectory(
+      note.folderId,
+      folderDirectories,
+    );
 
     if (!await targetDirectory.exists()) {
       await targetDirectory.create(recursive: true);
@@ -210,8 +215,9 @@ class LocalVaultNotesRepository implements NotesRepository {
       if (!await metadataFile.exists()) continue;
 
       try {
-        final json = jsonDecode(await metadataFile.readAsString())
-            as Map<String, dynamic>;
+        final json =
+            jsonDecode(await metadataFile.readAsString())
+                as Map<String, dynamic>;
         final id = json['id'];
         if (id is String && id.isNotEmpty) {
           result[id] = entity;

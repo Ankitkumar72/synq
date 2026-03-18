@@ -8,7 +8,7 @@ class AuthRepository {
   bool _googleSignInInitialized = false;
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
-  
+
   User? get currentUser => _firebaseAuth.currentUser;
 
   Future<void> signIn(String email, String password) async {
@@ -22,15 +22,14 @@ class AuthRepository {
     // 1. Initialize GoogleSignIn (required once per app lifecycle in v7.x)
     if (!_googleSignInInitialized) {
       await GoogleSignIn.instance.initialize(
-        serverClientId: '474773003470-ip0dv62bdn1iiqfhsrfhjkp3s7oqf1vu.apps.googleusercontent.com',
+        serverClientId:
+            '474773003470-ip0dv62bdn1iiqfhsrfhjkp3s7oqf1vu.apps.googleusercontent.com',
       );
       _googleSignInInitialized = true;
     }
 
     // 2. Trigger the authentication flow (replaces signIn() in v7.x)
     final googleUser = await GoogleSignIn.instance.authenticate();
-    
-
 
     // 4. Obtain the auth details (synchronous in v7.x)
     final GoogleSignInAuthentication auth = googleUser.authentication;
@@ -41,7 +40,9 @@ class AuthRepository {
     );
 
     // 6. Sign in to Firebase with the new credential
-    final credentialResult = await _firebaseAuth.signInWithCredential(credential);
+    final credentialResult = await _firebaseAuth.signInWithCredential(
+      credential,
+    );
 
     if (credentialResult.user != null) {
       await _userRepository.createUserIfNeeded(
@@ -59,7 +60,7 @@ class AuthRepository {
       email: email,
       password: password,
     );
-    
+
     if (name != null && credential.user != null) {
       await credential.user!.updateDisplayName(name);
       await credential.user!.reload();

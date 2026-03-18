@@ -335,11 +335,13 @@ class _EventBody extends StatelessWidget {
     final showTime = height >= 44;
     final showSubtitle = height >= 70 && (event.subtitle?.isNotEmpty ?? false);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
           children: [
             if (event.isCompleted) ...[
               Icon(
@@ -385,7 +387,8 @@ class _EventBody extends StatelessWidget {
               fontSize: 11,
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

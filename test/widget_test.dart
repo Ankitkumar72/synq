@@ -44,15 +44,19 @@ class MockNotesNotifier extends NotesNotifier {
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
-    
+
     // Build our app and trigger a frame using ProviderScope overrides.
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           authProvider.overrideWith((ref) => MockAuthNotifier()),
           syncAccessProvider.overrideWith((ref) => MockSyncAccessNotifier()),
-          firebaseErrorProvider.overrideWith((ref) => null), // Mock successful initialization
-          notesProvider.overrideWith(() => MockNotesNotifier()), // Mock empty notes
+          firebaseErrorProvider.overrideWith(
+            (ref) => null,
+          ), // Mock successful initialization
+          notesProvider.overrideWith(
+            () => MockNotesNotifier(),
+          ), // Mock empty notes
           // Override periodic-stream providers to prevent never-ending timers
           minuteProvider.overrideWith((ref) => Stream.value(0)),
           currentFocusProvider.overrideWith((ref) => Stream.value(null)),

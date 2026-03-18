@@ -24,7 +24,7 @@ class DailyScheduleCard extends StatelessWidget {
     final hasTasks = tasks.isNotEmpty;
     final dayOfWeek = DateFormat('E').format(date).toUpperCase();
     final dayNum = date.day.toString();
-    
+
     // Determine title and subtitle
     String title = 'Free Day';
     if (hasTasks) {
@@ -35,23 +35,24 @@ class DailyScheduleCard extends StatelessWidget {
         title = tasks.first.title;
       }
     }
-    
+
     final completedTasks = tasks.where((t) => t.isCompleted == true).length;
     final totalTasks = tasks.length;
-    
+
     String subtitle;
     if (!hasTasks) {
       subtitle = 'No tasks scheduled';
     } else if (completedTasks == totalTasks) {
       subtitle = 'All tasks completed';
     } else if (completedTasks > 0) {
-      subtitle = '$completedTasks task${completedTasks > 1 ? 's' : ''} completed, $totalTasks scheduled';
+      subtitle =
+          '$completedTasks task${completedTasks > 1 ? 's' : ''} completed, $totalTasks scheduled';
     } else {
       subtitle = '$totalTasks task${totalTasks > 1 ? 's' : ''} scheduled';
     }
-        
-    final dotColor = (hasTasks && completedTasks == totalTasks) 
-        ? Colors.green 
+
+    final dotColor = (hasTasks && completedTasks == totalTasks)
+        ? Colors.green
         : (hasTasks ? const Color(0xFF6B58F5) : const Color(0xFFD1D5DB));
 
     return GestureDetector(
@@ -61,7 +62,12 @@ class DailyScheduleCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isToday ? const Color(0xFFF0F4FF) : const Color(0xFFF7F8FA),
           borderRadius: BorderRadius.circular(24),
-          border: isToday ? Border.all(color: const Color(0xFF5473F7).withAlpha(128), width: 1.5) : null,
+          border: isToday
+              ? Border.all(
+                  color: const Color(0xFF5473F7).withAlpha(128),
+                  width: 1.5,
+                )
+              : null,
         ),
         child: Row(
           children: [
@@ -97,7 +103,7 @@ class DailyScheduleCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            
+
             // Text Column
             Expanded(
               child: Column(
@@ -110,7 +116,9 @@ class DailyScheduleCard extends StatelessWidget {
                     style: GoogleFonts.roboto(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: hasTasks ? const Color(0xFF1E1E1E) : const Color(0xFF8A93A4),
+                      color: hasTasks
+                          ? const Color(0xFF1E1E1E)
+                          : const Color(0xFF8A93A4),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -143,7 +151,7 @@ class DailyScheduleCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            
+
             // Action Button
             if (hasTasks)
               Container(
@@ -160,7 +168,10 @@ class DailyScheduleCard extends StatelessWidget {
               )
             else
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEEEBFF), // Light purple
                   borderRadius: BorderRadius.circular(20),

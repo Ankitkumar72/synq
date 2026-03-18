@@ -3,18 +3,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'recurrence_rule.freezed.dart';
 part 'recurrence_rule.g.dart';
 
-enum RecurrenceUnit {
-  day,
-  week,
-  month,
-  year,
-}
+enum RecurrenceUnit { day, week, month, year }
 
-enum RecurrenceEndType {
-  never,
-  onDate,
-  afterCount,
-}
+enum RecurrenceEndType { never, onDate, afterCount }
 
 @freezed
 class RecurrenceRule with _$RecurrenceRule {
@@ -27,5 +18,6 @@ class RecurrenceRule with _$RecurrenceRule {
     List<int>? daysOfWeek,
   }) = _RecurrenceRule;
 
-  factory RecurrenceRule.fromJson(Map<String, dynamic> json) => _$RecurrenceRuleFromJson(json);
+  factory RecurrenceRule.fromJson(Map<String, dynamic> json) =>
+      _$RecurrenceRuleFromJson(json);
 }

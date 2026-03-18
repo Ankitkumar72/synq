@@ -42,12 +42,12 @@ class CircularTimer extends StatelessWidget {
             child: Text(
               formattedTime,
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontSize: 80, // Larger base size, scaled down by FittedBox
-                    fontWeight: FontWeight.normal,
-                    fontFamily: GoogleFonts.robotoMono().fontFamily,
-                    letterSpacing: -2,
-                    color: Colors.black,
-                  ),
+                fontSize: 80, // Larger base size, scaled down by FittedBox
+                fontWeight: FontWeight.normal,
+                fontFamily: GoogleFonts.robotoMono().fontFamily,
+                letterSpacing: -2,
+                color: Colors.black,
+              ),
               maxLines: 1,
               softWrap: false,
             ),

@@ -12,10 +12,7 @@ import '../domain/models/note.dart';
 enum SyncWriteSource { local, remote }
 
 class SyncCursor {
-  const SyncCursor({
-    required this.timestampMs,
-    required this.lastId,
-  });
+  const SyncCursor({required this.timestampMs, required this.lastId});
 
   final int? timestampMs;
   final String? lastId;
@@ -171,7 +168,8 @@ class LocalDatabase {
     int? remoteUpdatedAtMs,
   }) async {
     final db = await _openDatabase();
-    final updatedAtMs = remoteUpdatedAtMs ??
+    final updatedAtMs =
+        remoteUpdatedAtMs ??
         note.updatedAt?.millisecondsSinceEpoch ??
         DateTime.now().millisecondsSinceEpoch;
 
@@ -187,16 +185,12 @@ class LocalDatabase {
         return;
       }
 
-      await txn.insert(
-        'notes',
-        <String, Object?>{
-          'id': note.id,
-          'payload': jsonEncode(note.toJson()),
-          'updated_at_ms': updatedAtMs,
-          'is_deleted': 0,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await txn.insert('notes', <String, Object?>{
+        'id': note.id,
+        'payload': jsonEncode(note.toJson()),
+        'updated_at_ms': updatedAtMs,
+        'is_deleted': 0,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       if (source == SyncWriteSource.local) {
         await _enqueueOperation(
@@ -218,7 +212,8 @@ class LocalDatabase {
     int? remoteUpdatedAtMs,
   }) async {
     final db = await _openDatabase();
-    final updatedAtMs = remoteUpdatedAtMs ?? DateTime.now().millisecondsSinceEpoch;
+    final updatedAtMs =
+        remoteUpdatedAtMs ?? DateTime.now().millisecondsSinceEpoch;
 
     await db.transaction((txn) async {
       final localUpdatedAtMs = await _currentUpdatedAtMs(
@@ -232,16 +227,12 @@ class LocalDatabase {
         return;
       }
 
-      await txn.insert(
-        'folders',
-        <String, Object?>{
-          'id': folder.id,
-          'payload': jsonEncode(folder.toJson()),
-          'updated_at_ms': updatedAtMs,
-          'is_deleted': 0,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await txn.insert('folders', <String, Object?>{
+        'id': folder.id,
+        'payload': jsonEncode(folder.toJson()),
+        'updated_at_ms': updatedAtMs,
+        'is_deleted': 0,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       if (source == SyncWriteSource.local) {
         await _enqueueOperation(
@@ -263,7 +254,8 @@ class LocalDatabase {
     int? remoteUpdatedAtMs,
   }) async {
     final db = await _openDatabase();
-    final updatedAtMs = remoteUpdatedAtMs ?? DateTime.now().millisecondsSinceEpoch;
+    final updatedAtMs =
+        remoteUpdatedAtMs ?? DateTime.now().millisecondsSinceEpoch;
 
     await db.transaction((txn) async {
       final localUpdatedAtMs = await _currentUpdatedAtMs(
@@ -277,16 +269,12 @@ class LocalDatabase {
         return;
       }
 
-      await txn.insert(
-        'notes',
-        <String, Object?>{
-          'id': noteId,
-          'payload': '{}',
-          'updated_at_ms': updatedAtMs,
-          'is_deleted': 1,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await txn.insert('notes', <String, Object?>{
+        'id': noteId,
+        'payload': '{}',
+        'updated_at_ms': updatedAtMs,
+        'is_deleted': 1,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       if (source == SyncWriteSource.local) {
         await _enqueueOperation(
@@ -312,16 +300,12 @@ class LocalDatabase {
 
     await db.transaction((txn) async {
       for (final noteId in noteIds) {
-        await txn.insert(
-          'notes',
-          <String, Object?>{
-            'id': noteId,
-            'payload': '{}',
-            'updated_at_ms': updatedAtMs,
-            'is_deleted': 1,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await txn.insert('notes', <String, Object?>{
+          'id': noteId,
+          'payload': '{}',
+          'updated_at_ms': updatedAtMs,
+          'is_deleted': 1,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
 
         if (source == SyncWriteSource.local) {
           await _enqueueOperation(
@@ -344,7 +328,8 @@ class LocalDatabase {
     int? remoteUpdatedAtMs,
   }) async {
     final db = await _openDatabase();
-    final updatedAtMs = remoteUpdatedAtMs ?? DateTime.now().millisecondsSinceEpoch;
+    final updatedAtMs =
+        remoteUpdatedAtMs ?? DateTime.now().millisecondsSinceEpoch;
 
     await db.transaction((txn) async {
       final localUpdatedAtMs = await _currentUpdatedAtMs(
@@ -358,16 +343,12 @@ class LocalDatabase {
         return;
       }
 
-      await txn.insert(
-        'folders',
-        <String, Object?>{
-          'id': folderId,
-          'payload': '{}',
-          'updated_at_ms': updatedAtMs,
-          'is_deleted': 1,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await txn.insert('folders', <String, Object?>{
+        'id': folderId,
+        'payload': '{}',
+        'updated_at_ms': updatedAtMs,
+        'is_deleted': 1,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       if (source == SyncWriteSource.local) {
         await _enqueueOperation(
@@ -473,10 +454,7 @@ class LocalDatabase {
       }
     }
 
-    return SyncCursor(
-      timestampMs: timestampMs,
-      lastId: lastId,
-    );
+    return SyncCursor(timestampMs: timestampMs, lastId: lastId);
   }
 
   Future<void> writeCursor({
@@ -489,22 +467,14 @@ class LocalDatabase {
     final idKey = _cursorIdKey(entityType);
 
     await db.transaction((txn) async {
-      await txn.insert(
-        'sync_state',
-        <String, Object?>{
-          'key': tsKey,
-          'value': '$timestampMs',
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-      await txn.insert(
-        'sync_state',
-        <String, Object?>{
-          'key': idKey,
-          'value': lastId,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await txn.insert('sync_state', <String, Object?>{
+        'key': tsKey,
+        'value': '$timestampMs',
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await txn.insert('sync_state', <String, Object?>{
+        'key': idKey,
+        'value': lastId,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     });
   }
 
@@ -558,7 +528,8 @@ class LocalDatabase {
       }
 
       // Read the .lastopen sidecar to decide staleness.
-      final sidecarPath = '${entity.path.substring(0, entity.path.length - 3)}.lastopen';
+      final sidecarPath =
+          '${entity.path.substring(0, entity.path.length - 3)}.lastopen';
       final sidecar = File(sidecarPath);
       if (await sidecar.exists()) {
         final raw = (await sidecar.readAsString()).trim();
@@ -574,7 +545,8 @@ class LocalDatabase {
   }
 
   static Future<void> _deleteSidecarAndDb(File dbFile) async {
-    final sidecarPath = '${dbFile.path.substring(0, dbFile.path.length - 3)}.lastopen';
+    final sidecarPath =
+        '${dbFile.path.substring(0, dbFile.path.length - 3)}.lastopen';
     final sidecar = File(sidecarPath);
     if (await sidecar.exists()) await sidecar.delete();
     // Delete main DB + SQLite WAL companion files.
@@ -653,9 +625,7 @@ class LocalDatabase {
     try {
       final basePath = await getDatabasesPath();
       final sidecar = File(path.join(basePath, 'synq_$_userId.lastopen'));
-      await sidecar.writeAsString(
-        '${DateTime.now().millisecondsSinceEpoch}',
-      );
+      await sidecar.writeAsString('${DateTime.now().millisecondsSinceEpoch}');
     } catch (_) {
       // Non-critical — staleness detection degrades gracefully.
     }
@@ -674,21 +644,17 @@ class LocalDatabase {
       whereArgs: <Object>[entityType, entityId, _queuePending],
     );
 
-    await txn.insert(
-      'sync_queue',
-      <String, Object?>{
-        'op_id': _uuid.v4(),
-        'entity_type': entityType,
-        'entity_id': entityId,
-        'op_type': opType,
-        'payload': payload,
-        'created_at_ms': DateTime.now().millisecondsSinceEpoch,
-        'retry_count': 0,
-        'next_retry_at_ms': null,
-        'status': _queuePending,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await txn.insert('sync_queue', <String, Object?>{
+      'op_id': _uuid.v4(),
+      'entity_type': entityType,
+      'entity_id': entityId,
+      'op_type': opType,
+      'payload': payload,
+      'created_at_ms': DateTime.now().millisecondsSinceEpoch,
+      'retry_count': 0,
+      'next_retry_at_ms': null,
+      'status': _queuePending,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
 
     _syncQueueChangedController.add(null);
   }

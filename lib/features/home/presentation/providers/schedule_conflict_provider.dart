@@ -13,34 +13,35 @@ const _defaultBlockDuration = Duration(hours: 1);
 /// * [proposedEnd]   – the end time (nullable; defaults to +1 hour).
 /// * [excludeId]     – the id of the task being edited so it doesn't match
 ///                     against itself.
-final scheduleConflictProvider = FutureProvider.family<List<Note>,
-    ({DateTime proposedStart, DateTime? proposedEnd, String? excludeId})>(
-  (ref, params) async {
-    final notes = await ref.watch(notesProvider.future);
+final scheduleConflictProvider =
+    FutureProvider.family<
+      List<Note>,
+      ({DateTime proposedStart, DateTime? proposedEnd, String? excludeId})
+    >((ref, params) async {
+      final notes = await ref.watch(notesProvider.future);
 
-    final pStart = params.proposedStart;
-    final pEnd = params.proposedEnd ?? pStart.add(_defaultBlockDuration);
+      final pStart = params.proposedStart;
+      final pEnd = params.proposedEnd ?? pStart.add(_defaultBlockDuration);
 
-    final conflicts = <Note>[];
+      final conflicts = <Note>[];
 
-    for (final note in notes) {
-      // Only consider incomplete, scheduled tasks
-      if (!note.isTask || note.isCompleted || note.scheduledTime == null) {
-        continue;
+      for (final note in notes) {
+        // Only consider incomplete, scheduled tasks
+        if (!note.isTask || note.isCompleted || note.scheduledTime == null) {
+          continue;
+        }
+        // Don't flag the task we're currently editing
+        if (params.excludeId != null && note.id == params.excludeId) continue;
+
+        final eStart = note.scheduledTime!;
+        final eEnd = note.endTime ?? eStart.add(_defaultBlockDuration);
+
+        // Two blocks conflict only when they overlap.
+        // Formally: pStart < eEnd AND eStart < pEnd
+        final overlaps = pStart.isBefore(eEnd) && eStart.isBefore(pEnd);
+
+        if (overlaps) conflicts.add(note);
       }
-      // Don't flag the task we're currently editing
-      if (params.excludeId != null && note.id == params.excludeId) continue;
 
-      final eStart = note.scheduledTime!;
-      final eEnd = note.endTime ?? eStart.add(_defaultBlockDuration);
-
-      // Two blocks conflict only when they overlap.
-      // Formally: pStart < eEnd AND eStart < pEnd
-      final overlaps = pStart.isBefore(eEnd) && eStart.isBefore(pEnd);
-
-      if (overlaps) conflicts.add(note);
-    }
-
-    return conflicts;
-  },
-);
+      return conflicts;
+    });

@@ -23,7 +23,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   Future<void> addNote(Note note) async {
     await _repository.addNote(note);
     await NotificationService().scheduleNote(note);
-    
+
     // Generate recurring instances if applicable
     if (note.recurrenceRule != null && note.scheduledTime != null) {
       await _generateInstances(note);
@@ -33,7 +33,9 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   Future<void> updateNote(Note note) async {
     // Optimistic update
     final currentList = state.value ?? [];
-    final updatedList = currentList.map((n) => n.id == note.id ? note : n).toList();
+    final updatedList = currentList
+        .map((n) => n.id == note.id ? note : n)
+        .toList();
     state = AsyncValue.data(updatedList);
 
     try {
@@ -58,27 +60,34 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   // Toggle completed status for a note
   Future<void> toggleCompleted(String id) async {
     final currentNotes = state.value ?? [];
-    final note = currentNotes.firstWhere((n) => n.id == id, orElse: () => throw Exception('Note not found'));
-    
+    final note = currentNotes.firstWhere(
+      (n) => n.id == id,
+      orElse: () => throw Exception('Note not found'),
+    );
+
     final bool isNowCompleted = !note.isCompleted;
     final updatedNote = note.copyWith(
       isCompleted: isNowCompleted,
       completedAt: isNowCompleted ? DateTime.now() : null,
     );
-    
+
     await updateNote(updatedNote);
   }
 
   Future<void> deleteFutureInstances(Note note) async {
     final parentId = note.parentRecurringId ?? note.id;
     final allNotes = state.value ?? [];
-    
+
     // Find all future instances of this series
     final futureIds = allNotes
-        .where((n) => 
-            (n.parentRecurringId == parentId || n.id == parentId) && // Same series
-            (n.scheduledTime != null && note.scheduledTime != null) &&
-            (n.scheduledTime!.isAfter(note.scheduledTime!) || n.id == note.id)) // Future or This
+        .where(
+          (n) =>
+              (n.parentRecurringId == parentId ||
+                  n.id == parentId) && // Same series
+              (n.scheduledTime != null && note.scheduledTime != null) &&
+              (n.scheduledTime!.isAfter(note.scheduledTime!) ||
+                  n.id == note.id),
+        ) // Future or This
         .map((n) => n.id)
         .toList();
 
@@ -93,7 +102,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   Future<void> deleteAllInstances(Note note) async {
     final parentId = note.parentRecurringId ?? note.id;
     final allNotes = state.value ?? [];
-    
+
     final allIds = allNotes
         .where((n) => n.parentRecurringId == parentId || n.id == parentId)
         .map((n) => n.id)
@@ -110,16 +119,19 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   Future<void> updateFutureInstances(Note note) async {
     final parentId = note.parentRecurringId ?? note.id;
     final allNotes = state.value ?? [];
-    
+
     // 1. Delete all future instances (excluding this one if possible, but easier to include and regenerate)
     // Actually, we want to KEEP this note but update it, and DELETE future ones.
-    
+
     final futureIdsToDelete = allNotes
-        .where((n) => 
-            (n.parentRecurringId == parentId || n.id == parentId) && 
-            n.id != note.id && 
-            n.scheduledTime != null && note.scheduledTime != null &&
-            n.scheduledTime!.isAfter(note.scheduledTime!))
+        .where(
+          (n) =>
+              (n.parentRecurringId == parentId || n.id == parentId) &&
+              n.id != note.id &&
+              n.scheduledTime != null &&
+              note.scheduledTime != null &&
+              n.scheduledTime!.isAfter(note.scheduledTime!),
+        )
         .map((n) => n.id)
         .toList();
 
@@ -142,40 +154,41 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   Future<void> updateAllInstances(Note note) async {
     final parentId = note.parentRecurringId ?? note.id;
     final allNotes = state.value ?? [];
-    
+
     final allInstances = allNotes
         .where((n) => n.parentRecurringId == parentId || n.id == parentId)
         .toList();
-        
+
     for (var instance in allInstances) {
-       final updatedInstance = instance.copyWith(
-         title: note.title,
-         body: note.body,
-         priority: note.priority,
-         category: note.category,
-         // We do not update time/recurrence here as that shifts everything. 
-         // "Update All" is typically for content.
-       );
-       await _repository.updateNote(updatedInstance);
-       await NotificationService().scheduleNote(updatedInstance);
+      final updatedInstance = instance.copyWith(
+        title: note.title,
+        body: note.body,
+        priority: note.priority,
+        category: note.category,
+        // We do not update time/recurrence here as that shifts everything.
+        // "Update All" is typically for content.
+      );
+      await _repository.updateNote(updatedInstance);
+      await NotificationService().scheduleNote(updatedInstance);
     }
   }
 
   Future<void> _generateInstances(Note parentNote) async {
     final rule = parentNote.recurrenceRule!;
     final instances = <Note>[];
-    
+
     DateTime nextDate = _calculateNextDate(parentNote.scheduledTime!, rule);
     int count = 1; // Parent is 1st
-    
+
     // Generate for next 60 days OR until end condition
     final limitDate = DateTime.now().add(const Duration(days: 60));
-    
+
     while (true) {
       // Check end conditions
       if (rule.endType == RecurrenceEndType.onDate && rule.endDate != null) {
         if (nextDate.isAfter(rule.endDate!)) break;
-      } else if (rule.endType == RecurrenceEndType.afterCount && rule.occurrenceCount != null) {
+      } else if (rule.endType == RecurrenceEndType.afterCount &&
+          rule.occurrenceCount != null) {
         if (count >= rule.occurrenceCount!) break;
       } else {
         // Never ends -> limit strict generation window to 60 days to avoid infinite loop / perf issues
@@ -183,17 +196,25 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
       }
 
       // Calculate new times
-      final duration = parentNote.endTime?.difference(parentNote.scheduledTime!) ?? const Duration(hours: 1);
-      final nextEndTime = parentNote.endTime != null ? nextDate.add(duration) : null;
-      
+      final duration =
+          parentNote.endTime?.difference(parentNote.scheduledTime!) ??
+          const Duration(hours: 1);
+      final nextEndTime = parentNote.endTime != null
+          ? nextDate.add(duration)
+          : null;
+
       DateTime? nextReminder;
       if (parentNote.reminderTime != null) {
-        final reminderOffset = parentNote.scheduledTime!.difference(parentNote.reminderTime!);
+        final reminderOffset = parentNote.scheduledTime!.difference(
+          parentNote.reminderTime!,
+        );
         nextReminder = nextDate.subtract(reminderOffset);
       }
 
       final instance = parentNote.copyWith(
-        id: DateTime.now().millisecondsSinceEpoch.toString() + count.toString(), // Unique ID
+        id:
+            DateTime.now().millisecondsSinceEpoch.toString() +
+            count.toString(), // Unique ID
         scheduledTime: nextDate,
         endTime: nextEndTime,
         reminderTime: nextReminder,
@@ -203,11 +224,11 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
         isCompleted: false,
         completedAt: null,
       );
-      
+
       instances.add(instance);
       await _repository.addNote(instance); // Add immediately (or batch ideally)
       await NotificationService().scheduleNote(instance);
-      
+
       nextDate = _calculateNextDate(nextDate, rule);
       count++;
     }
@@ -221,19 +242,31 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
       case RecurrenceUnit.week:
         return currentDate.add(Duration(days: 7 * interval));
       case RecurrenceUnit.month:
-         var nextMonth = currentDate.month + interval;
-         var nextYear = currentDate.year;
-         while (nextMonth > 12) {
-           nextMonth -= 12;
-           nextYear++;
-         }
-         var nextDay = currentDate.day;
-         final daysInNextMonth = DateTime(nextYear, nextMonth + 1, 0).day;
-         if (nextDay > daysInNextMonth) nextDay = daysInNextMonth;
-         
-         return DateTime(nextYear, nextMonth, nextDay, currentDate.hour, currentDate.minute);
+        var nextMonth = currentDate.month + interval;
+        var nextYear = currentDate.year;
+        while (nextMonth > 12) {
+          nextMonth -= 12;
+          nextYear++;
+        }
+        var nextDay = currentDate.day;
+        final daysInNextMonth = DateTime(nextYear, nextMonth + 1, 0).day;
+        if (nextDay > daysInNextMonth) nextDay = daysInNextMonth;
+
+        return DateTime(
+          nextYear,
+          nextMonth,
+          nextDay,
+          currentDate.hour,
+          currentDate.minute,
+        );
       case RecurrenceUnit.year:
-         return DateTime(currentDate.year + interval, currentDate.month, currentDate.day, currentDate.hour, currentDate.minute);
+        return DateTime(
+          currentDate.year + interval,
+          currentDate.month,
+          currentDate.day,
+          currentDate.hour,
+          currentDate.minute,
+        );
     }
   }
 
@@ -253,11 +286,8 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
     }
   }
 
-
-
   /// Handles notification action button taps.
-  Future<void> _handleNotificationAction(
-      String actionId, String noteId) async {
+  Future<void> _handleNotificationAction(String actionId, String noteId) async {
     final repo = ref.read(notesRepositoryProvider);
     final notifService = NotificationService();
 
@@ -266,9 +296,9 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
       final notes = state.value;
       if (notes == null) return;
       final note = notes.cast<Note?>().firstWhere(
-            (n) => n!.id == noteId,
-            orElse: () => null,
-          );
+        (n) => n!.id == noteId,
+        orElse: () => null,
+      );
       if (note == null || note.isCompleted) return;
 
       final updated = note.copyWith(
@@ -276,9 +306,10 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
         completedAt: DateTime.now(),
       );
       await repo.updateNote(updated);
-      state = AsyncValue.data(
-        [for (final n in notes) if (n.id == noteId) updated else n],
-      );
+      state = AsyncValue.data([
+        for (final n in notes)
+          if (n.id == noteId) updated else n,
+      ]);
     } else if (actionId == 'snooze') {
       // Reschedule the notification for +10 minutes from now
       final notifId = noteId.hashCode;
@@ -286,9 +317,9 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
 
       final notes = state.value;
       final note = notes?.cast<Note?>().firstWhere(
-            (n) => n!.id == noteId,
-            orElse: () => null,
-          );
+        (n) => n!.id == noteId,
+        orElse: () => null,
+      );
 
       await notifService.scheduleNotification(
         id: notifId,

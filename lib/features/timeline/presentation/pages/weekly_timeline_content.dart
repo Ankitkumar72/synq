@@ -13,29 +13,37 @@ class WeeklyTimelineContent extends ConsumerStatefulWidget {
   const WeeklyTimelineContent({super.key});
 
   @override
-  ConsumerState<WeeklyTimelineContent> createState() => _WeeklyTimelineContentState();
+  ConsumerState<WeeklyTimelineContent> createState() =>
+      _WeeklyTimelineContentState();
 }
 
 class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
-  final DateTime _currentWeekStart = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  final DateTime _currentWeekStart = DateTime.now().subtract(
+    Duration(days: DateTime.now().weekday - 1),
+  );
   late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    
+
     // Scroll to today after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
-        final weekDays = List.generate(8, (index) => _currentWeekStart.add(Duration(days: index)));
-        
+        final weekDays = List.generate(
+          8,
+          (index) => _currentWeekStart.add(Duration(days: index)),
+        );
+
         int todayIndex = -1;
         for (int i = 0; i < weekDays.length; i++) {
           final d = weekDays[i];
-          if (d.year == today.year && d.month == today.month && d.day == today.day) {
+          if (d.year == today.year &&
+              d.month == today.month &&
+              d.day == today.day) {
             todayIndex = i;
             break;
           }
@@ -44,10 +52,14 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
         if (todayIndex != -1) {
           // Find approximate offset to center the item
           final viewportHeight = _scrollController.position.viewportDimension;
-          const itemHeight = 110.0; // Approximate height of DailyScheduleCard + separator
-          
-          final targetOffset = (todayIndex * itemHeight) - (viewportHeight / 2) + (itemHeight / 2);
-          
+          const itemHeight =
+              110.0; // Approximate height of DailyScheduleCard + separator
+
+          final targetOffset =
+              (todayIndex * itemHeight) -
+              (viewportHeight / 2) +
+              (itemHeight / 2);
+
           _scrollController.animateTo(
             targetOffset.clamp(0, _scrollController.position.maxScrollExtent),
             duration: const Duration(milliseconds: 500),
@@ -69,7 +81,10 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
     final notesAsync = ref.watch(notesProvider);
     final allNotes = notesAsync.value ?? [];
 
-    final weekDays = List.generate(8, (index) => _currentWeekStart.add(Duration(days: index)));
+    final weekDays = List.generate(
+      8,
+      (index) => _currentWeekStart.add(Duration(days: index)),
+    );
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -88,7 +103,8 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
 
     final startFormat = DateFormat('MMM d');
     final endFormat = DateFormat('MMM d');
-    final weekRangeText = '${startFormat.format(_currentWeekStart)} - ${endFormat.format(_currentWeekStart.add(const Duration(days: 6)))}';
+    final weekRangeText =
+        '${startFormat.format(_currentWeekStart)} - ${endFormat.format(_currentWeekStart.add(const Duration(days: 6)))}';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -120,7 +136,8 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
                         Flexible(
                           child: Text(
                             weekRangeText,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
                                   fontSize: 26,
@@ -142,20 +159,28 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
                       Scaffold.of(context).openEndDrawer();
                     },
                     child: Container(
-                      padding: const EdgeInsets.all(10), // Slightly larger padding for the menu button
+                      padding: const EdgeInsets.all(
+                        10,
+                      ), // Slightly larger padding for the menu button
                       decoration: const BoxDecoration(
-                        color: Color(0xFFF6F8FA), // Light grey matching the design in screenshot
+                        color: Color(
+                          0xFFF6F8FA,
+                        ), // Light grey matching the design in screenshot
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.menu, color: AppColors.textPrimary, size: 24),
+                      child: const Icon(
+                        Icons.menu,
+                        color: AppColors.textPrimary,
+                        size: 24,
+                      ),
                     ),
                   );
-                }
+                },
               ),
             ],
           ),
           const SizedBox(height: 24),
-          
+
           // Weekly Focus Card
           const WeeklyFocusCard(),
           const SizedBox(height: 32),
@@ -177,7 +202,8 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
               ),
               GestureDetector(
                 onTap: () {
-                  ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.monthly;
+                  ref.read(timelineViewModeProvider.notifier).state =
+                      TimelineViewMode.monthly;
                 },
                 child: Text(
                   'View Calendar',
@@ -201,7 +227,11 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final date = weekDays[index];
-                final normalizedDate = DateTime(date.year, date.month, date.day);
+                final normalizedDate = DateTime(
+                  date.year,
+                  date.month,
+                  date.day,
+                );
                 final dayTasks = tasksByDate[normalizedDate] ?? [];
                 final isToday = normalizedDate.isAtSameMomentAs(today);
 
@@ -211,7 +241,8 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
                   isToday: isToday,
                   onTap: () {
                     ref.read(selectedDateProvider.notifier).state = date;
-                    ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.daily;
+                    ref.read(timelineViewModeProvider.notifier).state =
+                        TimelineViewMode.daily;
                   },
                 );
               },

@@ -14,7 +14,15 @@ class WeeklyFocusState {
     this.priority = '',
     this.criteria = const [],
     this.criteriaStatus = const [],
-    this.dailyIntentions = const [false, false, false, false, false, false, false],
+    this.dailyIntentions = const [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ],
   });
 
   WeeklyFocusState copyWith({
@@ -47,9 +55,21 @@ class WeeklyFocusState {
     return WeeklyFocusState(
       objective: json['objective'] as String? ?? '',
       priority: json['priority'] as String? ?? '',
-      criteria: (json['criteria'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
-      criteriaStatus: (json['criteriaStatus'] as List<dynamic>?)?.map((e) => e as bool).toList() ?? [],
-      dailyIntentions: (json['dailyIntentions'] as List<dynamic>?)?.map((e) => e as bool).toList() ?? [false, false, false, false, false, false, false],
+      criteria:
+          (json['criteria'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      criteriaStatus:
+          (json['criteriaStatus'] as List<dynamic>?)
+              ?.map((e) => e as bool)
+              .toList() ??
+          [],
+      dailyIntentions:
+          (json['dailyIntentions'] as List<dynamic>?)
+              ?.map((e) => e as bool)
+              .toList() ??
+          [false, false, false, false, false, false, false],
     );
   }
 }
@@ -90,28 +110,31 @@ class WeeklyFocusNotifier extends StateNotifier<WeeklyFocusState> {
 
   Future<void> toggleCriterion(int index) async {
     if (index < 0 || index >= state.criteriaStatus.length) return;
-    
+
     final newStatus = List<bool>.from(state.criteriaStatus);
     newStatus[index] = !newStatus[index];
     await _save(state.copyWith(criteriaStatus: newStatus));
   }
 
-  Future<void> updateCriteria(List<String> newCriteria, List<bool> newStatus) async {
-    await _save(state.copyWith(
-      criteria: newCriteria,
-      criteriaStatus: newStatus,
-    ));
+  Future<void> updateCriteria(
+    List<String> newCriteria,
+    List<bool> newStatus,
+  ) async {
+    await _save(
+      state.copyWith(criteria: newCriteria, criteriaStatus: newStatus),
+    );
   }
 
   Future<void> toggleDailyIntention(int index) async {
     if (index < 0 || index >= state.dailyIntentions.length) return;
-    
+
     final newIntentions = List<bool>.from(state.dailyIntentions);
     newIntentions[index] = !newIntentions[index];
     await _save(state.copyWith(dailyIntentions: newIntentions));
   }
 }
 
-final weeklyFocusProvider = StateNotifierProvider<WeeklyFocusNotifier, WeeklyFocusState>((ref) {
-  return WeeklyFocusNotifier();
-});
+final weeklyFocusProvider =
+    StateNotifierProvider<WeeklyFocusNotifier, WeeklyFocusState>((ref) {
+      return WeeklyFocusNotifier();
+    });

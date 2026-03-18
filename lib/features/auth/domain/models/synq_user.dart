@@ -82,14 +82,16 @@ class SynqUser {
       email: json['email'] as String? ?? '',
       name: json['name'] as String? ?? 'User',
       planTier: PlanTier.fromString(json['plan_tier'] as String? ?? 'free'),
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at'] as String) 
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
-      activeDevices: (json['active_devices'] as List<dynamic>?)
+      activeDevices:
+          (json['active_devices'] as List<dynamic>?)
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           const [],
-      activeDeviceIds: (json['active_device_ids'] as List<dynamic>?)
+      activeDeviceIds:
+          (json['active_device_ids'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],

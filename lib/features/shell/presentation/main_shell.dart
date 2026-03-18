@@ -9,9 +9,7 @@ import '../../notes/presentation/note_detail_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../../../core/navigation/fade_page_route.dart';
 
-
 final currentNavIndexProvider = StateProvider<int>((ref) => 0);
-
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -42,7 +40,9 @@ class _MainShellState extends ConsumerState<MainShell> {
         if (didPop) return;
 
         // Check if the current tab's nested navigator can pop
-        final isFirstRouteInCurrentTab = !await _navigatorKeys[currentIndex].currentState!.maybePop();
+        final isFirstRouteInCurrentTab = !await _navigatorKeys[currentIndex]
+            .currentState!
+            .maybePop();
 
         if (isFirstRouteInCurrentTab) {
           // If we are at the root of the tab
@@ -67,41 +67,48 @@ class _MainShellState extends ConsumerState<MainShell> {
             _buildTabNavigator(2, const ProfileScreen()),
           ],
         ),
-        bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0 
-          ? null 
-          : Container(
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow.withAlpha(13),
-                blurRadius: 20,
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavButton(ref, currentIndex, 0, Icons.grid_view_rounded),
-              _buildNavButton(ref, currentIndex, 1, Icons.calendar_month),
-              IconButton(
-                onPressed: () {
-                  _openNoteEditor(currentIndex);
-                },
-                icon: Icon(
-                  Icons.note_add_outlined,
-                  size: _navIconSize,
-                  color: _isNoteEditorOpen ? Colors.black : Colors.grey,
+        bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
+            ? null
+            : Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(30),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadow.withAlpha(13),
+                      blurRadius: 20,
+                    ),
+                  ],
                 ),
-                tooltip: 'Add Note',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildNavButton(
+                      ref,
+                      currentIndex,
+                      0,
+                      Icons.grid_view_rounded,
+                    ),
+                    _buildNavButton(ref, currentIndex, 1, Icons.calendar_month),
+                    IconButton(
+                      onPressed: () {
+                        _openNoteEditor(currentIndex);
+                      },
+                      icon: Icon(
+                        Icons.note_add_outlined,
+                        size: _navIconSize,
+                        color: _isNoteEditorOpen ? Colors.black : Colors.grey,
+                      ),
+                      tooltip: 'Add Note',
+                    ),
+
+                    _buildNavButton(ref, currentIndex, 2, Icons.person_outline),
+                  ],
+                ),
               ),
-              
-              _buildNavButton(ref, currentIndex, 2, Icons.person_outline),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -109,8 +116,8 @@ class _MainShellState extends ConsumerState<MainShell> {
   Future<void> _handleDoubleBackToExit() async {
     final now = DateTime.now();
     const maxDuration = Duration(seconds: 2);
-    final isWarningStillActive = _lastPressedAt != null && 
-                                 now.difference(_lastPressedAt!) < maxDuration;
+    final isWarningStillActive =
+        _lastPressedAt != null && now.difference(_lastPressedAt!) < maxDuration;
 
     if (isWarningStillActive) {
       await SystemChannels.platform.invokeMethod('SystemNavigator.pop');
@@ -131,7 +138,9 @@ class _MainShellState extends ConsumerState<MainShell> {
             backgroundColor: const Color(0xFF323232),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             width: 220,
           ),
         );
@@ -155,7 +164,12 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  Widget _buildNavButton(WidgetRef ref, int currentIndex, int index, IconData icon) {
+  Widget _buildNavButton(
+    WidgetRef ref,
+    int currentIndex,
+    int index,
+    IconData icon,
+  ) {
     final isCurrentTabActive = currentIndex == index && !_isNoteEditorOpen;
     return IconButton(
       icon: Icon(
@@ -204,23 +218,23 @@ class _MainShellState extends ConsumerState<MainShell> {
           setState(() => _isNoteEditorOpen = false);
           return;
         }
-        retryNavigator.push(
-          FadePageRoute(builder: (_) => const NoteDetailScreen()),
-        ).whenComplete(onComplete);
+        retryNavigator
+            .push(FadePageRoute(builder: (_) => const NoteDetailScreen()))
+            .whenComplete(onComplete);
       });
       return;
     }
 
-    navigator.push(
-      FadePageRoute(builder: (_) => const NoteDetailScreen()),
-    ).whenComplete(onComplete);
+    navigator
+        .push(FadePageRoute(builder: (_) => const NoteDetailScreen()))
+        .whenComplete(onComplete);
   }
 }
 
 /// Placeholder screen for tabs not yet implemented
 class PlaceholderScreen extends StatelessWidget {
   final String title;
-  
+
   const PlaceholderScreen({super.key, required this.title});
 
   @override
@@ -236,16 +250,13 @@ class PlaceholderScreen extends StatelessWidget {
               color: AppColors.textSecondary,
             ),
             const SizedBox(height: 16),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            Text(title, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 8),
             Text(
               'Coming soon',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),

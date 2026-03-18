@@ -35,7 +35,8 @@ class SynqDrawer extends ConsumerWidget {
               title: 'Schedule',
               isSelected: currentMode == TimelineViewMode.schedule,
               onTap: () {
-                ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.schedule;
+                ref.read(timelineViewModeProvider.notifier).state =
+                    TimelineViewMode.schedule;
                 _closeDrawer(context);
               },
             ),
@@ -45,7 +46,8 @@ class SynqDrawer extends ConsumerWidget {
               title: 'Day',
               isSelected: currentMode == TimelineViewMode.daily,
               onTap: () {
-                ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.daily;
+                ref.read(timelineViewModeProvider.notifier).state =
+                    TimelineViewMode.daily;
                 _closeDrawer(context);
               },
             ),
@@ -53,9 +55,12 @@ class SynqDrawer extends ConsumerWidget {
               context,
               icon: Icons.view_week_outlined,
               title: 'Week',
-              isSelected: currentMode == TimelineViewMode.weekly, // Currently sharing view
+              isSelected:
+                  currentMode ==
+                  TimelineViewMode.weekly, // Currently sharing view
               onTap: () {
-                ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.weekly;
+                ref.read(timelineViewModeProvider.notifier).state =
+                    TimelineViewMode.weekly;
                 _closeDrawer(context);
               },
             ),
@@ -65,7 +70,8 @@ class SynqDrawer extends ConsumerWidget {
               title: 'Month',
               isSelected: currentMode == TimelineViewMode.monthly,
               onTap: () {
-                ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.monthly;
+                ref.read(timelineViewModeProvider.notifier).state =
+                    TimelineViewMode.monthly;
                 _closeDrawer(context);
               },
             ),
@@ -85,12 +91,22 @@ class SynqDrawer extends ConsumerWidget {
                   CircleAvatar(
                     radius: 14,
                     backgroundColor: AppColors.primary,
-                    child: Text('U', style: GoogleFonts.roboto(color: Colors.white, fontSize: 14)),
+                    child: Text(
+                      'U',
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
                     'User Name',
-                    style: GoogleFonts.roboto(color: Colors.black87, fontWeight: FontWeight.w500, fontSize: 14),
+                    style: GoogleFonts.roboto(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
@@ -153,25 +169,34 @@ class SynqDrawer extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
       child: Material(
-        color: isSelected ? const Color(0xFFE8EFFF) : Colors.transparent, // Highlight color
+        color: isSelected
+            ? const Color(0xFFE8EFFF)
+            : Colors.transparent, // Highlight color
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
             child: Row(
               children: [
                 Icon(
                   icon,
-                  color: isSelected ? const Color(0xFF1E3A8A) : Colors.black54, // Icon color
+                  color: isSelected
+                      ? const Color(0xFF1E3A8A)
+                      : Colors.black54, // Icon color
                   size: 24,
                 ),
                 const SizedBox(width: 16),
                 Text(
                   title,
                   style: GoogleFonts.roboto(
-                    color: isSelected ? const Color(0xFF1E3A8A) : Colors.black87, // Text color
+                    color: isSelected
+                        ? const Color(0xFF1E3A8A)
+                        : Colors.black87, // Text color
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     fontSize: 15,
                   ),
@@ -200,7 +225,10 @@ class SynqDrawer extends ConsumerWidget {
           borderRadius: BorderRadius.circular(24),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 10.0,
+            ),
             child: Row(
               children: [
                 Icon(

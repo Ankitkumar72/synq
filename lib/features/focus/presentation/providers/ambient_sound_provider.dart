@@ -42,15 +42,9 @@ class AmbientSoundState {
   final String? activeSoundId;
   final bool isPlaying;
 
-  AmbientSoundState({
-    this.activeSoundId,
-    this.isPlaying = false,
-  });
+  AmbientSoundState({this.activeSoundId, this.isPlaying = false});
 
-  AmbientSoundState copyWith({
-    String? activeSoundId,
-    bool? isPlaying,
-  }) {
+  AmbientSoundState copyWith({String? activeSoundId, bool? isPlaying}) {
     return AmbientSoundState(
       activeSoundId: activeSoundId ?? this.activeSoundId,
       isPlaying: isPlaying ?? this.isPlaying,
@@ -101,6 +95,7 @@ class AmbientSoundNotifier extends StateNotifier<AmbientSoundState> {
   }
 }
 
-final ambientSoundProvider = StateNotifierProvider<AmbientSoundNotifier, AmbientSoundState>((ref) {
-  return AmbientSoundNotifier();
-});
+final ambientSoundProvider =
+    StateNotifierProvider<AmbientSoundNotifier, AmbientSoundState>((ref) {
+      return AmbientSoundNotifier();
+    });

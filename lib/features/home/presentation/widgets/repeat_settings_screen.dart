@@ -4,9 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../notes/domain/models/recurrence_rule.dart';
 
 class RepeatSettingsResult {
-  const RepeatSettingsResult({
-    required this.rule,
-  });
+  const RepeatSettingsResult({required this.rule});
 
   final RecurrenceRule? rule;
 }
@@ -47,10 +45,16 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
     _selectedUnit = widget.initialRule?.unit ?? RecurrenceUnit.week;
     _selectedEndType = widget.initialRule?.endType ?? RecurrenceEndType.never;
     _startsAt = widget.startsAt;
-    _endDate = widget.initialRule?.endDate ?? 
-               DateTime(widget.startsAt.year, widget.startsAt.month + 1, widget.startsAt.day);
-    
-    _selectedDays = widget.initialRule?.daysOfWeek?.toSet() ?? {widget.startsAt.weekday};
+    _endDate =
+        widget.initialRule?.endDate ??
+        DateTime(
+          widget.startsAt.year,
+          widget.startsAt.month + 1,
+          widget.startsAt.day,
+        );
+
+    _selectedDays =
+        widget.initialRule?.daysOfWeek?.toSet() ?? {widget.startsAt.weekday};
   }
 
   @override
@@ -126,7 +130,8 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
   Future<void> _pickAfterCount() async {
     final selected = await showDialog<int>(
       context: context,
-      builder: (context) => _AfterCountDialog(initialValue: _afterCountController.text),
+      builder: (context) =>
+          _AfterCountDialog(initialValue: _afterCountController.text),
     );
 
     if (selected == null || !mounted) return;
@@ -136,7 +141,6 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
       _selectedEndType = RecurrenceEndType.afterCount;
     });
   }
-
 
   void _applyAndClose() {
     final interval = int.tryParse(_intervalController.text.trim()) ?? 1;
@@ -157,13 +161,12 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
       endType: _selectedEndType,
       endDate: endDate,
       occurrenceCount: afterCount,
-      daysOfWeek: _selectedUnit == RecurrenceUnit.week ? _selectedDays.toList() : null,
+      daysOfWeek: _selectedUnit == RecurrenceUnit.week
+          ? _selectedDays.toList()
+          : null,
     );
 
-    Navigator.pop(
-      context,
-      RepeatSettingsResult(rule: rule),
-    );
+    Navigator.pop(context, RepeatSettingsResult(rule: rule));
   }
 
   @override
@@ -259,7 +262,10 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
                               isExpanded: true,
                               dropdownColor: Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: AppColors.textSecondary,
+                              ),
                               items: RecurrenceUnit.values
                                   .map(
                                     (unit) => DropdownMenuItem(
@@ -293,7 +299,7 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            
+
             // Time & Date Summary
             Row(
               children: [
@@ -317,7 +323,7 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
               ],
             ),
             const SizedBox(height: 14),
-            
+
             // End Condition Section
             Container(
               width: double.infinity,
@@ -344,7 +350,9 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
                       title: 'Run indefinitely',
                       isSelected: _selectedEndType == RecurrenceEndType.never,
                       trailing: const SizedBox(),
-                      onTap: () => setState(() => _selectedEndType = RecurrenceEndType.never),
+                      onTap: () => setState(
+                        () => _selectedEndType = RecurrenceEndType.never,
+                      ),
                     ),
                     const Divider(color: AppColors.tagAdmin, height: 1),
                     _endRow(
@@ -354,17 +362,22 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
                         text: DateFormat('d MMM yyyy').format(_endDate),
                         onTap: _pickEndDate,
                       ),
-                      onTap: () => setState(() => _selectedEndType = RecurrenceEndType.onDate),
+                      onTap: () => setState(
+                        () => _selectedEndType = RecurrenceEndType.onDate,
+                      ),
                     ),
                     const Divider(color: AppColors.tagAdmin, height: 1),
                     _endRow(
                       title: 'End after',
-                      isSelected: _selectedEndType == RecurrenceEndType.afterCount,
+                      isSelected:
+                          _selectedEndType == RecurrenceEndType.afterCount,
                       trailing: _smallValueChip(
                         text: '${_afterCountController.text} times',
                         onTap: _pickAfterCount,
                       ),
-                      onTap: () => setState(() => _selectedEndType = RecurrenceEndType.afterCount),
+                      onTap: () => setState(
+                        () => _selectedEndType = RecurrenceEndType.afterCount,
+                      ),
                     ),
                   ],
                 ),
@@ -388,12 +401,12 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
       children: List.generate(labels.length, (index) {
         final dayValue = indexToWeekday(index);
         final isSelected = _selectedDays.contains(dayValue);
-        
+
         return GestureDetector(
           onTap: () {
             setState(() {
               if (_selectedDays.contains(dayValue)) {
-                // Don't allow empty selection if unit is week? 
+                // Don't allow empty selection if unit is week?
                 // Or just let it be empty. Usually at least one day is needed.
                 if (_selectedDays.length > 1) {
                   _selectedDays.remove(dayValue);
@@ -411,13 +424,15 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isSelected ? AppColors.primary : AppColors.surface,
-              boxShadow: isSelected ? [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                )
-              ] : null,
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
               border: Border.all(
                 color: isSelected ? AppColors.primary : AppColors.tagAdmin,
                 width: 1,
@@ -507,7 +522,9 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
                 title,
                 style: TextStyle(
                   fontSize: 16,
-                  color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                  color: isSelected
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
@@ -528,7 +545,9 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
         shape: BoxShape.circle,
         color: selected ? AppColors.primary : Colors.transparent,
         border: Border.all(
-          color: selected ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.5),
+          color: selected
+              ? AppColors.primary
+              : AppColors.textSecondary.withValues(alpha: 0.5),
           width: 2,
         ),
       ),
@@ -538,10 +557,7 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
     );
   }
 
-  Widget _smallValueChip({
-    required String text,
-    required VoidCallback onTap,
-  }) {
+  Widget _smallValueChip({required String text, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -579,10 +595,14 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
 
   String _unitLabel(RecurrenceUnit unit) {
     switch (unit) {
-      case RecurrenceUnit.day: return 'Days';
-      case RecurrenceUnit.week: return 'Weeks';
-      case RecurrenceUnit.month: return 'Months';
-      case RecurrenceUnit.year: return 'Years';
+      case RecurrenceUnit.day:
+        return 'Days';
+      case RecurrenceUnit.week:
+        return 'Weeks';
+      case RecurrenceUnit.month:
+        return 'Months';
+      case RecurrenceUnit.year:
+        return 'Years';
     }
   }
 }

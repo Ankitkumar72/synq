@@ -10,10 +10,7 @@ class SyncAccessState {
   final bool cloudSyncEnabled;
   final bool isLoading;
 
-  SyncAccessState copyWith({
-    bool? cloudSyncEnabled,
-    bool? isLoading,
-  }) {
+  SyncAccessState copyWith({bool? cloudSyncEnabled, bool? isLoading}) {
     return SyncAccessState(
       cloudSyncEnabled: cloudSyncEnabled ?? this.cloudSyncEnabled,
       isLoading: isLoading ?? this.isLoading,
@@ -23,15 +20,12 @@ class SyncAccessState {
 
 final syncAccessProvider =
     StateNotifierProvider<SyncAccessNotifier, SyncAccessState>((ref) {
-  return SyncAccessNotifier();
-});
+      return SyncAccessNotifier();
+    });
 
 class SyncAccessNotifier extends StateNotifier<SyncAccessState> {
   SyncAccessNotifier()
-      : super(const SyncAccessState(
-          cloudSyncEnabled: true,
-          isLoading: true,
-        )) {
+    : super(const SyncAccessState(cloudSyncEnabled: true, isLoading: true)) {
     _load();
   }
 
@@ -40,10 +34,7 @@ class SyncAccessNotifier extends StateNotifier<SyncAccessState> {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_cloudSyncKey) ?? true;
-    state = state.copyWith(
-      cloudSyncEnabled: enabled,
-      isLoading: false,
-    );
+    state = state.copyWith(cloudSyncEnabled: enabled, isLoading: false);
   }
 
   Future<void> setCloudSyncEnabled(bool enabled) async {

@@ -17,7 +17,6 @@ class WeeklyFocusScreen extends ConsumerStatefulWidget {
 }
 
 class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,7 +54,11 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 100), // padding for bottom button
+            padding: const EdgeInsets.only(
+              left: 20,
+              right: 20,
+              bottom: 100,
+            ), // padding for bottom button
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -70,7 +73,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
               ],
             ),
           ),
-          
+
           // Sticky Bottom Button
           Positioned(
             bottom: 32,
@@ -91,7 +94,9 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5473F7), // Blue color from design
+                  backgroundColor: const Color(
+                    0xFF5473F7,
+                  ), // Blue color from design
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -144,12 +149,16 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            focusState.objective.isEmpty ? "Tap 'Update Goal' to set your focus" : focusState.objective,
+            focusState.objective.isEmpty
+                ? "Tap 'Update Goal' to set your focus"
+                : focusState.objective,
             textAlign: TextAlign.center,
             style: GoogleFonts.roboto(
               fontSize: focusState.objective.isEmpty ? 18 : 24,
               fontWeight: FontWeight.bold,
-              color: focusState.objective.isEmpty ? const Color(0xFFC4B5FD) : Colors.black,
+              color: focusState.objective.isEmpty
+                  ? const Color(0xFFC4B5FD)
+                  : Colors.black,
             ),
           ),
           const SizedBox(height: 20),
@@ -157,7 +166,10 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -175,14 +187,18 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
               if (focusState.priority.isNotEmpty) ...[
                 const SizedBox(width: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     border: focusState.priority == 'High Priority'
                         ? Border.all(
                             color: const Color(0xFF5473F7).withAlpha(80),
-                            width: 1.5)
+                            width: 1.5,
+                          )
                         : Border.all(color: const Color(0xFFEEEBFF)),
                   ),
                   child: Text(
@@ -227,7 +243,11 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                       color: Color(0xFF10B981), // Green
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check, color: Colors.white, size: 14),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 14,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -241,7 +261,10 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -281,7 +304,12 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
     );
   }
 
-  Widget _buildCriteriaItem(int index, String text, bool isChecked, {bool isLast = false}) {
+  Widget _buildCriteriaItem(
+    int index,
+    String text,
+    bool isChecked, {
+    bool isLast = false,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: GestureDetector(
@@ -311,7 +339,9 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                   color: isChecked ? const Color(0xFF6B58F5) : Colors.white,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isChecked ? const Color(0xFF6B58F5) : Colors.grey.shade300,
+                    color: isChecked
+                        ? const Color(0xFF6B58F5)
+                        : Colors.grey.shade300,
                   ),
                 ),
                 child: isChecked
@@ -325,7 +355,9 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                   style: GoogleFonts.roboto(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: isChecked ? const Color(0xFF8A93A4) : const Color(0xFF1E1E1E),
+                    color: isChecked
+                        ? const Color(0xFF8A93A4)
+                        : const Color(0xFF1E1E1E),
                     decoration: isChecked ? TextDecoration.lineThrough : null,
                   ),
                 ),
@@ -340,21 +372,27 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
   Widget _buildTopTasksSection() {
     final notesAsync = ref.watch(notesProvider);
     final allNotes = notesAsync.value ?? [];
-    
+
     // Filter active tasks
-    final activeTasks = allNotes.where((n) => n.isTask && !n.isCompleted).toList();
-    
+    final activeTasks = allNotes
+        .where((n) => n.isTask && !n.isCompleted)
+        .toList();
+
     // Sort logic to bring highest priority and soonest scheduled tasks to the top
     activeTasks.sort((a, b) {
       final pA = a.priority.index;
       final pB = b.priority.index;
-      if (pA != pB) return pB.compareTo(pA); // Descending priority (High is 2, Low is 0)
-      
-      final tA = a.scheduledTime ?? DateTime.now().add(const Duration(days: 365));
-      final tB = b.scheduledTime ?? DateTime.now().add(const Duration(days: 365));
+      if (pA != pB) {
+        return pB.compareTo(pA); // Descending priority (High is 2, Low is 0)
+      }
+
+      final tA =
+          a.scheduledTime ?? DateTime.now().add(const Duration(days: 365));
+      final tB =
+          b.scheduledTime ?? DateTime.now().add(const Duration(days: 365));
       return tA.compareTo(tB);
     });
-    
+
     final topTasks = activeTasks.take(3).toList();
 
     return Container(
@@ -414,15 +452,26 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           else
             ...topTasks.map((task) {
               final isHigh = task.priority == TaskPriority.high;
-              final priorityLabel = isHigh ? 'P1' : (task.priority == TaskPriority.medium ? 'P2' : 'P3');
-              final priorityColor = isHigh ? const Color(0xFFFDE8E1) : (task.priority == TaskPriority.medium ? const Color(0xFFE8EFFF) : Colors.grey.shade200);
-              final priorityTextColor = isHigh ? const Color(0xFFF97316) : (task.priority == TaskPriority.medium ? const Color(0xFF3B82F6) : Colors.grey.shade600);
-              
+              final priorityLabel = isHigh
+                  ? 'P1'
+                  : (task.priority == TaskPriority.medium ? 'P2' : 'P3');
+              final priorityColor = isHigh
+                  ? const Color(0xFFFDE8E1)
+                  : (task.priority == TaskPriority.medium
+                        ? const Color(0xFFE8EFFF)
+                        : Colors.grey.shade200);
+              final priorityTextColor = isHigh
+                  ? const Color(0xFFF97316)
+                  : (task.priority == TaskPriority.medium
+                        ? const Color(0xFF3B82F6)
+                        : Colors.grey.shade600);
+
               String subtitle = 'No time set';
               if (task.scheduledTime != null) {
                 final dateFmt = DateFormat('MMM d');
                 final timeFmt = DateFormat('h:mm a');
-                subtitle = '${dateFmt.format(task.scheduledTime!)} • ${timeFmt.format(task.scheduledTime!)}';
+                subtitle =
+                    '${dateFmt.format(task.scheduledTime!)} • ${timeFmt.format(task.scheduledTime!)}';
               }
 
               return Padding(
@@ -436,7 +485,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                 ),
               );
             }),
-          
+
           if (topTasks.isNotEmpty) const SizedBox(height: 4),
           // Add Task Button
           GestureDetector(
@@ -448,7 +497,10 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey.withAlpha(50), width: 1.5),
+                border: Border.all(
+                  color: Colors.grey.withAlpha(50),
+                  width: 1.5,
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -538,17 +590,22 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
 
   Widget _buildDailyIntentionsSection() {
     final focusState = ref.watch(weeklyFocusProvider);
-    
+
     // Get dates for Mon - Sun of the current week
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    
+
     // We show 7 days (MON - SUN)
     final days = List.generate(7, (index) {
       final date = startOfWeek.add(Duration(days: index));
-      final isFinished = focusState.dailyIntentions.length > index ? focusState.dailyIntentions[index] : false;
-      final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
-      
+      final isFinished = focusState.dailyIntentions.length > index
+          ? focusState.dailyIntentions[index]
+          : false;
+      final isToday =
+          date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
+
       return {
         'index': index,
         'day': DateFormat('E').format(date).toUpperCase().substring(0, 3),
@@ -569,7 +626,11 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_today, color: Color(0xFFC4B5FD), size: 20),
+              const Icon(
+                Icons.calendar_today,
+                color: Color(0xFFC4B5FD),
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Text(
                 'Daily Intentions',
@@ -583,40 +644,52 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
           ),
           const SizedBox(height: 20),
           SizedBox(
-            height: 105, // accommodate container height + cross-axis padding for shadow
+            height:
+                105, // accommodate container height + cross-axis padding for shadow
             child: LayoutBuilder(
               builder: (context, constraints) {
                 // Determine width for ~4 items (3 gaps of 12px)
                 final itemWidth = (constraints.maxWidth - (3 * 12)) / 4;
-                
+
                 // Calculate initial scroll offset to center 'Today'
-                final todayIndex = now.weekday - 1; 
+                final todayIndex = now.weekday - 1;
                 final itemTotalWidth = itemWidth + 12; // item width + spacing
-                
-                // Offset calculation: 
+
+                // Offset calculation:
                 // We want the today item to be centered. Center of scroll view is constraints.maxWidth / 2.
                 // Item left edge should be at: center - (itemWidth / 2)
                 // Left edge of item conceptually is at: todayIndex * itemTotalWidth
                 // So scrollOffset = (todayIndex * itemTotalWidth) - (constraints.maxWidth / 2) + (itemWidth / 2)
                 double initialScrollOffset = 0;
                 if (todayIndex >= 0 && todayIndex < 7) {
-                   initialScrollOffset = (todayIndex * itemTotalWidth) - (constraints.maxWidth / 2) + (itemWidth / 2);
-                   // Constrain offset between 0 and max possible scroll
-                   final maxScroll = (7 * itemTotalWidth) - 12 - constraints.maxWidth;
-                   initialScrollOffset = initialScrollOffset.clamp(0.0, maxScroll < 0 ? 0.0 : maxScroll);
+                  initialScrollOffset =
+                      (todayIndex * itemTotalWidth) -
+                      (constraints.maxWidth / 2) +
+                      (itemWidth / 2);
+                  // Constrain offset between 0 and max possible scroll
+                  final maxScroll =
+                      (7 * itemTotalWidth) - 12 - constraints.maxWidth;
+                  initialScrollOffset = initialScrollOffset.clamp(
+                    0.0,
+                    maxScroll < 0 ? 0.0 : maxScroll,
+                  );
                 }
 
                 // We don't want to rebuild Controller on every LayoutBuilder pass, but assuming this doesn't resize often drastically.
-                // For a robust centering initialization on first build without a complex stateful wrapper, 
+                // For a robust centering initialization on first build without a complex stateful wrapper,
                 // assigning it here works well enough for static orientation.
-                final ScrollController scrollController = ScrollController(initialScrollOffset: initialScrollOffset);
+                final ScrollController scrollController = ScrollController(
+                  initialScrollOffset: initialScrollOffset,
+                );
 
                 return ListView.builder(
                   controller: scrollController,
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   itemCount: days.length,
-                  padding: const EdgeInsets.only(bottom: 12), // provides cross-axis padding for the shadow
+                  padding: const EdgeInsets.only(
+                    bottom: 12,
+                  ), // provides cross-axis padding for the shadow
                   itemBuilder: (context, index) {
                     final dayData = days[index];
                     final isSelected = dayData['icon'] as bool;
@@ -624,21 +697,31 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
 
                     return GestureDetector(
                       onTap: () {
-                        ref.read(weeklyFocusProvider.notifier).toggleDailyIntention(index);
+                        ref
+                            .read(weeklyFocusProvider.notifier)
+                            .toggleDailyIntention(index);
                       },
                       child: Container(
                         width: itemWidth,
-                        margin: const EdgeInsets.only(right: 12), // removed bottom margin, handled by ListView padding
+                        margin: const EdgeInsets.only(
+                          right: 12,
+                        ), // removed bottom margin, handled by ListView padding
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF5473F7) : (isToday ? const Color(0xFFF0EFFF) : const Color(0xFFF5F7FF)),
+                          color: isSelected
+                              ? const Color(0xFF5473F7)
+                              : (isToday
+                                    ? const Color(0xFFF0EFFF)
+                                    : const Color(0xFFF5F7FF)),
                           borderRadius: BorderRadius.circular(35),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: const Color(0xFF5473F7).withAlpha(76),
+                                    color: const Color(
+                                      0xFF5473F7,
+                                    ).withAlpha(76),
                                     blurRadius: 15,
                                     offset: const Offset(0, 8),
-                                  )
+                                  ),
                                 ]
                               : [],
                         ),
@@ -648,19 +731,29 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                             Text(
                               dayData['day'] as String,
                               style: GoogleFonts.roboto(
-                                color: isSelected ? Colors.white.withAlpha(200) : (isToday ? const Color(0xFF6B58F5) : Colors.grey.shade500),
+                                color: isSelected
+                                    ? Colors.white.withAlpha(200)
+                                    : (isToday
+                                          ? const Color(0xFF6B58F5)
+                                          : Colors.grey.shade500),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 6),
                             if (isSelected)
-                              const Icon(Icons.check, color: Colors.white, size: 20)
+                              const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 20,
+                              )
                             else
                               Text(
                                 dayData['date'] as String,
                                 style: GoogleFonts.roboto(
-                                  color: isToday ? const Color(0xFF6B58F5) : Colors.black87,
+                                  color: isToday
+                                      ? const Color(0xFF6B58F5)
+                                      : Colors.black87,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20,
                                 ),
@@ -671,7 +764,7 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
                     );
                   },
                 );
-              }
+              },
             ),
           ),
           const SizedBox(height: 20),

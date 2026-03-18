@@ -12,7 +12,8 @@ part of 'note.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 SubTask _$SubTaskFromJson(Map<String, dynamic> json) {
   return _SubTask.fromJson(json);
@@ -54,28 +55,32 @@ class _$SubTaskCopyWithImpl<$Res, $Val extends SubTask>
     Object? title = null,
     Object? isCompleted = null,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as String,
-      isCompleted: null == isCompleted
-          ? _value.isCompleted
-          : isCompleted // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            title: null == title
+                ? _value.title
+                : title // ignore: cast_nullable_to_non_nullable
+                      as String,
+            isCompleted: null == isCompleted
+                ? _value.isCompleted
+                : isCompleted // ignore: cast_nullable_to_non_nullable
+                      as bool,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$SubTaskImplCopyWith<$Res> implements $SubTaskCopyWith<$Res> {
   factory _$$SubTaskImplCopyWith(
-          _$SubTaskImpl value, $Res Function(_$SubTaskImpl) then) =
-      __$$SubTaskImplCopyWithImpl<$Res>;
+    _$SubTaskImpl value,
+    $Res Function(_$SubTaskImpl) then,
+  ) = __$$SubTaskImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String id, String title, bool isCompleted});
@@ -86,8 +91,9 @@ class __$$SubTaskImplCopyWithImpl<$Res>
     extends _$SubTaskCopyWithImpl<$Res, _$SubTaskImpl>
     implements _$$SubTaskImplCopyWith<$Res> {
   __$$SubTaskImplCopyWithImpl(
-      _$SubTaskImpl _value, $Res Function(_$SubTaskImpl) _then)
-      : super(_value, _then);
+    _$SubTaskImpl _value,
+    $Res Function(_$SubTaskImpl) _then,
+  ) : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
@@ -96,20 +102,22 @@ class __$$SubTaskImplCopyWithImpl<$Res>
     Object? title = null,
     Object? isCompleted = null,
   }) {
-    return _then(_$SubTaskImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as String,
-      isCompleted: null == isCompleted
-          ? _value.isCompleted
-          : isCompleted // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ));
+    return _then(
+      _$SubTaskImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        title: null == title
+            ? _value.title
+            : title // ignore: cast_nullable_to_non_nullable
+                  as String,
+        isCompleted: null == isCompleted
+            ? _value.isCompleted
+            : isCompleted // ignore: cast_nullable_to_non_nullable
+                  as bool,
+      ),
+    );
   }
 }
 
@@ -117,8 +125,11 @@ class __$$SubTaskImplCopyWithImpl<$Res>
 
 @JsonSerializable(explicitToJson: true)
 class _$SubTaskImpl implements _SubTask {
-  const _$SubTaskImpl(
-      {required this.id, required this.title, this.isCompleted = false});
+  const _$SubTaskImpl({
+    required this.id,
+    required this.title,
+    this.isCompleted = false,
+  });
 
   factory _$SubTaskImpl.fromJson(Map<String, dynamic> json) =>
       _$$SubTaskImplFromJson(json);
@@ -159,17 +170,16 @@ class _$SubTaskImpl implements _SubTask {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$SubTaskImplToJson(
-      this,
-    );
+    return _$$SubTaskImplToJson(this);
   }
 }
 
 abstract class _SubTask implements SubTask {
-  const factory _SubTask(
-      {required final String id,
-      required final String title,
-      final bool isCompleted}) = _$SubTaskImpl;
+  const factory _SubTask({
+    required final String id,
+    required final String title,
+    final bool isCompleted,
+  }) = _$SubTaskImpl;
 
   factory _SubTask.fromJson(Map<String, dynamic> json) = _$SubTaskImpl.fromJson;
 
@@ -228,33 +238,34 @@ abstract class $NoteCopyWith<$Res> {
   factory $NoteCopyWith(Note value, $Res Function(Note) then) =
       _$NoteCopyWithImpl<$Res, Note>;
   @useResult
-  $Res call(
-      {String id,
-      String title,
-      String? body,
-      NoteCategory category,
-      DateTime createdAt,
-      DateTime? scheduledTime,
-      DateTime? endTime,
-      DateTime? reminderTime,
-      RecurrenceRule? recurrenceRule,
-      String? parentRecurringId,
-      DateTime? originalScheduledTime,
-      DateTime? completedAt,
-      TaskPriority priority,
-      bool isTask,
-      bool isAllDay,
-      bool isRecurringInstance,
-      bool isCompleted,
-      List<String> tags,
-      List<String> attachments,
-      List<String> links,
-      List<SubTask> subtasks,
-      String? folderId,
-      DateTime? updatedAt,
-      String? deviceLastEdited,
-      int? color,
-      int order});
+  $Res call({
+    String id,
+    String title,
+    String? body,
+    NoteCategory category,
+    DateTime createdAt,
+    DateTime? scheduledTime,
+    DateTime? endTime,
+    DateTime? reminderTime,
+    RecurrenceRule? recurrenceRule,
+    String? parentRecurringId,
+    DateTime? originalScheduledTime,
+    DateTime? completedAt,
+    TaskPriority priority,
+    bool isTask,
+    bool isAllDay,
+    bool isRecurringInstance,
+    bool isCompleted,
+    List<String> tags,
+    List<String> attachments,
+    List<String> links,
+    List<SubTask> subtasks,
+    String? folderId,
+    DateTime? updatedAt,
+    String? deviceLastEdited,
+    int? color,
+    int order,
+  });
 
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
 }
@@ -299,112 +310,115 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? color = freezed,
     Object? order = null,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as String,
-      body: freezed == body
-          ? _value.body
-          : body // ignore: cast_nullable_to_non_nullable
-              as String?,
-      category: null == category
-          ? _value.category
-          : category // ignore: cast_nullable_to_non_nullable
-              as NoteCategory,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      scheduledTime: freezed == scheduledTime
-          ? _value.scheduledTime
-          : scheduledTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      endTime: freezed == endTime
-          ? _value.endTime
-          : endTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      reminderTime: freezed == reminderTime
-          ? _value.reminderTime
-          : reminderTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      recurrenceRule: freezed == recurrenceRule
-          ? _value.recurrenceRule
-          : recurrenceRule // ignore: cast_nullable_to_non_nullable
-              as RecurrenceRule?,
-      parentRecurringId: freezed == parentRecurringId
-          ? _value.parentRecurringId
-          : parentRecurringId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      originalScheduledTime: freezed == originalScheduledTime
-          ? _value.originalScheduledTime
-          : originalScheduledTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      completedAt: freezed == completedAt
-          ? _value.completedAt
-          : completedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      priority: null == priority
-          ? _value.priority
-          : priority // ignore: cast_nullable_to_non_nullable
-              as TaskPriority,
-      isTask: null == isTask
-          ? _value.isTask
-          : isTask // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAllDay: null == isAllDay
-          ? _value.isAllDay
-          : isAllDay // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isRecurringInstance: null == isRecurringInstance
-          ? _value.isRecurringInstance
-          : isRecurringInstance // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isCompleted: null == isCompleted
-          ? _value.isCompleted
-          : isCompleted // ignore: cast_nullable_to_non_nullable
-              as bool,
-      tags: null == tags
-          ? _value.tags
-          : tags // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      attachments: null == attachments
-          ? _value.attachments
-          : attachments // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      links: null == links
-          ? _value.links
-          : links // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      subtasks: null == subtasks
-          ? _value.subtasks
-          : subtasks // ignore: cast_nullable_to_non_nullable
-              as List<SubTask>,
-      folderId: freezed == folderId
-          ? _value.folderId
-          : folderId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      deviceLastEdited: freezed == deviceLastEdited
-          ? _value.deviceLastEdited
-          : deviceLastEdited // ignore: cast_nullable_to_non_nullable
-              as String?,
-      color: freezed == color
-          ? _value.color
-          : color // ignore: cast_nullable_to_non_nullable
-              as int?,
-      order: null == order
-          ? _value.order
-          : order // ignore: cast_nullable_to_non_nullable
-              as int,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            title: null == title
+                ? _value.title
+                : title // ignore: cast_nullable_to_non_nullable
+                      as String,
+            body: freezed == body
+                ? _value.body
+                : body // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            category: null == category
+                ? _value.category
+                : category // ignore: cast_nullable_to_non_nullable
+                      as NoteCategory,
+            createdAt: null == createdAt
+                ? _value.createdAt
+                : createdAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            scheduledTime: freezed == scheduledTime
+                ? _value.scheduledTime
+                : scheduledTime // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            endTime: freezed == endTime
+                ? _value.endTime
+                : endTime // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            reminderTime: freezed == reminderTime
+                ? _value.reminderTime
+                : reminderTime // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            recurrenceRule: freezed == recurrenceRule
+                ? _value.recurrenceRule
+                : recurrenceRule // ignore: cast_nullable_to_non_nullable
+                      as RecurrenceRule?,
+            parentRecurringId: freezed == parentRecurringId
+                ? _value.parentRecurringId
+                : parentRecurringId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            originalScheduledTime: freezed == originalScheduledTime
+                ? _value.originalScheduledTime
+                : originalScheduledTime // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            completedAt: freezed == completedAt
+                ? _value.completedAt
+                : completedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            priority: null == priority
+                ? _value.priority
+                : priority // ignore: cast_nullable_to_non_nullable
+                      as TaskPriority,
+            isTask: null == isTask
+                ? _value.isTask
+                : isTask // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isAllDay: null == isAllDay
+                ? _value.isAllDay
+                : isAllDay // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isRecurringInstance: null == isRecurringInstance
+                ? _value.isRecurringInstance
+                : isRecurringInstance // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isCompleted: null == isCompleted
+                ? _value.isCompleted
+                : isCompleted // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            tags: null == tags
+                ? _value.tags
+                : tags // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            attachments: null == attachments
+                ? _value.attachments
+                : attachments // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            links: null == links
+                ? _value.links
+                : links // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            subtasks: null == subtasks
+                ? _value.subtasks
+                : subtasks // ignore: cast_nullable_to_non_nullable
+                      as List<SubTask>,
+            folderId: freezed == folderId
+                ? _value.folderId
+                : folderId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            updatedAt: freezed == updatedAt
+                ? _value.updatedAt
+                : updatedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            deviceLastEdited: freezed == deviceLastEdited
+                ? _value.deviceLastEdited
+                : deviceLastEdited // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            color: freezed == color
+                ? _value.color
+                : color // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            order: null == order
+                ? _value.order
+                : order // ignore: cast_nullable_to_non_nullable
+                      as int,
+          )
+          as $Val,
+    );
   }
 
   @override
@@ -423,37 +437,39 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
 /// @nodoc
 abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
   factory _$$NoteImplCopyWith(
-          _$NoteImpl value, $Res Function(_$NoteImpl) then) =
-      __$$NoteImplCopyWithImpl<$Res>;
+    _$NoteImpl value,
+    $Res Function(_$NoteImpl) then,
+  ) = __$$NoteImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String id,
-      String title,
-      String? body,
-      NoteCategory category,
-      DateTime createdAt,
-      DateTime? scheduledTime,
-      DateTime? endTime,
-      DateTime? reminderTime,
-      RecurrenceRule? recurrenceRule,
-      String? parentRecurringId,
-      DateTime? originalScheduledTime,
-      DateTime? completedAt,
-      TaskPriority priority,
-      bool isTask,
-      bool isAllDay,
-      bool isRecurringInstance,
-      bool isCompleted,
-      List<String> tags,
-      List<String> attachments,
-      List<String> links,
-      List<SubTask> subtasks,
-      String? folderId,
-      DateTime? updatedAt,
-      String? deviceLastEdited,
-      int? color,
-      int order});
+  $Res call({
+    String id,
+    String title,
+    String? body,
+    NoteCategory category,
+    DateTime createdAt,
+    DateTime? scheduledTime,
+    DateTime? endTime,
+    DateTime? reminderTime,
+    RecurrenceRule? recurrenceRule,
+    String? parentRecurringId,
+    DateTime? originalScheduledTime,
+    DateTime? completedAt,
+    TaskPriority priority,
+    bool isTask,
+    bool isAllDay,
+    bool isRecurringInstance,
+    bool isCompleted,
+    List<String> tags,
+    List<String> attachments,
+    List<String> links,
+    List<SubTask> subtasks,
+    String? folderId,
+    DateTime? updatedAt,
+    String? deviceLastEdited,
+    int? color,
+    int order,
+  });
 
   @override
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
@@ -464,7 +480,7 @@ class __$$NoteImplCopyWithImpl<$Res>
     extends _$NoteCopyWithImpl<$Res, _$NoteImpl>
     implements _$$NoteImplCopyWith<$Res> {
   __$$NoteImplCopyWithImpl(_$NoteImpl _value, $Res Function(_$NoteImpl) _then)
-      : super(_value, _then);
+    : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
@@ -496,112 +512,114 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? color = freezed,
     Object? order = null,
   }) {
-    return _then(_$NoteImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as String,
-      body: freezed == body
-          ? _value.body
-          : body // ignore: cast_nullable_to_non_nullable
-              as String?,
-      category: null == category
-          ? _value.category
-          : category // ignore: cast_nullable_to_non_nullable
-              as NoteCategory,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      scheduledTime: freezed == scheduledTime
-          ? _value.scheduledTime
-          : scheduledTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      endTime: freezed == endTime
-          ? _value.endTime
-          : endTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      reminderTime: freezed == reminderTime
-          ? _value.reminderTime
-          : reminderTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      recurrenceRule: freezed == recurrenceRule
-          ? _value.recurrenceRule
-          : recurrenceRule // ignore: cast_nullable_to_non_nullable
-              as RecurrenceRule?,
-      parentRecurringId: freezed == parentRecurringId
-          ? _value.parentRecurringId
-          : parentRecurringId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      originalScheduledTime: freezed == originalScheduledTime
-          ? _value.originalScheduledTime
-          : originalScheduledTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      completedAt: freezed == completedAt
-          ? _value.completedAt
-          : completedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      priority: null == priority
-          ? _value.priority
-          : priority // ignore: cast_nullable_to_non_nullable
-              as TaskPriority,
-      isTask: null == isTask
-          ? _value.isTask
-          : isTask // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isAllDay: null == isAllDay
-          ? _value.isAllDay
-          : isAllDay // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isRecurringInstance: null == isRecurringInstance
-          ? _value.isRecurringInstance
-          : isRecurringInstance // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isCompleted: null == isCompleted
-          ? _value.isCompleted
-          : isCompleted // ignore: cast_nullable_to_non_nullable
-              as bool,
-      tags: null == tags
-          ? _value._tags
-          : tags // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      attachments: null == attachments
-          ? _value._attachments
-          : attachments // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      links: null == links
-          ? _value._links
-          : links // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      subtasks: null == subtasks
-          ? _value._subtasks
-          : subtasks // ignore: cast_nullable_to_non_nullable
-              as List<SubTask>,
-      folderId: freezed == folderId
-          ? _value.folderId
-          : folderId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      deviceLastEdited: freezed == deviceLastEdited
-          ? _value.deviceLastEdited
-          : deviceLastEdited // ignore: cast_nullable_to_non_nullable
-              as String?,
-      color: freezed == color
-          ? _value.color
-          : color // ignore: cast_nullable_to_non_nullable
-              as int?,
-      order: null == order
-          ? _value.order
-          : order // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
+    return _then(
+      _$NoteImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        title: null == title
+            ? _value.title
+            : title // ignore: cast_nullable_to_non_nullable
+                  as String,
+        body: freezed == body
+            ? _value.body
+            : body // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        category: null == category
+            ? _value.category
+            : category // ignore: cast_nullable_to_non_nullable
+                  as NoteCategory,
+        createdAt: null == createdAt
+            ? _value.createdAt
+            : createdAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        scheduledTime: freezed == scheduledTime
+            ? _value.scheduledTime
+            : scheduledTime // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        endTime: freezed == endTime
+            ? _value.endTime
+            : endTime // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        reminderTime: freezed == reminderTime
+            ? _value.reminderTime
+            : reminderTime // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        recurrenceRule: freezed == recurrenceRule
+            ? _value.recurrenceRule
+            : recurrenceRule // ignore: cast_nullable_to_non_nullable
+                  as RecurrenceRule?,
+        parentRecurringId: freezed == parentRecurringId
+            ? _value.parentRecurringId
+            : parentRecurringId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        originalScheduledTime: freezed == originalScheduledTime
+            ? _value.originalScheduledTime
+            : originalScheduledTime // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        completedAt: freezed == completedAt
+            ? _value.completedAt
+            : completedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        priority: null == priority
+            ? _value.priority
+            : priority // ignore: cast_nullable_to_non_nullable
+                  as TaskPriority,
+        isTask: null == isTask
+            ? _value.isTask
+            : isTask // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isAllDay: null == isAllDay
+            ? _value.isAllDay
+            : isAllDay // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isRecurringInstance: null == isRecurringInstance
+            ? _value.isRecurringInstance
+            : isRecurringInstance // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isCompleted: null == isCompleted
+            ? _value.isCompleted
+            : isCompleted // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        tags: null == tags
+            ? _value._tags
+            : tags // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        attachments: null == attachments
+            ? _value._attachments
+            : attachments // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        links: null == links
+            ? _value._links
+            : links // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        subtasks: null == subtasks
+            ? _value._subtasks
+            : subtasks // ignore: cast_nullable_to_non_nullable
+                  as List<SubTask>,
+        folderId: freezed == folderId
+            ? _value.folderId
+            : folderId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        updatedAt: freezed == updatedAt
+            ? _value.updatedAt
+            : updatedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        deviceLastEdited: freezed == deviceLastEdited
+            ? _value.deviceLastEdited
+            : deviceLastEdited // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        color: freezed == color
+            ? _value.color
+            : color // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        order: null == order
+            ? _value.order
+            : order // ignore: cast_nullable_to_non_nullable
+                  as int,
+      ),
+    );
   }
 }
 
@@ -609,38 +627,38 @@ class __$$NoteImplCopyWithImpl<$Res>
 
 @JsonSerializable(explicitToJson: true)
 class _$NoteImpl extends _Note {
-  const _$NoteImpl(
-      {required this.id,
-      required this.title,
-      this.body,
-      required this.category,
-      required this.createdAt,
-      this.scheduledTime,
-      this.endTime,
-      this.reminderTime,
-      this.recurrenceRule,
-      this.parentRecurringId,
-      this.originalScheduledTime,
-      this.completedAt,
-      this.priority = TaskPriority.medium,
-      this.isTask = false,
-      this.isAllDay = false,
-      this.isRecurringInstance = false,
-      this.isCompleted = false,
-      final List<String> tags = const [],
-      final List<String> attachments = const [],
-      final List<String> links = const [],
-      final List<SubTask> subtasks = const [],
-      this.folderId,
-      this.updatedAt,
-      this.deviceLastEdited,
-      this.color,
-      this.order = 0})
-      : _tags = tags,
-        _attachments = attachments,
-        _links = links,
-        _subtasks = subtasks,
-        super._();
+  const _$NoteImpl({
+    required this.id,
+    required this.title,
+    this.body,
+    required this.category,
+    required this.createdAt,
+    this.scheduledTime,
+    this.endTime,
+    this.reminderTime,
+    this.recurrenceRule,
+    this.parentRecurringId,
+    this.originalScheduledTime,
+    this.completedAt,
+    this.priority = TaskPriority.medium,
+    this.isTask = false,
+    this.isAllDay = false,
+    this.isRecurringInstance = false,
+    this.isCompleted = false,
+    final List<String> tags = const [],
+    final List<String> attachments = const [],
+    final List<String> links = const [],
+    final List<SubTask> subtasks = const [],
+    this.folderId,
+    this.updatedAt,
+    this.deviceLastEdited,
+    this.color,
+    this.order = 0,
+  }) : _tags = tags,
+       _attachments = attachments,
+       _links = links,
+       _subtasks = subtasks,
+       super._();
 
   factory _$NoteImpl.fromJson(Map<String, dynamic> json) =>
       _$$NoteImplFromJson(json);
@@ -772,8 +790,10 @@ class _$NoteImpl extends _Note {
             (identical(other.isCompleted, isCompleted) ||
                 other.isCompleted == isCompleted) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
-            const DeepCollectionEquality()
-                .equals(other._attachments, _attachments) &&
+            const DeepCollectionEquality().equals(
+              other._attachments,
+              _attachments,
+            ) &&
             const DeepCollectionEquality().equals(other._links, _links) &&
             const DeepCollectionEquality().equals(other._subtasks, _subtasks) &&
             (identical(other.folderId, folderId) ||
@@ -789,34 +809,34 @@ class _$NoteImpl extends _Note {
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hashAll([
-        runtimeType,
-        id,
-        title,
-        body,
-        category,
-        createdAt,
-        scheduledTime,
-        endTime,
-        reminderTime,
-        recurrenceRule,
-        parentRecurringId,
-        originalScheduledTime,
-        completedAt,
-        priority,
-        isTask,
-        isAllDay,
-        isRecurringInstance,
-        isCompleted,
-        const DeepCollectionEquality().hash(_tags),
-        const DeepCollectionEquality().hash(_attachments),
-        const DeepCollectionEquality().hash(_links),
-        const DeepCollectionEquality().hash(_subtasks),
-        folderId,
-        updatedAt,
-        deviceLastEdited,
-        color,
-        order
-      ]);
+    runtimeType,
+    id,
+    title,
+    body,
+    category,
+    createdAt,
+    scheduledTime,
+    endTime,
+    reminderTime,
+    recurrenceRule,
+    parentRecurringId,
+    originalScheduledTime,
+    completedAt,
+    priority,
+    isTask,
+    isAllDay,
+    isRecurringInstance,
+    isCompleted,
+    const DeepCollectionEquality().hash(_tags),
+    const DeepCollectionEquality().hash(_attachments),
+    const DeepCollectionEquality().hash(_links),
+    const DeepCollectionEquality().hash(_subtasks),
+    folderId,
+    updatedAt,
+    deviceLastEdited,
+    color,
+    order,
+  ]);
 
   @JsonKey(ignore: true)
   @override
@@ -826,40 +846,39 @@ class _$NoteImpl extends _Note {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$NoteImplToJson(
-      this,
-    );
+    return _$$NoteImplToJson(this);
   }
 }
 
 abstract class _Note extends Note {
-  const factory _Note(
-      {required final String id,
-      required final String title,
-      final String? body,
-      required final NoteCategory category,
-      required final DateTime createdAt,
-      final DateTime? scheduledTime,
-      final DateTime? endTime,
-      final DateTime? reminderTime,
-      final RecurrenceRule? recurrenceRule,
-      final String? parentRecurringId,
-      final DateTime? originalScheduledTime,
-      final DateTime? completedAt,
-      final TaskPriority priority,
-      final bool isTask,
-      final bool isAllDay,
-      final bool isRecurringInstance,
-      final bool isCompleted,
-      final List<String> tags,
-      final List<String> attachments,
-      final List<String> links,
-      final List<SubTask> subtasks,
-      final String? folderId,
-      final DateTime? updatedAt,
-      final String? deviceLastEdited,
-      final int? color,
-      final int order}) = _$NoteImpl;
+  const factory _Note({
+    required final String id,
+    required final String title,
+    final String? body,
+    required final NoteCategory category,
+    required final DateTime createdAt,
+    final DateTime? scheduledTime,
+    final DateTime? endTime,
+    final DateTime? reminderTime,
+    final RecurrenceRule? recurrenceRule,
+    final String? parentRecurringId,
+    final DateTime? originalScheduledTime,
+    final DateTime? completedAt,
+    final TaskPriority priority,
+    final bool isTask,
+    final bool isAllDay,
+    final bool isRecurringInstance,
+    final bool isCompleted,
+    final List<String> tags,
+    final List<String> attachments,
+    final List<String> links,
+    final List<SubTask> subtasks,
+    final String? folderId,
+    final DateTime? updatedAt,
+    final String? deviceLastEdited,
+    final int? color,
+    final int order,
+  }) = _$NoteImpl;
   const _Note._() : super._();
 
   factory _Note.fromJson(Map<String, dynamic> json) = _$NoteImpl.fromJson;

@@ -39,7 +39,9 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
     if (widget.folderToEdit != null) {
       _nameController.text = widget.folderToEdit!.name;
       _selectedColor = widget.folderToEdit!.colorValue;
-      _selectedIcon = IconUtils.getIconFromCodePoint(widget.folderToEdit!.iconCodePoint);
+      _selectedIcon = IconUtils.getIconFromCodePoint(
+        widget.folderToEdit!.iconCodePoint,
+      );
       _isFavorite = widget.folderToEdit!.isFavorite;
     }
   }
@@ -60,7 +62,9 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
     }
 
     final folder = Folder(
-      id: widget.folderToEdit?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          widget.folderToEdit?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       iconCodePoint: _selectedIcon.codePoint,
       iconFontFamily: _selectedIcon.fontFamily,
@@ -89,7 +93,9 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
       ),
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       child: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,15 +114,17 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
             Text(
               widget.folderToEdit == null ? 'New Folder' : 'Edit Folder',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black, // Explicit black
-                  ),
+                fontWeight: FontWeight.bold,
+                color: Colors.black, // Explicit black
+              ),
             ),
             const SizedBox(height: 24),
             TextField(
               controller: _nameController,
               autofocus: true,
-              style: const TextStyle(color: Colors.black), // Explicit black text
+              style: const TextStyle(
+                color: Colors.black,
+              ), // Explicit black text
               decoration: InputDecoration(
                 hintText: 'Folder Name',
                 filled: true,
@@ -125,13 +133,22 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
               maxLines: null, // Allow wrapping
-              textCapitalization: TextCapitalization.sentences, // Cap first letter
+              textCapitalization:
+                  TextCapitalization.sentences, // Cap first letter
             ),
             const SizedBox(height: 24),
-            Text('Color', style: Theme.of(context).textTheme.titleSmall!.copyWith(color: AppColors.textSecondary)),
+            Text(
+              'Color',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall!.copyWith(color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 12),
             SizedBox(
               height: 40,
@@ -150,16 +167,29 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
                       decoration: BoxDecoration(
                         color: Color(color),
                         shape: BoxShape.circle,
-                        border: isSelected ? Border.all(color: Colors.black, width: 2) : null,
+                        border: isSelected
+                            ? Border.all(color: Colors.black, width: 2)
+                            : null,
                       ),
-                      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
+                      child: isSelected
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 20,
+                            )
+                          : null,
                     ),
                   );
                 },
               ),
             ),
             const SizedBox(height: 24),
-            Text('Icon', style: Theme.of(context).textTheme.titleSmall!.copyWith(color: AppColors.textSecondary)),
+            Text(
+              'Icon',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall!.copyWith(color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 12),
             SizedBox(
               height: 48,
@@ -176,11 +206,20 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey[100],
+                        color: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
-                        border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
+                        border: isSelected
+                            ? Border.all(color: AppColors.primary, width: 2)
+                            : null,
                       ),
-                      child: Icon(icon, color: isSelected ? AppColors.primary : Colors.grey[600]),
+                      child: Icon(
+                        icon,
+                        color: isSelected
+                            ? AppColors.primary
+                            : Colors.grey[600],
+                      ),
                     ),
                   );
                 },
@@ -207,9 +246,14 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-                child: const Text('Create Folder', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Create Folder',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],

@@ -45,119 +45,120 @@ class FolderOptionsSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 12),
-          // Drag Handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Header Section
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    folder.name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$noteCount files, $folderCount folders',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Header Section
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        folder.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$noteCount files, $folderCount folders',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Group 1: Creation
+              _OptionGroup(
+                children: [
+                  _OptionItem(
+                    icon: Icons.edit_note_outlined,
+                    label: 'New note',
+                    onTap: onNewNote,
+                  ),
+                  _OptionItem(
+                    icon: Icons.create_new_folder_outlined,
+                    label: 'New folder',
+                    onTap: onNewFolder,
                   ),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Group 1: Creation
-          _OptionGroup(
-            children: [
-              _OptionItem(
-                icon: Icons.edit_note_outlined,
-                label: 'New note',
-                onTap: onNewNote,
+              // Group 2: Management
+              _OptionGroup(
+                children: [
+                  _OptionItem(
+                    icon: Icons.copy_outlined,
+                    label: 'Make a copy',
+                    onTap: onMakeCopy,
+                  ),
+                  _OptionItem(
+                    icon: Icons.drive_file_move_outlined,
+                    label: 'Move folder to...',
+                    onTap: onMove,
+                  ),
+                  _OptionItem(
+                    icon: folder.isFavorite
+                        ? Icons.bookmark
+                        : Icons.bookmark_outline,
+                    label: folder.isFavorite
+                        ? 'Remove bookmark'
+                        : 'Bookmark...',
+                    onTap: onBookmark,
+                  ),
+                ],
               ),
-              _OptionItem(
-                icon: Icons.create_new_folder_outlined,
-                label: 'New folder',
-                onTap: onNewFolder,
+              // Group 3: Utility
+              _OptionGroup(
+                children: [
+                  _OptionItem(
+                    icon: Icons.link,
+                    label: 'Copy path',
+                    onTap: onCopyPath,
+                    showChevron: true,
+                  ),
+                ],
               ),
-            ],
-          ),
-          // Group 2: Management
-          _OptionGroup(
-            children: [
-              _OptionItem(
-                icon: Icons.copy_outlined,
-                label: 'Make a copy',
-                onTap: onMakeCopy,
+              // Group 4: Edit
+              _OptionGroup(
+                children: [
+                  _OptionItem(
+                    icon: Icons.edit_outlined,
+                    label: 'Rename...',
+                    onTap: onRename,
+                  ),
+                  _OptionItem(
+                    icon: Icons.delete_outline,
+                    label: 'Delete',
+                    isDestructive: true,
+                    onTap: onDelete,
+                  ),
+                ],
               ),
-              _OptionItem(
-                icon: Icons.drive_file_move_outlined,
-                label: 'Move folder to...',
-                onTap: onMove,
+              // Group 5: Search
+              _OptionGroup(
+                children: [
+                  _OptionItem(
+                    icon: Icons.search,
+                    label: 'Search in folder',
+                    onTap: onSearch,
+                  ),
+                ],
               ),
-              _OptionItem(
-                icon: folder.isFavorite ? Icons.bookmark : Icons.bookmark_outline,
-                label: folder.isFavorite ? 'Remove bookmark' : 'Bookmark...',
-                onTap: onBookmark,
-              ),
-            ],
-          ),
-          // Group 3: Utility
-          _OptionGroup(
-            children: [
-              _OptionItem(
-                icon: Icons.link,
-                label: 'Copy path',
-                onTap: onCopyPath,
-                showChevron: true,
-              ),
-            ],
-          ),
-          // Group 4: Edit
-          _OptionGroup(
-            children: [
-              _OptionItem(
-                icon: Icons.edit_outlined,
-                label: 'Rename...',
-                onTap: onRename,
-              ),
-              _OptionItem(
-                icon: Icons.delete_outline,
-                label: 'Delete',
-                isDestructive: true,
-                onTap: onDelete,
-              ),
-            ],
-          ),
-          // Group 5: Search
-          _OptionGroup(
-            children: [
-              _OptionItem(
-                icon: Icons.search,
-                label: 'Search in folder',
-                onTap: onSearch,
-              ),
-            ],
-          ),
             ],
           ),
         ),
@@ -245,11 +246,7 @@ class _OptionItem extends StatelessWidget {
                 ),
               ),
               if (showChevron)
-                Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey[400],
-                  size: 20,
-                ),
+                Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
             ],
           ),
         ),

@@ -40,108 +40,107 @@ class NoteOptionsSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 12),
-          // Drag Handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Header
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    note.title.isEmpty ? 'Untitled' : note.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Last edited ${note.updatedAt != null ? _formatDateTime(note.updatedAt) : 'Never'}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Header
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        note.title.isEmpty ? 'Untitled' : note.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Last edited ${note.updatedAt != null ? _formatDateTime(note.updatedAt) : 'Never'}',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Group 1: Navigation Actions (Close/Reading View)
+              if (onClose != null || onToggleReadingView != null)
+                _OptionGroup(
+                  children: [
+                    if (onClose != null)
+                      _OptionItem(
+                        icon: Icons.close,
+                        label: 'Close',
+                        onTap: onClose!,
+                      ),
+                    if (onToggleReadingView != null)
+                      _OptionItem(
+                        icon: isReadOnly
+                            ? Icons.edit_outlined
+                            : Icons.chrome_reader_mode_outlined,
+                        label: isReadOnly ? 'Edit view' : 'Reading view',
+                        onTap: onToggleReadingView!,
+                      ),
+                  ],
+                ),
+
+              // Group 2: Management Actions
+              _OptionGroup(
+                children: [
+                  _OptionItem(
+                    icon: Icons.edit_outlined,
+                    label: 'Rename...',
+                    onTap: onRename,
+                  ),
+                  _OptionItem(
+                    icon: Icons.drive_file_move_outlined,
+                    label: 'Move file to...',
+                    onTap: onMove,
+                  ),
+                  if (onFind != null)
+                    _OptionItem(
+                      icon: Icons.search,
+                      label: 'Find...',
+                      onTap: onFind!,
                     ),
+                  if (onReplace != null)
+                    _OptionItem(
+                      icon: Icons.find_replace,
+                      label: 'Replace...',
+                      onTap: onReplace!,
+                    ),
+                ],
+              ),
+
+              // Group 3: Destructive Actions
+              _OptionGroup(
+                children: [
+                  _OptionItem(
+                    icon: Icons.delete_outline,
+                    label: 'Delete file',
+                    isDestructive: true,
+                    onTap: onDelete,
                   ),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          // Group 1: Navigation Actions (Close/Reading View)
-          if (onClose != null || onToggleReadingView != null)
-            _OptionGroup(
-              children: [
-                if (onClose != null)
-                  _OptionItem(
-                    icon: Icons.close,
-                    label: 'Close',
-                    onTap: onClose!,
-                  ),
-                if (onToggleReadingView != null)
-                  _OptionItem(
-                    icon: isReadOnly ? Icons.edit_outlined : Icons.chrome_reader_mode_outlined,
-                    label: isReadOnly ? 'Edit view' : 'Reading view',
-                    onTap: onToggleReadingView!,
-                  ),
-              ],
-            ),
-
-          // Group 2: Management Actions
-          _OptionGroup(
-            children: [
-              _OptionItem(
-                icon: Icons.edit_outlined,
-                label: 'Rename...',
-                onTap: onRename,
-              ),
-              _OptionItem(
-                icon: Icons.drive_file_move_outlined,
-                label: 'Move file to...',
-                onTap: onMove,
-              ),
-              if (onFind != null)
-                _OptionItem(
-                  icon: Icons.search,
-                  label: 'Find...',
-                  onTap: onFind!,
-                ),
-              if (onReplace != null)
-                _OptionItem(
-                  icon: Icons.find_replace,
-                  label: 'Replace...',
-                  onTap: onReplace!,
-                ),
-            ],
-          ),
-
-          // Group 3: Destructive Actions
-          _OptionGroup(
-            children: [
-              _OptionItem(
-                icon: Icons.delete_outline,
-                label: 'Delete file',
-                isDestructive: true,
-                onTap: onDelete,
-              ),
-            ],
-          ),
             ],
           ),
         ),
@@ -220,7 +219,11 @@ class _OptionItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Icon(icon, color: isDestructive ? Colors.red : Colors.black54, size: 22),
+              Icon(
+                icon,
+                color: isDestructive ? Colors.red : Colors.black54,
+                size: 22,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(

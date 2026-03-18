@@ -142,29 +142,34 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
 
   void _setupNoteSubscription() {
     if (widget.noteToEdit == null) return;
-    
-    _noteSubscription = ref.read(notesRepositoryProvider).watchNote(widget.noteToEdit!.id).listen((note) {
-      if (note == null || !mounted) return;
-      
-      // Merge logic: only update if the remote note is newer and edited by a different device
-      if (_editingNote != null && 
-          note.updatedAt != null && 
-          (_editingNote!.updatedAt == null || note.updatedAt!.isAfter(_editingNote!.updatedAt!)) &&
-          note.deviceLastEdited != _deviceId) {
-        
-        setState(() {
-          _editingNote = note;
-          _titleController.text = note.title;
-          _quillController.document = MarkdownBridge.deltaFromMarkdown(note.body);
-          _selectedFolderId = note.folderId;
-          _tags.clear();
-          _tags.addAll(note.tags);
-          _attachments.clear();
-          _attachments.addAll(note.attachments);
-          _saveStatus = 'Synced';
+
+    _noteSubscription = ref
+        .read(notesRepositoryProvider)
+        .watchNote(widget.noteToEdit!.id)
+        .listen((note) {
+          if (note == null || !mounted) return;
+
+          // Merge logic: only update if the remote note is newer and edited by a different device
+          if (_editingNote != null &&
+              note.updatedAt != null &&
+              (_editingNote!.updatedAt == null ||
+                  note.updatedAt!.isAfter(_editingNote!.updatedAt!)) &&
+              note.deviceLastEdited != _deviceId) {
+            setState(() {
+              _editingNote = note;
+              _titleController.text = note.title;
+              _quillController.document = MarkdownBridge.deltaFromMarkdown(
+                note.body,
+              );
+              _selectedFolderId = note.folderId;
+              _tags.clear();
+              _tags.addAll(note.tags);
+              _attachments.clear();
+              _attachments.addAll(note.attachments);
+              _saveStatus = 'Synced';
+            });
+          }
         });
-      }
-    });
   }
 
   void _restoreDraftIfAvailable() {
@@ -173,9 +178,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
 
     _draftNoteId = draft.noteId ?? _draftNoteId;
     _titleController.text = draft.title;
-    
+
     _quillController.document = MarkdownBridge.deltaFromMarkdown(draft.body);
-    
+
     _selectedFolderId = draft.selectedFolderId;
     _tags
       ..clear()
@@ -250,7 +255,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     if (_isSaving) return;
 
     final title = _titleController.text.trim();
-    final body = MarkdownBridge.markdownFromDelta(_quillController.document).trim();
+    final body = MarkdownBridge.markdownFromDelta(
+      _quillController.document,
+    ).trim();
 
     if (title.isEmpty && body.isEmpty) return; // Don't save empty
 
@@ -421,7 +428,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                           final isSelected = _selectedFolderId == folder.id;
                           return ListTile(
                             leading: Icon(
-                              IconUtils.getIconFromCodePoint(folder.iconCodePoint),
+                              IconUtils.getIconFromCodePoint(
+                                folder.iconCodePoint,
+                              ),
                               color: Color(
                                 folder.colorValue,
                               ).withValues(alpha: 1.0),
@@ -465,13 +474,15 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     _persistDraft();
 
     if (mounted) {
-      final folderName = nextFolderId == null 
-          ? 'Uncategorized' 
+      final folderName = nextFolderId == null
+          ? 'Uncategorized'
           : folders.any((f) => f.id == nextFolderId)
-              ? folders.firstWhere((f) => f.id == nextFolderId).name
-              : 'Folder';
+          ? folders.firstWhere((f) => f.id == nextFolderId).name
+          : 'Folder';
 
-      final fileName = _titleController.text.trim().isEmpty ? 'Untitled' : _titleController.text.trim();
+      final fileName = _titleController.text.trim().isEmpty
+          ? 'Untitled'
+          : _titleController.text.trim();
       _showToast(context, '$fileName Moved to $folderName.');
     }
   }
@@ -492,7 +503,10 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.98),
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: const Color(0xFF5473F7).withValues(alpha: 0.5), width: 1.5),
+                border: Border.all(
+                  color: const Color(0xFF5473F7).withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.15),
@@ -524,11 +538,16 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   }
 
   void _showNoteOptions(BuildContext context) {
-    final currentNote = _editingNote ??
+    final currentNote =
+        _editingNote ??
         Note(
           id: _draftNoteId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-          title: _titleController.text.trim().isEmpty ? 'Untitled' : _titleController.text.trim(),
-          body: MarkdownBridge.markdownFromDelta(_quillController.document).trim(),
+          title: _titleController.text.trim().isEmpty
+              ? 'Untitled'
+              : _titleController.text.trim(),
+          body: MarkdownBridge.markdownFromDelta(
+            _quillController.document,
+          ).trim(),
           category: NoteCategory.work, // Default category
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
@@ -579,8 +598,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       },
     );
   }
-
-
 
   Future<void> _confirmDelete() async {
     final shouldDelete = await showDialog<bool>(
@@ -989,31 +1006,43 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
 
     // 1. Handle Images First
     if (reader.canProvide(Formats.png) || reader.canProvide(Formats.jpeg)) {
-      final format = reader.canProvide(Formats.png) ? Formats.png : Formats.jpeg;
+      final format = reader.canProvide(Formats.png)
+          ? Formats.png
+          : Formats.jpeg;
       final extension = format == Formats.png ? 'png' : 'jpg';
 
       final completer = Completer<Uint8List?>();
-      reader.getFile(format, (file) async {
-        try {
-          final bytes = await file.readAll();
-          completer.complete(bytes);
-        } catch (_) {
+      reader.getFile(
+        format,
+        (file) async {
+          try {
+            final bytes = await file.readAll();
+            completer.complete(bytes);
+          } catch (_) {
+            completer.complete(null);
+          }
+        },
+        onError: (_) {
           completer.complete(null);
-        }
-      }, onError: (_) {
-        completer.complete(null);
-      });
+        },
+      );
       final bytes = await completer.future;
       if (bytes != null) {
-        final path = await _mediaService.saveBytesToLocalDocuments(bytes, extension: extension);
+        final path = await _mediaService.saveBytesToLocalDocuments(
+          bytes,
+          extension: extension,
+        );
         if (path != null) {
           final selection = _quillController.selection;
-          _quillController.document.insert(selection.end, quill.BlockEmbed.image(path));
+          _quillController.document.insert(
+            selection.end,
+            quill.BlockEmbed.image(path),
+          );
           _quillController.updateSelection(
             TextSelection.collapsed(offset: selection.end + 1),
             quill.ChangeSource.local,
           );
-          
+
           setState(() {
             _attachments.add(path);
             _hasUnsavedChanges = true;
@@ -1030,25 +1059,30 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       if (htmlStr != null) {
         final parsedDoc = HtmlParser.deltaFromHtml(htmlStr);
         final selection = _quillController.selection;
-        
+
         // Insert the parsed rich layout directly at the cursor
         _quillController.replaceText(
-            selection.start, selection.end - selection.start, parsedDoc.toDelta(),
-            TextSelection.collapsed(offset: selection.start + parsedDoc.length));
+          selection.start,
+          selection.end - selection.start,
+          parsedDoc.toDelta(),
+          TextSelection.collapsed(offset: selection.start + parsedDoc.length),
+        );
         return;
       }
     }
-    
+
     // Fallback if no HTML exists (plain text pasting)
     if (reader.canProvide(Formats.plainText)) {
       final text = await reader.readValue(Formats.plainText);
       if (text != null) {
         final selection = _quillController.selection;
         _quillController.replaceText(
-            selection.start, selection.end - selection.start, text,
-            TextSelection.collapsed(offset: selection.start + text.length));
+          selection.start,
+          selection.end - selection.start,
+          text,
+          TextSelection.collapsed(offset: selection.start + text.length),
+        );
       }
     }
   }
-
 }

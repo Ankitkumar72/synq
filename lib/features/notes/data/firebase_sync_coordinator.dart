@@ -15,8 +15,8 @@ class FirebaseSyncCoordinator {
     required FirebaseFirestore firestore,
     required this.userId,
     required LocalDatabase database,
-  })  : _firestore = firestore,
-        _database = database;
+  }) : _firestore = firestore,
+       _database = database;
 
   final FirebaseFirestore _firestore;
   final String userId;
@@ -44,8 +44,8 @@ class FirebaseSyncCoordinator {
         .limit(1)
         .snapshots()
         .listen((_) {
-      unawaited(syncNow());
-    });
+          unawaited(syncNow());
+        });
 
     _foldersSubscription?.cancel();
     _foldersSubscription = _collectionForType(LocalDatabase.entityTypeFolder)
@@ -53,8 +53,8 @@ class FirebaseSyncCoordinator {
         .limit(1)
         .snapshots()
         .listen((_) {
-      unawaited(syncNow());
-    });
+          unawaited(syncNow());
+        });
 
     unawaited(syncNow());
   }
@@ -72,7 +72,7 @@ class FirebaseSyncCoordinator {
     }
     _isSyncing = true;
     _syncRequested = false;
-    
+
     try {
       await _pushOutbox();
       await _pullEntity(LocalDatabase.entityTypeNote);
@@ -114,18 +114,16 @@ class FirebaseSyncCoordinator {
     final document = collection.doc(operation.entityId);
 
     if (operation.opType == LocalDatabase.opTypeDelete) {
-      await document.set(
-        <String, Object?>{
-          'id': operation.entityId,
-          'is_deleted': true,
-          'server_updated_at': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await document.set(<String, Object?>{
+        'id': operation.entityId,
+        'is_deleted': true,
+        'server_updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
       return;
     }
 
-    if (operation.opType != LocalDatabase.opTypeUpsert || operation.payload == null) {
+    if (operation.opType != LocalDatabase.opTypeUpsert ||
+        operation.payload == null) {
       return;
     }
 
@@ -151,12 +149,10 @@ class FirebaseSyncCoordinator {
       Query<Map<String, dynamic>> query = _collectionForType(entityType)
           .orderBy('server_updated_at')
           .orderBy('id')
-          .startAfter(
-        <Object>[
-          Timestamp.fromMillisecondsSinceEpoch(cursorTimestampMs),
-          cursorId,
-        ],
-      );
+          .startAfter(<Object>[
+            Timestamp.fromMillisecondsSinceEpoch(cursorTimestampMs),
+            cursorId,
+          ]);
 
       final snapshot = await query.limit(_pullBatchSize).get();
       if (snapshot.docs.isEmpty) return;
@@ -165,7 +161,8 @@ class FirebaseSyncCoordinator {
         final payload = Map<String, dynamic>.from(doc.data());
         final docId = _effectiveDocId(doc.id, payload['id']);
         final remoteUpdatedAtMs =
-            _extractRemoteUpdatedAtMs(payload) ?? DateTime.now().millisecondsSinceEpoch;
+            _extractRemoteUpdatedAtMs(payload) ??
+            DateTime.now().millisecondsSinceEpoch;
 
         final hasPending = await _database.hasPendingOperation(
           entityType: entityType,
@@ -211,7 +208,8 @@ class FirebaseSyncCoordinator {
       final payload = Map<String, dynamic>.from(doc.data());
       final docId = _effectiveDocId(doc.id, payload['id']);
       final remoteUpdatedAtMs =
-          _extractRemoteUpdatedAtMs(payload) ?? DateTime.now().millisecondsSinceEpoch;
+          _extractRemoteUpdatedAtMs(payload) ??
+          DateTime.now().millisecondsSinceEpoch;
 
       final hasPending = await _database.hasPendingOperation(
         entityType: entityType,
@@ -239,14 +237,11 @@ class FirebaseSyncCoordinator {
       if (payload['server_updated_at'] == null ||
           payload['id'] == null ||
           !payload.containsKey('is_deleted')) {
-        await doc.reference.set(
-          <String, Object?>{
-            'id': docId,
-            'is_deleted': payload['is_deleted'] == true,
-            'server_updated_at': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        await doc.reference.set(<String, Object?>{
+          'id': docId,
+          'is_deleted': payload['is_deleted'] == true,
+          'server_updated_at': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       }
     }
 
@@ -316,7 +311,9 @@ class FirebaseSyncCoordinator {
     }
   }
 
-  CollectionReference<Map<String, dynamic>> _collectionForType(String entityType) {
+  CollectionReference<Map<String, dynamic>> _collectionForType(
+    String entityType,
+  ) {
     if (entityType == LocalDatabase.entityTypeNote) {
       return _firestore.collection('users').doc(userId).collection('notes');
     }

@@ -47,41 +47,41 @@ class FolderCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 32, 
+              width: 32,
               height: 32,
               decoration: BoxDecoration(
                 color: Color(folder.colorValue).withValues(alpha: 0.12),
-                shape: BoxShape.circle, 
+                shape: BoxShape.circle,
               ),
               child: Icon(
                 IconUtils.getIconFromCodePoint(folder.iconCodePoint),
                 color: Color(folder.colorValue),
-                size: 16, 
+                size: 16,
               ),
             ),
-            const SizedBox(width: 12), 
+            const SizedBox(width: 12),
             Text(
               folder.name,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
-              maxLines: 2, 
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            const Spacer(), 
+            const Spacer(),
             Text(
-              '$itemCount', 
+              '$itemCount',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 14, 
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: AppColors.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             if (folder.isFavorite) ...[
-                const SizedBox(width: 4),
-                const Icon(Icons.star_rounded, color: Colors.orange, size: 12),
+              const SizedBox(width: 4),
+              const Icon(Icons.star_rounded, color: Colors.orange, size: 12),
             ],
           ],
         ),

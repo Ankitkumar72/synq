@@ -24,7 +24,9 @@ class FolderDetailScreen extends ConsumerWidget {
 
     final foldersAsync = ref.watch(foldersProvider);
     final allFolders = foldersAsync.value ?? [];
-    final subFolders = allFolders.where((f) => f.parentId == folder.id).toList();
+    final subFolders = allFolders
+        .where((f) => f.parentId == folder.id)
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -82,7 +84,8 @@ class FolderDetailScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'FOLDERS',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
                                   color: AppColors.textSecondary,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
@@ -92,23 +95,32 @@ class FolderDetailScreen extends ConsumerWidget {
                           GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 2.5,
-                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 2.5,
+                                ),
                             itemCount: subFolders.length,
                             itemBuilder: (context, index) {
                               final subFolder = subFolders[index];
-                              final subFolderNoteCount = allNotes.where((n) => n.folderId == subFolder.id).length;
+                              final subFolderNoteCount = allNotes
+                                  .where((n) => n.folderId == subFolder.id)
+                                  .length;
                               return GestureDetector(
                                 onTap: () => Navigator.push(
                                   context,
-                                  FadePageRoute(builder: (_) => FolderDetailScreen(folder: subFolder)),
+                                  FadePageRoute(
+                                    builder: (_) =>
+                                        FolderDetailScreen(folder: subFolder),
+                                  ),
                                 ),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.surface,
                                     borderRadius: BorderRadius.circular(16),
@@ -119,20 +131,28 @@ class FolderDetailScreen extends ConsumerWidget {
                                         width: 32,
                                         height: 32,
                                         decoration: BoxDecoration(
-                                          color: Color(subFolder.colorValue).withValues(alpha: 0.15),
+                                          color: Color(
+                                            subFolder.colorValue,
+                                          ).withValues(alpha: 0.15),
                                           shape: BoxShape.circle,
                                         ),
                                         child: Icon(
-                                          IconUtils.getIconFromCodePoint(subFolder.iconCodePoint),
-                                          color: Color(subFolder.colorValue).withValues(alpha: 1.0),
+                                          IconUtils.getIconFromCodePoint(
+                                            subFolder.iconCodePoint,
+                                          ),
+                                          color: Color(
+                                            subFolder.colorValue,
+                                          ).withValues(alpha: 1.0),
                                           size: 16,
                                         ),
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Text(
                                               subFolder.name,
@@ -168,92 +188,96 @@ class FolderDetailScreen extends ConsumerWidget {
                 if (folderNotes.isNotEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(16, subFolders.isNotEmpty ? 0 : 16, 16, 12),
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        subFolders.isNotEmpty ? 0 : 16,
+                        16,
+                        12,
+                      ),
                       child: Text(
                         'NOTES',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                   ),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final note = folderNotes[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final note = folderNotes[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                        color: AppColors.surface,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 0,
                           ),
-                          elevation: 0,
-                          color: AppColors.surface,
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 0,
+                          leading: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Color(
+                                folder.colorValue,
+                              ).withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
                             ),
-                            leading: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Color(folder.colorValue).withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                note.isTask
-                                    ? Icons.check_circle_outlined
-                                    : Icons.description_outlined,
-                                color: Color(folder.colorValue),
-                                size: 20,
-                              ),
+                            child: Icon(
+                              note.isTask
+                                  ? Icons.check_circle_outlined
+                                  : Icons.description_outlined,
+                              color: Color(folder.colorValue),
+                              size: 20,
                             ),
-                            title: Text(
-                              note.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
-                              ),
+                          ),
+                          title: Text(
+                            note.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
                             ),
-                            subtitle: note.body != null && note.body!.isNotEmpty
-                                ? Text(
-                                    note.body!,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                    ),
-                                  )
-                                : null,
-                            trailing: Text(
-                              _formatDateString(note.createdAt),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                FadePageRoute(
-                                  builder: (_) => NoteDetailScreen(
-                                    noteToEdit: note,
-                                    initialFolderId: folder.id,
-                                  ),
+                          ),
+                          subtitle: note.body != null && note.body!.isNotEmpty
+                              ? Text(
+                                  note.body!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.black87),
+                                )
+                              : null,
+                          trailing: Text(
+                            _formatDateString(note.createdAt),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              FadePageRoute(
+                                builder: (_) => NoteDetailScreen(
+                                  noteToEdit: note,
+                                  initialFolderId: folder.id,
                                 ),
-                              );
-                            },
-                            onLongPress: () => _showNoteOptionsMenu(context, ref, note),
-                          ),
-                        );
-                      },
-                      childCount: folderNotes.length,
-                    ),
+                              ),
+                            );
+                          },
+                          onLongPress: () =>
+                              _showNoteOptionsMenu(context, ref, note),
+                        ),
+                      );
+                    }, childCount: folderNotes.length),
                   ),
                 ),
-                const SliverPadding(padding: EdgeInsets.only(bottom: 80)), // Space for FAB
+                const SliverPadding(
+                  padding: EdgeInsets.only(bottom: 80),
+                ), // Space for FAB
               ],
             ),
       floatingActionButton: FloatingActionButton(
@@ -316,7 +340,11 @@ class FolderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openFolderPicker(BuildContext context, WidgetRef ref, Note note) async {
+  Future<void> _openFolderPicker(
+    BuildContext context,
+    WidgetRef ref,
+    Note note,
+  ) async {
     final foldersState = ref.read(foldersProvider);
     final folders = foldersState.value ?? const <Folder>[];
 
@@ -362,10 +390,25 @@ class FolderDetailScreen extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         ListTile(
-                          leading: const Icon(Icons.folder_off_outlined, color: Colors.grey),
-                          title: const Text('Uncategorized', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                          trailing: note.folderId == null ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
-                          onTap: () => Navigator.pop(context, uncategorizedValue),
+                          leading: const Icon(
+                            Icons.folder_off_outlined,
+                            color: Colors.grey,
+                          ),
+                          title: const Text(
+                            'Uncategorized',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          trailing: note.folderId == null
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Color(0xFF5473F7),
+                                )
+                              : null,
+                          onTap: () =>
+                              Navigator.pop(context, uncategorizedValue),
                         ),
                         const Divider(height: 1),
                         ...folders.map((f) {
@@ -375,8 +418,19 @@ class FolderDetailScreen extends ConsumerWidget {
                               IconUtils.getIconFromCodePoint(f.iconCodePoint),
                               color: Color(f.colorValue),
                             ),
-                            title: Text(f.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                            trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
+                            title: Text(
+                              f.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Color(0xFF5473F7),
+                                  )
+                                : null,
                             onTap: () => Navigator.pop(context, f.id),
                           );
                         }),
@@ -396,15 +450,17 @@ class FolderDetailScreen extends ConsumerWidget {
     final nextFolderId = selected == uncategorizedValue ? null : selected;
     if (nextFolderId == note.folderId) return;
 
-    await ref.read(notesProvider.notifier).updateNote(note.copyWith(folderId: nextFolderId));
+    await ref
+        .read(notesProvider.notifier)
+        .updateNote(note.copyWith(folderId: nextFolderId));
 
     if (context.mounted) {
-      final folderName = nextFolderId == null 
-          ? 'Uncategorized' 
+      final folderName = nextFolderId == null
+          ? 'Uncategorized'
           : folders.any((f) => f.id == nextFolderId)
-              ? folders.firstWhere((f) => f.id == nextFolderId).name
-              : 'Folder';
-      
+          ? folders.firstWhere((f) => f.id == nextFolderId).name
+          : 'Folder';
+
       final fileName = note.title.isEmpty ? 'Untitled' : note.title;
       _showToast(context, '$fileName Moved to $folderName.');
     }
@@ -426,7 +482,10 @@ class FolderDetailScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.98),
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: const Color(0xFF5473F7).withValues(alpha: 0.5), width: 1.5),
+                border: Border.all(
+                  color: const Color(0xFF5473F7).withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.15),

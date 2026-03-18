@@ -10,10 +10,12 @@ class DeviceEnforcementGuard extends ConsumerStatefulWidget {
   const DeviceEnforcementGuard({super.key, required this.child});
 
   @override
-  ConsumerState<DeviceEnforcementGuard> createState() => _DeviceEnforcementGuardState();
+  ConsumerState<DeviceEnforcementGuard> createState() =>
+      _DeviceEnforcementGuardState();
 }
 
-class _DeviceEnforcementGuardState extends ConsumerState<DeviceEnforcementGuard> {
+class _DeviceEnforcementGuardState
+    extends ConsumerState<DeviceEnforcementGuard> {
   final DeviceService _deviceService = DeviceService();
   bool _isChecking = true;
   bool _isAllowed = true;
@@ -39,11 +41,15 @@ class _DeviceEnforcementGuardState extends ConsumerState<DeviceEnforcementGuard>
 
     // Register device first (idempotent)
     final userRepo = ref.read(userRepositoryProvider);
-    await userRepo.registerDevice(user.id, _currentDeviceId!, _currentDeviceName!);
+    await userRepo.registerDevice(
+      user.id,
+      _currentDeviceId!,
+      _currentDeviceName!,
+    );
 
     // Re-check allowance
     final allowed = await userRepo.isDeviceAllowed(user.id, _currentDeviceId!);
-    
+
     if (mounted) {
       setState(() {
         _isAllowed = allowed;
@@ -55,9 +61,7 @@ class _DeviceEnforcementGuardState extends ConsumerState<DeviceEnforcementGuard>
   @override
   Widget build(BuildContext context) {
     if (_isChecking) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (!_isAllowed) {
@@ -75,7 +79,11 @@ class _DeviceEnforcementGuardState extends ConsumerState<DeviceEnforcementGuard>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.important_devices_rounded, size: 80, color: Color(0xFF5473F7)),
+            const Icon(
+              Icons.important_devices_rounded,
+              size: 80,
+              color: Color(0xFF5473F7),
+            ),
             const SizedBox(height: 32),
             Text(
               'Device Limit Reached',
@@ -108,12 +116,17 @@ class _DeviceEnforcementGuardState extends ConsumerState<DeviceEnforcementGuard>
                   backgroundColor: const Color(0xFF5473F7),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
                 child: Text(
                   'Upgrade to Pro',
-                  style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -125,7 +138,10 @@ class _DeviceEnforcementGuardState extends ConsumerState<DeviceEnforcementGuard>
               },
               child: Text(
                 'Retry Connection',
-                style: GoogleFonts.roboto(color: Colors.grey[600], fontWeight: FontWeight.w600),
+                style: GoogleFonts.roboto(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],

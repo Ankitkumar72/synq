@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Custom page route that uses a fade transition instead of the default slide
 /// to prevent black background flashes during navigation.
-/// 
+///
 /// Key features:
 /// - Uses FadeTransition for both push and pop
 /// - Wraps content in a container with theme background to prevent black flash
@@ -31,7 +31,11 @@ class FadePageRoute<T> extends PageRoute<T> {
   Duration get reverseTransitionDuration => const Duration(milliseconds: 150);
 
   @override
-  Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
     // Wrap in a Material with theme background to prevent any black from showing
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -40,17 +44,19 @@ class FadePageRoute<T> extends PageRoute<T> {
   }
 
   @override
-  Widget buildTransitions(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
     // Use curved animation for smoother feel
     final curvedAnimation = CurvedAnimation(
       parent: animation,
       curve: Curves.easeOut,
       reverseCurve: Curves.easeIn,
     );
-    
-    return FadeTransition(
-      opacity: curvedAnimation,
-      child: child,
-    );
+
+    return FadeTransition(opacity: curvedAnimation, child: child);
   }
 }

@@ -5,7 +5,6 @@ import '../../../notes/data/local_database.dart';
 import '../../../notes/data/note_editor_draft_store.dart';
 import '../../../notes/data/seed_notes.dart';
 
-
 // State to hold preventing duplicate loading
 class AuthState {
   final bool isAuthenticated;
@@ -18,11 +17,7 @@ class AuthState {
     this.error,
   });
 
-  AuthState copyWith({
-    bool? isAuthenticated,
-    bool? isLoading,
-    String? error,
-  }) {
+  AuthState copyWith({bool? isAuthenticated, bool? isLoading, String? error}) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       isLoading: isLoading ?? this.isLoading,
@@ -44,23 +39,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   void _init() {
-    _repository.authStateChanges.listen((user) {
-      if (user != null) {
-        state = state.copyWith(isAuthenticated: true, isLoading: false);
-        // Clean up stale DB files from other accounts (fire-and-forget)
-        () async {
-          try {
-            await LocalDatabase.deleteStaleDbFiles(user.uid);
-          } catch (e) {
-            debugPrint('STALE_DB_CLEANUP_ERROR: $e');
-          }
-        }();
-      } else {
-        state = state.copyWith(isAuthenticated: false, isLoading: false);
-      }
-    }, onError: (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    });
+    _repository.authStateChanges.listen(
+      (user) {
+        if (user != null) {
+          state = state.copyWith(isAuthenticated: true, isLoading: false);
+          // Clean up stale DB files from other accounts (fire-and-forget)
+          () async {
+            try {
+              await LocalDatabase.deleteStaleDbFiles(user.uid);
+            } catch (e) {
+              debugPrint('STALE_DB_CLEANUP_ERROR: $e');
+            }
+          }();
+        } else {
+          state = state.copyWith(isAuthenticated: false, isLoading: false);
+        }
+      },
+      onError: (e) {
+        state = state.copyWith(isLoading: false, error: e.toString());
+      },
+    );
   }
 
   Future<void> login(String email, String password) async {
@@ -69,7 +67,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await _repository.signIn(email, password);
       // Success is handled by stream listener
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: _formatError(e.toString()));
+      state = state.copyWith(
+        isLoading: false,
+        error: _formatError(e.toString()),
+      );
     }
   }
 
@@ -83,7 +84,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await SeedNotesService.seedIfEmpty(user.uid);
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: _formatError(e.toString()));
+      state = state.copyWith(
+        isLoading: false,
+        error: _formatError(e.toString()),
+      );
     }
   }
 
@@ -96,7 +100,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await SeedNotesService.seedIfEmpty(userCredential.user!.uid);
       }
 
-      // user cancelation returns null but doesn't throw, 
+      // user cancelation returns null but doesn't throw,
       // success will trigger stream.
       // If we are still here and loading is true, we might want to unset it
       // but stream updates happen fast.
@@ -107,11 +111,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // If repository returns without throwing because of cancel, stream won't fire.
       // So we should reset loading state here.
       if (!state.isAuthenticated) {
-         state = state.copyWith(isLoading: false);
+        state = state.copyWith(isLoading: false);
       }
     } catch (e) {
       debugPrint('GOOGLE_SIGN_IN_ERROR: $e'); // Added logging
-      state = state.copyWith(isLoading: false, error: _formatError(e.toString()));
+      state = state.copyWith(
+        isLoading: false,
+        error: _formatError(e.toString()),
+      );
     }
   }
 
@@ -141,7 +148,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (error.contains('user-not-found')) {
       return 'Account not found. Please sign up first.';
     }
-    if (error.contains('wrong-password') || error.contains('invalid-credential')) {
+    if (error.contains('wrong-password') ||
+        error.contains('invalid-credential')) {
       return 'Incorrect email or password.';
     }
     if (error.contains('email-already-in-use')) {
@@ -156,13 +164,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (error.contains('network-request-failed')) {
       return 'Network error. Check your connection.';
     }
-    if (error.contains('dev.flutter.pigeon') || error.contains('channel-error')) {
+    if (error.contains('dev.flutter.pigeon') ||
+        error.contains('channel-error')) {
       return 'Please enter the details correctly.';
     }
-    
+
     // Fallback: clean up the detailed technical message
     // e.g. "[firebase_auth/unknown] An unknown error occurred."
     final parts = error.split(']');
-    return parts.length > 1 ? parts[1].trim() : 'Authentication failed. Please try again.'; // Generic fallback
+    return parts.length > 1
+        ? parts[1].trim()
+        : 'Authentication failed. Please try again.'; // Generic fallback
   }
 }

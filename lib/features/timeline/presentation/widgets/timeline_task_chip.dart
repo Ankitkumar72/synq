@@ -9,11 +9,8 @@ import 'timeline_layout_engine.dart';
 // Callbacks
 // ---------------------------------------------------------------------------
 
-typedef TaskRescheduledCallback = void Function(
-  TimelineEvent task,
-  String newStartTime,
-  String newEndTime,
-);
+typedef TaskRescheduledCallback =
+    void Function(TimelineEvent task, String newStartTime, String newEndTime);
 
 typedef TaskTappedCallback = void Function(TimelineEvent task);
 typedef TaskToggleCallback = void Function(TimelineEvent task);
@@ -229,8 +226,7 @@ class _TimelineTaskChipState extends State<TimelineTaskChip> {
                       color: textColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      decoration:
-                          completed ? TextDecoration.lineThrough : null,
+                      decoration: completed ? TextDecoration.lineThrough : null,
                       decorationColor: textColor,
                       height: 1.2,
                     ),
@@ -255,9 +251,7 @@ class _TimelineTaskChipState extends State<TimelineTaskChip> {
           ? base.withValues(alpha: 0.25)
           : base.withValues(alpha: 0.15);
     }
-    return completed
-        ? const Color(0xFFE8E8E8)
-        : const Color(0xFFE8EAF6);
+    return completed ? const Color(0xFFE8E8E8) : const Color(0xFFE8EAF6);
   }
 
   static Color _chipBorderColor(TimelineEvent task, bool completed) {
@@ -267,9 +261,7 @@ class _TimelineTaskChipState extends State<TimelineTaskChip> {
           ? base.withValues(alpha: 0.3)
           : base.withValues(alpha: 0.4);
     }
-    return completed
-        ? const Color(0xFFD0D0D0)
-        : const Color(0xFFC5CAE9);
+    return completed ? const Color(0xFFD0D0D0) : const Color(0xFFC5CAE9);
   }
 
   static Color _chipTextColor(TimelineEvent task, bool completed) {
@@ -277,17 +269,11 @@ class _TimelineTaskChipState extends State<TimelineTaskChip> {
       final base = Color(task.color!);
       final luminance = base.computeLuminance();
       final darkVariant = luminance > 0.5
-          ? HSLColor.fromColor(base)
-              .withLightness(0.25)
-              .toColor()
+          ? HSLColor.fromColor(base).withLightness(0.25).toColor()
           : base;
-      return completed
-          ? darkVariant.withValues(alpha: 0.5)
-          : darkVariant;
+      return completed ? darkVariant.withValues(alpha: 0.5) : darkVariant;
     }
-    return completed
-        ? const Color(0xFF9E9E9E)
-        : const Color(0xFF3949AB);
+    return completed ? const Color(0xFF9E9E9E) : const Color(0xFF3949AB);
   }
 
   // ---------------------------------------------------------------------------

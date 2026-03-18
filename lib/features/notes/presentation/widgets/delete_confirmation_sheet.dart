@@ -49,10 +49,7 @@ class DeleteConfirmationSheet extends StatelessWidget {
           Text(
             'Are you sure you want to delete "$itemName"?',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
           ),
           const SizedBox(height: 32),
           // Buttons

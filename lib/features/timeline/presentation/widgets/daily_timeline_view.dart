@@ -378,7 +378,8 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         } else {
           // Anchor at start time + stacking offset within the hour
           final minutes = _parseMinutes(task.startTime);
-          top = (minutes / 60.0) * TimelineLayoutEngine.pixelsPerHour +
+          top =
+              (minutes / 60.0) * TimelineLayoutEngine.pixelsPerHour +
               TimelineLayoutEngine.verticalGap / 2 +
               i * TimelineTaskChip.chipStepHeight;
         }

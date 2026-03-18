@@ -17,10 +17,10 @@ class FirestoreFoldersRepository implements FoldersRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return Folder.fromJson(doc.data());
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return Folder.fromJson(doc.data());
+          }).toList();
+        });
   }
 
   @override

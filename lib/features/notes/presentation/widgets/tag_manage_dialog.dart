@@ -60,10 +60,14 @@ class _TagManageDialogState extends State<TagManageDialog> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _tags.map((tag) => Chip(
-                label: Text(tag),
-                onDeleted: () => _removeTag(tag),
-              )).toList(),
+              children: _tags
+                  .map(
+                    (tag) => Chip(
+                      label: Text(tag),
+                      onDeleted: () => _removeTag(tag),
+                    ),
+                  )
+                  .toList(),
             ),
             const SizedBox(height: 16),
             TextField(

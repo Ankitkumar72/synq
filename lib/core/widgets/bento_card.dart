@@ -53,15 +53,9 @@ class BentoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (header != null) ...[
-                  header!,
-                  const SizedBox(height: 12),
-                ],
+                if (header != null) ...[header!, const SizedBox(height: 12)],
                 Flexible(child: child),
-                if (footer != null) ...[
-                  const SizedBox(height: 12),
-                  footer!,
-                ],
+                if (footer != null) ...[const SizedBox(height: 12), footer!],
               ],
             ),
           ),

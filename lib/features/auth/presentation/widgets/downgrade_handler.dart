@@ -16,12 +16,16 @@ class DowngradeHandler extends ConsumerWidget {
 
     return userAsync.when(
       data: (user) {
-        if (user != null && user.planTier == PlanTier.free && user.isOverLimit && user.activeDevices.length > 1) {
+        if (user != null &&
+            user.planTier == PlanTier.free &&
+            user.isOverLimit &&
+            user.activeDevices.length > 1) {
           return _buildOverLimitGate(context);
         }
         return child;
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (_, __) => child, // Fallback to child on error
     );
   }
@@ -34,7 +38,11 @@ class DowngradeHandler extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.warning_amber_rounded, size: 80, color: Colors.orange),
+            const Icon(
+              Icons.warning_amber_rounded,
+              size: 80,
+              color: Colors.orange,
+            ),
             const SizedBox(height: 32),
             Text(
               'Subscription Ended',
@@ -62,18 +70,25 @@ class DowngradeHandler extends ConsumerWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const DeviceManagementScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const DeviceManagementScreen(),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: Text(
                   'Manage Devices',
-                  style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

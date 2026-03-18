@@ -12,7 +12,8 @@ part of 'folder.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 Folder _$FolderFromJson(Map<String, dynamic> json) {
   return _Folder.fromJson(json);
@@ -39,15 +40,16 @@ abstract class $FolderCopyWith<$Res> {
   factory $FolderCopyWith(Folder value, $Res Function(Folder) then) =
       _$FolderCopyWithImpl<$Res, Folder>;
   @useResult
-  $Res call(
-      {String id,
-      String name,
-      int iconCodePoint,
-      String? iconFontFamily,
-      int colorValue,
-      DateTime createdAt,
-      bool isFavorite,
-      String? parentId});
+  $Res call({
+    String id,
+    String name,
+    int iconCodePoint,
+    String? iconFontFamily,
+    int colorValue,
+    DateTime createdAt,
+    bool isFavorite,
+    String? parentId,
+  });
 }
 
 /// @nodoc
@@ -72,59 +74,64 @@ class _$FolderCopyWithImpl<$Res, $Val extends Folder>
     Object? isFavorite = null,
     Object? parentId = freezed,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      iconCodePoint: null == iconCodePoint
-          ? _value.iconCodePoint
-          : iconCodePoint // ignore: cast_nullable_to_non_nullable
-              as int,
-      iconFontFamily: freezed == iconFontFamily
-          ? _value.iconFontFamily
-          : iconFontFamily // ignore: cast_nullable_to_non_nullable
-              as String?,
-      colorValue: null == colorValue
-          ? _value.colorValue
-          : colorValue // ignore: cast_nullable_to_non_nullable
-              as int,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      isFavorite: null == isFavorite
-          ? _value.isFavorite
-          : isFavorite // ignore: cast_nullable_to_non_nullable
-              as bool,
-      parentId: freezed == parentId
-          ? _value.parentId
-          : parentId // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
+            iconCodePoint: null == iconCodePoint
+                ? _value.iconCodePoint
+                : iconCodePoint // ignore: cast_nullable_to_non_nullable
+                      as int,
+            iconFontFamily: freezed == iconFontFamily
+                ? _value.iconFontFamily
+                : iconFontFamily // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            colorValue: null == colorValue
+                ? _value.colorValue
+                : colorValue // ignore: cast_nullable_to_non_nullable
+                      as int,
+            createdAt: null == createdAt
+                ? _value.createdAt
+                : createdAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            isFavorite: null == isFavorite
+                ? _value.isFavorite
+                : isFavorite // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            parentId: freezed == parentId
+                ? _value.parentId
+                : parentId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$FolderImplCopyWith<$Res> implements $FolderCopyWith<$Res> {
   factory _$$FolderImplCopyWith(
-          _$FolderImpl value, $Res Function(_$FolderImpl) then) =
-      __$$FolderImplCopyWithImpl<$Res>;
+    _$FolderImpl value,
+    $Res Function(_$FolderImpl) then,
+  ) = __$$FolderImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String id,
-      String name,
-      int iconCodePoint,
-      String? iconFontFamily,
-      int colorValue,
-      DateTime createdAt,
-      bool isFavorite,
-      String? parentId});
+  $Res call({
+    String id,
+    String name,
+    int iconCodePoint,
+    String? iconFontFamily,
+    int colorValue,
+    DateTime createdAt,
+    bool isFavorite,
+    String? parentId,
+  });
 }
 
 /// @nodoc
@@ -132,8 +139,9 @@ class __$$FolderImplCopyWithImpl<$Res>
     extends _$FolderCopyWithImpl<$Res, _$FolderImpl>
     implements _$$FolderImplCopyWith<$Res> {
   __$$FolderImplCopyWithImpl(
-      _$FolderImpl _value, $Res Function(_$FolderImpl) _then)
-      : super(_value, _then);
+    _$FolderImpl _value,
+    $Res Function(_$FolderImpl) _then,
+  ) : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
@@ -147,55 +155,58 @@ class __$$FolderImplCopyWithImpl<$Res>
     Object? isFavorite = null,
     Object? parentId = freezed,
   }) {
-    return _then(_$FolderImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      iconCodePoint: null == iconCodePoint
-          ? _value.iconCodePoint
-          : iconCodePoint // ignore: cast_nullable_to_non_nullable
-              as int,
-      iconFontFamily: freezed == iconFontFamily
-          ? _value.iconFontFamily
-          : iconFontFamily // ignore: cast_nullable_to_non_nullable
-              as String?,
-      colorValue: null == colorValue
-          ? _value.colorValue
-          : colorValue // ignore: cast_nullable_to_non_nullable
-              as int,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      isFavorite: null == isFavorite
-          ? _value.isFavorite
-          : isFavorite // ignore: cast_nullable_to_non_nullable
-              as bool,
-      parentId: freezed == parentId
-          ? _value.parentId
-          : parentId // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$FolderImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
+        iconCodePoint: null == iconCodePoint
+            ? _value.iconCodePoint
+            : iconCodePoint // ignore: cast_nullable_to_non_nullable
+                  as int,
+        iconFontFamily: freezed == iconFontFamily
+            ? _value.iconFontFamily
+            : iconFontFamily // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        colorValue: null == colorValue
+            ? _value.colorValue
+            : colorValue // ignore: cast_nullable_to_non_nullable
+                  as int,
+        createdAt: null == createdAt
+            ? _value.createdAt
+            : createdAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        isFavorite: null == isFavorite
+            ? _value.isFavorite
+            : isFavorite // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        parentId: freezed == parentId
+            ? _value.parentId
+            : parentId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$FolderImpl implements _Folder {
-  const _$FolderImpl(
-      {required this.id,
-      required this.name,
-      required this.iconCodePoint,
-      this.iconFontFamily,
-      required this.colorValue,
-      required this.createdAt,
-      this.isFavorite = false,
-      this.parentId});
+  const _$FolderImpl({
+    required this.id,
+    required this.name,
+    required this.iconCodePoint,
+    this.iconFontFamily,
+    required this.colorValue,
+    required this.createdAt,
+    this.isFavorite = false,
+    this.parentId,
+  });
 
   factory _$FolderImpl.fromJson(Map<String, dynamic> json) =>
       _$$FolderImplFromJson(json);
@@ -246,8 +257,17 @@ class _$FolderImpl implements _Folder {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, iconCodePoint,
-      iconFontFamily, colorValue, createdAt, isFavorite, parentId);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    name,
+    iconCodePoint,
+    iconFontFamily,
+    colorValue,
+    createdAt,
+    isFavorite,
+    parentId,
+  );
 
   @JsonKey(ignore: true)
   @override
@@ -257,22 +277,21 @@ class _$FolderImpl implements _Folder {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$FolderImplToJson(
-      this,
-    );
+    return _$$FolderImplToJson(this);
   }
 }
 
 abstract class _Folder implements Folder {
-  const factory _Folder(
-      {required final String id,
-      required final String name,
-      required final int iconCodePoint,
-      final String? iconFontFamily,
-      required final int colorValue,
-      required final DateTime createdAt,
-      final bool isFavorite,
-      final String? parentId}) = _$FolderImpl;
+  const factory _Folder({
+    required final String id,
+    required final String name,
+    required final int iconCodePoint,
+    final String? iconFontFamily,
+    required final int colorValue,
+    required final DateTime createdAt,
+    final bool isFavorite,
+    final String? parentId,
+  }) = _$FolderImpl;
 
   factory _Folder.fromJson(Map<String, dynamic> json) = _$FolderImpl.fromJson;
 

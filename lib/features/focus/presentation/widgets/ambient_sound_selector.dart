@@ -27,10 +27,7 @@ class AmbientSoundSelector extends ConsumerWidget {
 class AmbientSoundButton extends ConsumerWidget {
   final AmbientSound sound;
 
-  const AmbientSoundButton({
-    super.key,
-    required this.sound,
-  });
+  const AmbientSoundButton({super.key, required this.sound});
 
   IconData _getIconData(String iconName) {
     switch (iconName) {
@@ -52,12 +49,15 @@ class AmbientSoundButton extends ConsumerWidget {
     final isPlaying = isActive && state.isPlaying;
 
     return GestureDetector(
-      onTap: () => ref.read(ambientSoundProvider.notifier).toggleSound(sound.id),
+      onTap: () =>
+          ref.read(ambientSoundProvider.notifier).toggleSound(sound.id),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? Colors.transparent : Colors.black.withValues(alpha: 0.05),
+          color: isActive
+              ? Colors.transparent
+              : Colors.black.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isActive ? AppColors.primary : Colors.transparent,

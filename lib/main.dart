@@ -22,7 +22,7 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     await FirebaseService.initialize();
-    
+
     // Enable offline persistence
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
@@ -40,13 +40,15 @@ void main() async {
     firebaseError = e.toString();
   }
 
-  runApp(ProviderScope(
-    overrides: [
-      if (firebaseError != null)
-        firebaseErrorProvider.overrideWith((ref) => firebaseError),
-    ],
-    child: const SynqApp(),
-  ));
+  runApp(
+    ProviderScope(
+      overrides: [
+        if (firebaseError != null)
+          firebaseErrorProvider.overrideWith((ref) => firebaseError),
+      ],
+      child: const SynqApp(),
+    ),
+  );
 }
 
 class SynqApp extends ConsumerStatefulWidget {
@@ -92,13 +94,9 @@ class _SynqAppState extends ConsumerState<SynqApp> {
         GlobalCupertinoLocalizations.delegate,
         FlutterQuillLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('en', 'US')],
       builder: (context, child) {
-        return ResponsiveWrapper(
-          child: child ?? const SizedBox(),
-        );
+        return ResponsiveWrapper(child: child ?? const SizedBox());
       },
       home: firebaseError != null
           ? Scaffold(
@@ -109,7 +107,11 @@ class _SynqAppState extends ConsumerState<SynqApp> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'Initialization Failed',
@@ -120,8 +122,8 @@ class _SynqAppState extends ConsumerState<SynqApp> {
                         firebaseError,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -129,14 +131,15 @@ class _SynqAppState extends ConsumerState<SynqApp> {
               ),
             )
           : shouldShowLoading
-              ? Scaffold(backgroundColor: AppColors.background, body: const Center(child: CircularProgressIndicator()))
-              : canEnterApp
-                  ? const DeviceEnforcementGuard(
-                      child: DowngradeHandler(
-                        child: MainShell(),
-                      ),
-                    )
-                  : const LoginScreen(),
+          ? Scaffold(
+              backgroundColor: AppColors.background,
+              body: const Center(child: CircularProgressIndicator()),
+            )
+          : canEnterApp
+          ? const DeviceEnforcementGuard(
+              child: DowngradeHandler(child: MainShell()),
+            )
+          : const LoginScreen(),
     );
   }
 }

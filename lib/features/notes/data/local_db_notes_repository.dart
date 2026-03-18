@@ -20,34 +20,22 @@ class LocalDbNotesRepository implements NotesRepository {
   @override
   Future<void> addNote(Note note) async {
     final stamped = note.copyWith(updatedAt: DateTime.now());
-    await _database.upsertNote(
-      stamped,
-      source: SyncWriteSource.local,
-    );
+    await _database.upsertNote(stamped, source: SyncWriteSource.local);
   }
 
   @override
   Future<void> updateNote(Note note) async {
     final stamped = note.copyWith(updatedAt: DateTime.now());
-    await _database.upsertNote(
-      stamped,
-      source: SyncWriteSource.local,
-    );
+    await _database.upsertNote(stamped, source: SyncWriteSource.local);
   }
 
   @override
   Future<void> deleteNote(String id) async {
-    await _database.markNoteDeleted(
-      id,
-      source: SyncWriteSource.local,
-    );
+    await _database.markNoteDeleted(id, source: SyncWriteSource.local);
   }
 
   @override
   Future<void> deleteNotes(List<String> ids) async {
-    await _database.markNotesDeleted(
-      ids,
-      source: SyncWriteSource.local,
-    );
+    await _database.markNotesDeleted(ids, source: SyncWriteSource.local);
   }
 }

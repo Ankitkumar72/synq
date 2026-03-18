@@ -14,7 +14,12 @@ class CreateTaskSheet extends ConsumerStatefulWidget {
   final String? initialFolderId;
   final DateTime? initialDate;
 
-  const CreateTaskSheet({super.key, this.taskToEdit, this.initialFolderId, this.initialDate});
+  const CreateTaskSheet({
+    super.key,
+    this.taskToEdit,
+    this.initialFolderId,
+    this.initialDate,
+  });
 
   @override
   ConsumerState<CreateTaskSheet> createState() => _CreateTaskSheetState();
@@ -30,7 +35,6 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
   RecurrenceRule? _recurrenceRule;
   String? _selectedFolderId;
   List<String> _selectedTags = [];
-
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -68,15 +72,14 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
     super.dispose();
   }
 
-
-
   Future<void> _openTimePlannerSheet() async {
     var selectedDate = _taskDueDate ?? DateTime.now();
-    TimeOfDay? selectedStartTime = (_taskDueDate != null && _taskEndTime != null) 
-        ? TimeOfDay.fromDateTime(_taskDueDate!) 
+    TimeOfDay? selectedStartTime =
+        (_taskDueDate != null && _taskEndTime != null)
+        ? TimeOfDay.fromDateTime(_taskDueDate!)
         : null;
-    TimeOfDay? selectedEndTime = _taskEndTime != null 
-        ? TimeOfDay.fromDateTime(_taskEndTime!) 
+    TimeOfDay? selectedEndTime = _taskEndTime != null
+        ? TimeOfDay.fromDateTime(_taskEndTime!)
         : null;
     var selectedIsAllDay = _isTaskAllDay;
     var selectedRule = _recurrenceRule;
@@ -133,7 +136,9 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                   return const Color(0xFFE7EBF0);
                 }),
                 todayForegroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) return Colors.white;
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.white;
+                  }
                   return const Color(0xFF5473F7);
                 }),
                 todayBorder: BorderSide.none,
@@ -146,7 +151,8 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
             Future<void> setTimeRange() async {
               final pickedStartTime = await showTimePicker(
                 context: context,
-                initialTime: selectedStartTime ?? const TimeOfDay(hour: 9, minute: 0),
+                initialTime:
+                    selectedStartTime ?? const TimeOfDay(hour: 9, minute: 0),
                 helpText: 'Select Start Time',
               );
               if (!context.mounted) return;
@@ -162,14 +168,16 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
               final suggestedEnd = baseDate.add(const Duration(hours: 1));
               final pickedEndTime = await showTimePicker(
                 context: context,
-                initialTime: selectedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd),
+                initialTime:
+                    selectedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd),
                 helpText: 'Select End Time',
               );
               if (!context.mounted) return;
 
               setModalState(() {
                 selectedStartTime = pickedStartTime;
-                selectedEndTime = pickedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd);
+                selectedEndTime =
+                    pickedEndTime ?? TimeOfDay.fromDateTime(suggestedEnd);
                 selectedIsAllDay = false;
               });
             }
@@ -222,7 +230,10 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                 ),
-                insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: SingleChildScrollView(
@@ -231,8 +242,12 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                       children: [
                         CalendarDatePicker(
                           initialDate: selectedDate,
-                          firstDate: DateTime.now().subtract(const Duration(days: 3650)),
-                          lastDate: DateTime.now().add(const Duration(days: 3650)),
+                          firstDate: DateTime.now().subtract(
+                            const Duration(days: 3650),
+                          ),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 3650),
+                          ),
                           onDateChanged: (date) {
                             setModalState(() => selectedDate = date);
                           },
@@ -240,13 +255,17 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                         const Divider(height: 1, color: Color(0xFF708090)),
                         ListTile(
                           visualDensity: const VisualDensity(vertical: -4),
-                          leading: const Icon(Icons.access_time, color: Colors.white70),
+                          leading: const Icon(
+                            Icons.access_time,
+                            color: Colors.white70,
+                          ),
                           title: Text(
                             selectedIsAllDay
                                 ? 'All Day'
-                                : (selectedStartTime == null || selectedEndTime == null
-                                    ? 'Set time'
-                                    : '${_formatTimeFromTimeOfDay(selectedStartTime!)} - ${_formatTimeFromTimeOfDay(selectedEndTime!)}'),
+                                : (selectedStartTime == null ||
+                                          selectedEndTime == null
+                                      ? 'Set time'
+                                      : '${_formatTimeFromTimeOfDay(selectedStartTime!)} - ${_formatTimeFromTimeOfDay(selectedEndTime!)}'),
                             style: const TextStyle(
                               color: Color(0xFFE7EBF0),
                               fontSize: 14,
@@ -257,7 +276,10 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                         const Divider(height: 1, color: Color(0xFF708090)),
                         ListTile(
                           visualDensity: const VisualDensity(vertical: -4),
-                          leading: const Icon(Icons.repeat, color: Colors.white70),
+                          leading: const Icon(
+                            Icons.repeat,
+                            color: Colors.white70,
+                          ),
                           title: Text(
                             _formatRecurrenceLabelForRule(selectedRule),
                             style: const TextStyle(
@@ -269,38 +291,47 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                         ),
                         const Divider(height: 1, color: Color(0xFF708090)),
                         // -- Conflict warning inside the dialog --
-                        if (!selectedIsAllDay && selectedStartTime != null && selectedEndTime != null)
-                          Consumer(builder: (context, dialogRef, _) {
-                            final proposedStart = DateTime(
-                              selectedDate.year,
-                              selectedDate.month,
-                              selectedDate.day,
-                              selectedStartTime!.hour,
-                              selectedStartTime!.minute,
-                            );
-                            final proposedEnd = DateTime(
-                              selectedDate.year,
-                              selectedDate.month,
-                              selectedDate.day,
-                              selectedEndTime!.hour,
-                              selectedEndTime!.minute,
-                            );
-                            final conflictsAsync = dialogRef.watch(
-                              scheduleConflictProvider((
-                                proposedStart: proposedStart,
-                                proposedEnd: proposedEnd,
-                                excludeId: widget.taskToEdit?.id,
-                              )),
-                            );
-                            return conflictsAsync.when(
-                              data: (conflicts) {
-                                if (conflicts.isEmpty) return const SizedBox.shrink();
-                                return _buildConflictBanner(conflicts, dark: true);
-                              },
-                              loading: () => const SizedBox.shrink(),
-                              error: (_, __) => const SizedBox.shrink(),
-                            );
-                          }),
+                        if (!selectedIsAllDay &&
+                            selectedStartTime != null &&
+                            selectedEndTime != null)
+                          Consumer(
+                            builder: (context, dialogRef, _) {
+                              final proposedStart = DateTime(
+                                selectedDate.year,
+                                selectedDate.month,
+                                selectedDate.day,
+                                selectedStartTime!.hour,
+                                selectedStartTime!.minute,
+                              );
+                              final proposedEnd = DateTime(
+                                selectedDate.year,
+                                selectedDate.month,
+                                selectedDate.day,
+                                selectedEndTime!.hour,
+                                selectedEndTime!.minute,
+                              );
+                              final conflictsAsync = dialogRef.watch(
+                                scheduleConflictProvider((
+                                  proposedStart: proposedStart,
+                                  proposedEnd: proposedEnd,
+                                  excludeId: widget.taskToEdit?.id,
+                                )),
+                              );
+                              return conflictsAsync.when(
+                                data: (conflicts) {
+                                  if (conflicts.isEmpty) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return _buildConflictBanner(
+                                    conflicts,
+                                    dark: true,
+                                  );
+                                },
+                                loading: () => const SizedBox.shrink(),
+                                error: (_, __) => const SizedBox.shrink(),
+                              );
+                            },
+                          ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                           child: Row(
@@ -319,11 +350,16 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                                   Navigator.pop(context);
                                 },
                                 style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFFEF4444), // red
+                                  foregroundColor: const Color(
+                                    0xFFEF4444,
+                                  ), // red
                                 ),
                                 child: const Text(
                                   'Clear',
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                               Row(
@@ -331,11 +367,16 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                                   TextButton(
                                     onPressed: () => Navigator.pop(context),
                                     style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFFE7EBF0), // light text
+                                      foregroundColor: const Color(
+                                        0xFFE7EBF0,
+                                      ), // light text
                                     ),
                                     child: const Text(
                                       'Cancel',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -352,7 +393,8 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                                           );
                                           _taskEndTime = null;
                                         } else {
-                                          if (selectedStartTime != null && selectedEndTime != null) {
+                                          if (selectedStartTime != null &&
+                                              selectedEndTime != null) {
                                             _taskDueDate = DateTime(
                                               selectedDate.year,
                                               selectedDate.month,
@@ -383,14 +425,22 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                                       backgroundColor: const Color(0xFF5473F7),
                                       foregroundColor: Colors.white,
                                       elevation: 0,
-                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(100),
+                                        borderRadius: BorderRadius.circular(
+                                          100,
+                                        ),
                                       ),
                                     ),
                                     child: const Text(
                                       'Done',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -445,32 +495,50 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
               ),
               const SizedBox(height: 12),
               ListTile(
-                leading: const Icon(Icons.notifications_off_outlined, color: Colors.black87),
-                title: const Text('No reminder', style: TextStyle(color: Colors.black87)),
+                leading: const Icon(
+                  Icons.notifications_off_outlined,
+                  color: Colors.black87,
+                ),
+                title: const Text(
+                  'No reminder',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, 'none'),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 leading: const Icon(Icons.alarm, color: Colors.black87),
-                title: const Text('At due time', style: TextStyle(color: Colors.black87)),
+                title: const Text(
+                  'At due time',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, '0m'),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 leading: const Icon(Icons.schedule, color: Colors.black87),
-                title: const Text('15 minutes before', style: TextStyle(color: Colors.black87)),
+                title: const Text(
+                  '15 minutes before',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, '15m'),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 leading: const Icon(Icons.schedule, color: Colors.black87),
-                title: const Text('1 hour before', style: TextStyle(color: Colors.black87)),
+                title: const Text(
+                  '1 hour before',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, '1h'),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 leading: const Icon(Icons.schedule, color: Colors.black87),
-                title: const Text('1 day before', style: TextStyle(color: Colors.black87)),
+                title: const Text(
+                  '1 day before',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 onTap: () => Navigator.pop(context, '1d'),
               ),
             ],
@@ -511,10 +579,8 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
   }) async {
     final result = await Navigator.of(context).push<RepeatSettingsResult>(
       MaterialPageRoute(
-        builder: (_) => RepeatSettingsScreen(
-          initialRule: initialRule,
-          startsAt: startsAt,
-        ),
+        builder: (_) =>
+            RepeatSettingsScreen(initialRule: initialRule, startsAt: startsAt),
       ),
     );
 
@@ -524,9 +590,8 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
 
     return (applied: true, rule: result.rule);
   }
-  
-  // Reuse logic for other pickers if needed, or keep simple
 
+  // Reuse logic for other pickers if needed, or keep simple
 
   Future<void> _handleSave() async {
     final title = _titleController.text.trim();
@@ -534,21 +599,22 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
 
     if (title.isEmpty) {
       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please enter a task title'),
             backgroundColor: Colors.orange,
             behavior: SnackBarBehavior.floating,
           ),
         );
-       }
+      }
       return;
     }
 
     final startTime = _taskDueDate;
     final endTime = _taskEndTime;
 
-    final task = (widget.taskToEdit?.copyWith(
+    final task =
+        (widget.taskToEdit?.copyWith(
           title: title,
           body: description.isEmpty ? null : description,
           category: _selectedTaskCategory,
@@ -578,8 +644,8 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
           isTask: true,
           isAllDay: _isTaskAllDay,
           tags: _selectedTags,
-          attachments: [], 
-          links: [],     
+          attachments: [],
+          links: [],
           folderId: _selectedFolderId,
         ));
 
@@ -597,9 +663,9 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-             content: Text('Failed to save task: $e'),
-             backgroundColor: Colors.red,
-             behavior: SnackBarBehavior.floating,
+            content: Text('Failed to save task: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -662,7 +728,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -675,9 +741,12 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                   _buildSectionLabel('TASK TITLE'),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.white, 
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -691,9 +760,9 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                       controller: _titleController,
                       autofocus: false,
                       style: const TextStyle(
-                         fontSize: 16, // Reduced from 24
-                         fontWeight: FontWeight.w600,
-                         color: Colors.black87, 
+                        fontSize: 16, // Reduced from 24
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
                       ),
                       maxLines: null,
                       decoration: const InputDecoration(
@@ -703,7 +772,11 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                         enabledBorder: InputBorder.none,
                         contentPadding: EdgeInsets.zero,
                         hintText: 'What needs to be done?',
-                        hintStyle: TextStyle(color: Color(0xFF9AA0A6), fontSize: 16, fontWeight: FontWeight.w600),
+                        hintStyle: TextStyle(
+                          color: Color(0xFF9AA0A6),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -712,51 +785,60 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                   _buildTypeChips(),
 
                   const SizedBox(height: 12), // Reduced spacing
-
                   // Schedule Section
                   _buildSectionLabel('SCHEDULE'),
                   const SizedBox(height: 8),
-                   _buildScheduleCard(
+                  _buildScheduleCard(
                     date: _formatDateToTitle(_taskDueDate),
                     dateSub: _formatDateToSubtitle(_taskDueDate),
-                    time: _isTaskAllDay 
-                       ? 'All Day' 
-                       : (_taskEndTime == null || _taskDueDate == null ? 'Set Time' : '${_formatTime(_taskDueDate)} - ${_formatTime(_taskEndTime)}'),
+                    time: _isTaskAllDay
+                        ? 'All Day'
+                        : (_taskEndTime == null || _taskDueDate == null
+                              ? 'Set Time'
+                              : '${_formatTime(_taskDueDate)} - ${_formatTime(_taskEndTime)}'),
                     onTap: _openTimePlannerSheet,
                   ),
 
                   // -- Inline conflict warning below the schedule card --
-                  if (_taskDueDate != null && _taskEndTime != null && !_isTaskAllDay)
-                    Consumer(builder: (context, innerRef, _) {
-                      final conflictsAsync = innerRef.watch(
-                        scheduleConflictProvider((
-                          proposedStart: _taskDueDate!,
-                          proposedEnd: _taskEndTime,
-                          excludeId: widget.taskToEdit?.id,
-                        )),
-                      );
-                      return conflictsAsync.when(
-                        data: (conflicts) {
-                          if (conflicts.isEmpty) return const SizedBox.shrink();
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: _buildConflictBanner(conflicts, dark: false),
-                          );
-                        },
-                        loading: () => const SizedBox.shrink(),
-                        error: (_, __) => const SizedBox.shrink(),
-                      );
-                    }),
+                  if (_taskDueDate != null &&
+                      _taskEndTime != null &&
+                      !_isTaskAllDay)
+                    Consumer(
+                      builder: (context, innerRef, _) {
+                        final conflictsAsync = innerRef.watch(
+                          scheduleConflictProvider((
+                            proposedStart: _taskDueDate!,
+                            proposedEnd: _taskEndTime,
+                            excludeId: widget.taskToEdit?.id,
+                          )),
+                        );
+                        return conflictsAsync.when(
+                          data: (conflicts) {
+                            if (conflicts.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: _buildConflictBanner(
+                                conflicts,
+                                dark: false,
+                              ),
+                            );
+                          },
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, __) => const SizedBox.shrink(),
+                        );
+                      },
+                    ),
 
                   const SizedBox(height: 12), // Reduced spacing
-
                   // Description
                   Row(
-                     children: [
-                        const Icon(Icons.notes, size: 18, color: Colors.grey),
-                        const SizedBox(width: 8),
-                        _buildSectionLabel('DESCRIPTION'),
-                     ],
+                    children: [
+                      const Icon(Icons.notes, size: 18, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      _buildSectionLabel('DESCRIPTION'),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -797,15 +879,22 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                     ),
                   ),
 
-                  const SizedBox(height: 24), // Added some bottom spacing inside scroll view
+                  const SizedBox(
+                    height: 24,
+                  ), // Added some bottom spacing inside scroll view
                 ],
               ),
             ),
           ),
-          
+
           // Bottom Create Button
           Padding(
-            padding: EdgeInsets.fromLTRB(24, 0, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
+            padding: EdgeInsets.fromLTRB(
+              24,
+              0,
+              24,
+              24 + MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: SizedBox(
               width: double.infinity,
               height: 56,
@@ -878,21 +967,19 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
             color: isSelected ? Colors.transparent : Colors.grey.shade200,
             width: 1.5,
           ),
-          boxShadow: isSelected ? [] : [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: isSelected
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: const Color(0xFF334155),
-            ),
+            Icon(icon, size: 16, color: const Color(0xFF334155)),
             const SizedBox(width: 8),
             Text(
               label,
@@ -907,7 +994,6 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
       ),
     );
   }
-
 
   Widget _buildScheduleCard({
     required String date,
@@ -939,7 +1025,11 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                 color: const Color(0xFFF0F4FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.calendar_today_outlined, color: Color(0xFF5473F7), size: 22),
+              child: const Icon(
+                Icons.calendar_today_outlined,
+                color: Color(0xFF5473F7),
+                size: 22,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -970,7 +1060,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                 ],
               ),
             ),
-            
+
             // Divider
             Container(
               height: 40,
@@ -978,7 +1068,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
               color: Colors.grey[200],
               margin: const EdgeInsets.symmetric(horizontal: 16),
             ),
-            
+
             // Time Section
             Expanded(
               child: Column(
@@ -1014,15 +1104,17 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
                 color: const Color(0xFFF0F4FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.access_time, color: Color(0xFF5473F7), size: 22),
+              child: const Icon(
+                Icons.access_time,
+                color: Color(0xFF5473F7),
+                size: 22,
+              ),
             ),
           ],
         ),
       ),
     );
   }
-
-
 
   String _formatTime(DateTime? dt) {
     if (dt == null) return '--:--';
@@ -1051,8 +1143,6 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
     return '${difference.inMinutes}m before';
   }
 
-
-
   String _formatRecurrenceLabelForRule(RecurrenceRule? rule) {
     if (rule == null) return 'No Repeat';
 
@@ -1076,26 +1166,43 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
     }
   }
 
-
-
   String _formatTimeFromTimeOfDay(TimeOfDay time) {
-    final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final hour = time.hour > 12
+        ? time.hour - 12
+        : (time.hour == 0 ? 12 : time.hour);
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
   }
 
   String _formatDateToTitle(DateTime? dt) {
-     if (dt == null) return 'Set Date'; 
-     final now = DateTime.now();
-     if (dt.year == now.year && dt.month == now.month && dt.day == now.day) return 'Today';
-     if (dt.year == now.year && dt.month == now.month && dt.day == now.day + 1) return 'Tomorrow';
-     return '${dt.day}/${dt.month}';
+    if (dt == null) return 'Set Date';
+    final now = DateTime.now();
+    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
+      return 'Today';
+    }
+    if (dt.year == now.year && dt.month == now.month && dt.day == now.day + 1) {
+      return 'Tomorrow';
+    }
+    return '${dt.day}/${dt.month}';
   }
-   
+
   String? _formatDateToSubtitle(DateTime? dt) {
-     if (dt == null) return null;
-     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-     return '${months[dt.month - 1]} ${dt.day}';
+    if (dt == null) return null;
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[dt.month - 1]} ${dt.day}';
   }
 
   /// Builds the amber conflict-warning banner used in both the time-planner
@@ -1134,13 +1241,22 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
   }
 }
 
-void showCreateTaskSheet(BuildContext context, {Note? taskToEdit, String? initialFolderId, DateTime? initialDate}) {
+void showCreateTaskSheet(
+  BuildContext context, {
+  Note? taskToEdit,
+  String? initialFolderId,
+  DateTime? initialDate,
+}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    useSafeArea: true, 
+    useSafeArea: true,
     // allow transparent background so our Container decoration shows nicely
     backgroundColor: Colors.transparent,
-    builder: (context) => CreateTaskSheet(taskToEdit: taskToEdit, initialFolderId: initialFolderId, initialDate: initialDate),
+    builder: (context) => CreateTaskSheet(
+      taskToEdit: taskToEdit,
+      initialFolderId: initialFolderId,
+      initialDate: initialDate,
+    ),
   );
 }

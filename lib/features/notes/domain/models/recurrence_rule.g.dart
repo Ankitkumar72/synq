@@ -21,15 +21,15 @@ _$RecurrenceRuleImpl _$$RecurrenceRuleImplFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$$RecurrenceRuleImplToJson(
-        _$RecurrenceRuleImpl instance) =>
-    <String, dynamic>{
-      'interval': instance.interval,
-      'unit': _$RecurrenceUnitEnumMap[instance.unit]!,
-      'endType': _$RecurrenceEndTypeEnumMap[instance.endType]!,
-      'endDate': instance.endDate?.toIso8601String(),
-      'occurrenceCount': instance.occurrenceCount,
-      'daysOfWeek': instance.daysOfWeek,
-    };
+  _$RecurrenceRuleImpl instance,
+) => <String, dynamic>{
+  'interval': instance.interval,
+  'unit': _$RecurrenceUnitEnumMap[instance.unit]!,
+  'endType': _$RecurrenceEndTypeEnumMap[instance.endType]!,
+  'endDate': instance.endDate?.toIso8601String(),
+  'occurrenceCount': instance.occurrenceCount,
+  'daysOfWeek': instance.daysOfWeek,
+};
 
 const _$RecurrenceUnitEnumMap = {
   RecurrenceUnit.day: 'day',

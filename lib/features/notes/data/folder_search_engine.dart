@@ -2,13 +2,11 @@ import '../domain/models/folder.dart';
 import '../domain/models/note.dart';
 
 class FolderSearchEngine {
-  FolderSearchEngine({
-    required List<Folder> folders,
-    required List<Note> notes,
-  })  : _folderOrder = folders.map((f) => f.id).toList(),
-        _folderOrderIndex = {
-          for (var i = 0; i < folders.length; i++) folders[i].id: i,
-        } {
+  FolderSearchEngine({required List<Folder> folders, required List<Note> notes})
+    : _folderOrder = folders.map((f) => f.id).toList(),
+      _folderOrderIndex = {
+        for (var i = 0; i < folders.length; i++) folders[i].id: i,
+      } {
     final notesByFolder = <String, List<Note>>{};
     for (final note in notes) {
       final folderId = note.folderId;
@@ -131,8 +129,9 @@ class FolderSearchEngine {
       ..sort((a, b) {
         final scoreCompare = b.value.compareTo(a.value);
         if (scoreCompare != 0) return scoreCompare;
-        return (_folderOrderIndex[a.key] ?? 0)
-            .compareTo(_folderOrderIndex[b.key] ?? 0);
+        return (_folderOrderIndex[a.key] ?? 0).compareTo(
+          _folderOrderIndex[b.key] ?? 0,
+        );
       });
 
     return ranked.map((entry) => entry.key).toList(growable: false);
@@ -173,10 +172,7 @@ class FolderSearchEngine {
 
   static Set<String> _tokenize(String input) {
     if (input.isEmpty) return <String>{};
-    return input
-        .split(' ')
-        .where((token) => token.length >= 2)
-        .toSet();
+    return input.split(' ').where((token) => token.length >= 2).toSet();
   }
 
   static Set<String> _trigrams(String token) {
@@ -203,7 +199,9 @@ class FolderSearchEngine {
       var rowMin = current[0];
 
       for (var j = 1; j <= b.length; j++) {
-        final substitutionCost = a.codeUnitAt(i - 1) == b.codeUnitAt(j - 1) ? 0 : 1;
+        final substitutionCost = a.codeUnitAt(i - 1) == b.codeUnitAt(j - 1)
+            ? 0
+            : 1;
         final deletion = previous[j] + 1;
         final insertion = current[j - 1] + 1;
         final substitution = previous[j - 1] + substitutionCost;

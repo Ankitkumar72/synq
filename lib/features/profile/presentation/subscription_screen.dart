@@ -40,7 +40,10 @@ class SubscriptionScreen extends StatelessWidget {
               // Pricing Card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 24,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F6FC),
                   borderRadius: BorderRadius.circular(24),
@@ -49,7 +52,10 @@ class SubscriptionScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFDCE6FF),
                         borderRadius: BorderRadius.circular(20),
@@ -90,15 +96,12 @@ class SubscriptionScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '(Just \$2.08 / month — less than a coffee!)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
 
               // Features Comparison
@@ -129,7 +132,10 @@ class SubscriptionScreen extends StatelessWidget {
                           _buildFeatureItem('Local Only', isCheck: false),
                           _buildFeatureItem('1 Device', isCheck: false),
                           _buildFeatureItem('Basic Stats', isCheck: false),
-                          _buildFeatureItem('Secure local storage & TLS sync', isCheck: true),
+                          _buildFeatureItem(
+                            'Secure local storage & TLS sync',
+                            isCheck: true,
+                          ),
                         ],
                       ),
                     ),
@@ -163,16 +169,19 @@ class SubscriptionScreen extends StatelessWidget {
                           _buildFeatureItem('Unlimited Devices', isCheck: true),
                           _buildFeatureItem('100MB Files', isCheck: true),
                           _buildFeatureItem('Deep Analytics', isCheck: true),
-                          _buildFeatureItem('Secure local storage & TLS sync', isCheck: true),
+                          _buildFeatureItem(
+                            'Secure local storage & TLS sync',
+                            isCheck: true,
+                          ),
                         ],
                       ),
                     ),
                   ),
                 ],
               ),
-              
+
               const Spacer(flex: 2),
-              
+
               // Subscription CTA
               SizedBox(
                 width: double.infinity,

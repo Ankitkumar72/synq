@@ -10,16 +10,16 @@ final userRepositoryProvider = Provider<UserRepository>((ref) {
 
 final userProvider = StreamProvider<SynqUser?>((ref) {
   final authState = ref.watch(authProvider);
-  
+
   if (!authState.isAuthenticated) {
     return Stream.value(null);
   }
-  
+
   final uid = FirebaseAuth.instance.currentUser?.uid;
   if (uid == null) {
     return Stream.value(null);
   }
-  
+
   final userRepo = ref.watch(userRepositoryProvider);
   return userRepo.watchUser(uid);
 });

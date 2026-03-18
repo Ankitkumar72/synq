@@ -25,23 +25,23 @@ class NextUpCard extends ConsumerWidget {
                 Text(
                   "--:--",
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   "All Caught Up",
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
                 Text(
                   "No more events",
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black54,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.black54),
                 ),
               ],
             );
@@ -59,11 +59,11 @@ class NextUpCard extends ConsumerWidget {
                   Text(
                     "UPCOMING TASK",
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                          letterSpacing: 0.5,
-                        ),
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -71,25 +71,27 @@ class NextUpCard extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                   Text(
                     _formatTime(task.scheduledTime!),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ],
               ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        error: (err, stack) => Center(child: Icon(Icons.error_outline, color: Colors.red[300])),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        error: (err, stack) =>
+            Center(child: Icon(Icons.error_outline, color: Colors.red[300])),
       ),
     );
   }
@@ -101,19 +103,23 @@ class NextUpCard extends ConsumerWidget {
         Text(
           "NEXT",
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
         ),
-        const Icon(Icons.calendar_today_outlined, size: 18, color: Colors.black),
+        const Icon(
+          Icons.calendar_today_outlined,
+          size: 18,
+          color: Colors.black,
+        ),
       ],
     );
   }
 
   String _formatTime(DateTime dateTime) {
-    final hour = dateTime.hour > 12 
-        ? dateTime.hour - 12 
+    final hour = dateTime.hour > 12
+        ? dateTime.hour - 12
         : (dateTime.hour == 0 ? 12 : dateTime.hour);
     final minute = dateTime.minute.toString().padLeft(2, '0');
     final period = dateTime.hour >= 12 ? 'PM' : 'AM';

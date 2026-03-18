@@ -38,19 +38,20 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
 
   void _scrollToSelectedDate({bool animate = true}) {
     if (!mounted || !_weekScrollController.hasClients) return;
-    
+
     final selectedDate = ref.read(selectedDateProvider);
     final weekDays = _getWeekDays(selectedDate);
     final index = weekDays.indexWhere((d) => _isSameDay(d, selectedDate));
-    
+
     if (index >= 0) {
       final itemWidth = 70.0; // 60 width + 5*2 margin
       final screenWidth = MediaQuery.of(context).size.width;
-      final targetOffset = (index * itemWidth) + 16.0 - (screenWidth / 2) + (itemWidth / 2);
-      
+      final targetOffset =
+          (index * itemWidth) + 16.0 - (screenWidth / 2) + (itemWidth / 2);
+
       double maxScroll = _weekScrollController.position.maxScrollExtent;
       double offset = targetOffset.clamp(0.0, maxScroll);
-      
+
       if (animate) {
         _weekScrollController.animateTo(
           offset,
@@ -65,12 +66,14 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
 
   void _toggleView() {
     final viewMode = ref.read(timelineViewModeProvider);
-    
+
     if (viewMode == TimelineViewMode.monthly) {
-      ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.weekly;
+      ref.read(timelineViewModeProvider.notifier).state =
+          TimelineViewMode.weekly;
     } else {
-      ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.monthly;
-      
+      ref.read(timelineViewModeProvider.notifier).state =
+          TimelineViewMode.monthly;
+
       final selectedDate = ref.read(selectedDateProvider);
       setState(() {
         _visibleMonth = DateTime(selectedDate.year, selectedDate.month);
@@ -97,7 +100,8 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     });
 
     ref.listen(timelineViewModeProvider, (previous, next) {
-      if (previous == TimelineViewMode.monthly && next != TimelineViewMode.monthly) {
+      if (previous == TimelineViewMode.monthly &&
+          next != TimelineViewMode.monthly) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToSelectedDate(animate: false);
         });
@@ -119,7 +123,9 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
 
     // Sort tasks chronologically
     for (final date in tasksByDate.keys) {
-      tasksByDate[date]!.sort((a, b) => a.scheduledTime!.compareTo(b.scheduledTime!));
+      tasksByDate[date]!.sort(
+        (a, b) => a.scheduledTime!.compareTo(b.scheduledTime!),
+      );
     }
 
     return isMonthly
@@ -163,7 +169,8 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                       Flexible(
                         child: Text(
                           title,
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                                 fontSize: 26,
@@ -174,7 +181,11 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                       if (isMonthly)
                         const Padding(
                           padding: EdgeInsets.only(left: 4, top: 4),
-                          child: Icon(Icons.keyboard_arrow_down, size: 28, color: AppColors.textPrimary),
+                          child: Icon(
+                            Icons.keyboard_arrow_down,
+                            size: 28,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                     ],
                   ),
@@ -183,8 +194,8 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      color: AppColors.textSecondary,
+                    ),
                   ),
               ],
             ),
@@ -201,10 +212,14 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                     color: Color(0xFFF6F8FA),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.menu, color: AppColors.textPrimary, size: 24),
+                  child: const Icon(
+                    Icons.menu,
+                    color: AppColors.textPrimary,
+                    size: 24,
+                  ),
                 ),
               );
-            }
+            },
           ),
         ],
       ),
@@ -212,7 +227,10 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
   }
 
   Widget _buildWeeklyView(
-      BuildContext context, DateTime selectedDate, Set<DateTime> datesWithTasks) {
+    BuildContext context,
+    DateTime selectedDate,
+    Set<DateTime> datesWithTasks,
+  ) {
     final weekDays = _getWeekDays(selectedDate);
     final weekNumber = _getWeekNumber(selectedDate);
 
@@ -255,7 +273,11 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
   }
 
   Widget _buildMonthlyView(
-      BuildContext context, DateTime selectedDate, Set<DateTime> datesWithTasks, Map<DateTime, List<Note>> tasksByDate) {
+    BuildContext context,
+    DateTime selectedDate,
+    Set<DateTime> datesWithTasks,
+    Map<DateTime, List<Note>> tasksByDate,
+  ) {
     return Column(
       key: const ValueKey('monthly'),
       children: [
@@ -272,8 +294,12 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                 // Update visible month title faster during scroll
                 final page = _monthPageController.page ?? 0;
                 final index = page.round();
-                final newVisibleMonth = DateTime(_today.year, _today.month + index);
-                if (newVisibleMonth.month != _visibleMonth.month || newVisibleMonth.year != _visibleMonth.year) {
+                final newVisibleMonth = DateTime(
+                  _today.year,
+                  _today.month + index,
+                );
+                if (newVisibleMonth.month != _visibleMonth.month ||
+                    newVisibleMonth.year != _visibleMonth.year) {
                   setState(() {
                     _visibleMonth = newVisibleMonth;
                   });
@@ -284,7 +310,9 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
             child: PageView.builder(
               controller: _monthPageController,
               scrollDirection: Axis.vertical,
-              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
               onPageChanged: (index) {
                 // final fallback if notification missed it
                 setState(() {
@@ -293,7 +321,13 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
               },
               itemBuilder: (context, index) {
                 final monthDate = DateTime(_today.year, _today.month + index);
-                return _buildMonthGrid(context, monthDate, selectedDate, datesWithTasks, tasksByDate);
+                return _buildMonthGrid(
+                  context,
+                  monthDate,
+                  selectedDate,
+                  datesWithTasks,
+                  tasksByDate,
+                );
               },
             ),
           ),
@@ -302,17 +336,27 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     );
   }
 
-  Future<void> _showMonthYearPicker(BuildContext context, DateTime selectedDate) async {
-    DateTime tempDate = _isSameMonth(selectedDate, _visibleMonth) ? selectedDate : _visibleMonth;
+  Future<void> _showMonthYearPicker(
+    BuildContext context,
+    DateTime selectedDate,
+  ) async {
+    DateTime tempDate = _isSameMonth(selectedDate, _visibleMonth)
+        ? selectedDate
+        : _visibleMonth;
     final DateTime? picked = await showDialog<DateTime>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: Text(
             'Select Month & Year',
-            style: GoogleFonts.roboto(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: GoogleFonts.roboto(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
           content: SizedBox(
             width: 300,
@@ -321,9 +365,11 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
               data: Theme.of(context).copyWith(
                 colorScheme: Theme.of(context).colorScheme.copyWith(
                   onSurface: Colors.black,
-                  onSurfaceVariant: Colors.black, 
+                  onSurfaceVariant: Colors.black,
                   onPrimary: Colors.white,
-                  primary: const Color(0xFF5473F7), // Match app theme blue for highlights
+                  primary: const Color(
+                    0xFF5473F7,
+                  ), // Match app theme blue for highlights
                 ),
                 textTheme: Theme.of(context).textTheme.apply(
                   bodyColor: Colors.black,
@@ -346,15 +392,23 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel', style: GoogleFonts.roboto(color: Colors.grey)),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.roboto(color: Colors.grey),
+              ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(tempDate),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1E1E1E),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: Text('Confirm', style: GoogleFonts.roboto(color: Colors.white)),
+              child: Text(
+                'Confirm',
+                style: GoogleFonts.roboto(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -363,12 +417,13 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
 
     if (picked != null) {
       // Calculate index relative to _today.month
-      final monthsDiff = (picked.year - _today.year) * 12 + (picked.month - _today.month);
-      
+      final monthsDiff =
+          (picked.year - _today.year) * 12 + (picked.month - _today.month);
+
       setState(() {
         _visibleMonth = picked;
       });
-      
+
       _monthPageController.animateToPage(
         monthsDiff,
         duration: const Duration(milliseconds: 400),
@@ -377,7 +432,13 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     }
   }
 
-  Widget _buildMonthGrid(BuildContext context, DateTime monthDate, DateTime selectedDate, Set<DateTime> datesWithTasks, Map<DateTime, List<Note>> tasksByDate) {
+  Widget _buildMonthGrid(
+    BuildContext context,
+    DateTime monthDate,
+    DateTime selectedDate,
+    Set<DateTime> datesWithTasks,
+    Map<DateTime, List<Note>> tasksByDate,
+  ) {
     final monthDays = _getMonthDays(monthDate);
     final weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -400,13 +461,15 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: weekdays
-                .map((d) => Text(
-                      d,
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ))
+                .map(
+                  (d) => Text(
+                    d,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
                 .toList(),
           ),
           Expanded(
@@ -416,16 +479,25 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                 crossAxisCount: 7,
                 mainAxisSpacing: 4,
                 crossAxisSpacing: 4,
-                childAspectRatio: 0.5, // Adjusted from 0.45 for better stability
+                childAspectRatio:
+                    0.5, // Adjusted from 0.45 for better stability
               ),
               itemCount: 42, // Always show 6 rows
               itemBuilder: (context, index) {
                 final date = monthDays[index];
                 final isPadding = date.month != monthDate.month;
                 final isSelected = _isSameDay(date, selectedDate);
-                final dayTasks = tasksByDate[DateTime(date.year, date.month, date.day)] ?? [];
+                final dayTasks =
+                    tasksByDate[DateTime(date.year, date.month, date.day)] ??
+                    [];
 
-                return _buildGridDayItem(context, date, isSelected, dayTasks, isPadding);
+                return _buildGridDayItem(
+                  context,
+                  date,
+                  isSelected,
+                  dayTasks,
+                  isPadding,
+                );
               },
             ),
           ),
@@ -434,8 +506,12 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     );
   }
 
-
-  Widget _buildDayItem(BuildContext context, DateTime date, bool isSelected, bool hasTasks) {
+  Widget _buildDayItem(
+    BuildContext context,
+    DateTime date,
+    bool isSelected,
+    bool hasTasks,
+  ) {
     final isToday = _isSameDay(date, DateTime.now());
     return GestureDetector(
       onTap: () => ref.read(selectedDateProvider.notifier).state = date,
@@ -445,14 +521,21 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF5473F7) : const Color(0xFFF5F7FF),
           borderRadius: BorderRadius.circular(35),
-          border: isToday && !isSelected ? Border.all(color: const Color(0xFF5473F7).withValues(alpha: 0.5), width: 1.5) : null,
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: const Color(0xFF5473F7).withValues(alpha: 0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            )
-          ] : [],
+          border: isToday && !isSelected
+              ? Border.all(
+                  color: const Color(0xFF5473F7).withValues(alpha: 0.5),
+                  width: 1.5,
+                )
+              : null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF5473F7).withValues(alpha: 0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : [],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -460,7 +543,9 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
             Text(
               DateFormat('E').format(date).substring(0, 3),
               style: GoogleFonts.roboto(
-                color: isSelected ? Colors.white.withValues(alpha: 0.8) : Colors.grey.shade500,
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.8)
+                    : Colors.grey.shade500,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -492,13 +577,19 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
   }
 
   Widget _buildGridDayItem(
-      BuildContext context, DateTime date, bool isSelected, List<Note> tasks, bool isPadding) {
+    BuildContext context,
+    DateTime date,
+    bool isSelected,
+    List<Note> tasks,
+    bool isPadding,
+  ) {
     final isToday = _isSameDay(date, DateTime.now());
     return GestureDetector(
       onTap: () {
         ref.read(selectedDateProvider.notifier).state = date;
         // Redirect to daily timeline
-        ref.read(timelineViewModeProvider.notifier).state = TimelineViewMode.daily;
+        ref.read(timelineViewModeProvider.notifier).state =
+            TimelineViewMode.daily;
       },
       child: Column(
         children: [
@@ -508,13 +599,18 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
             decoration: BoxDecoration(
               color: isSelected ? const Color(0xFF1E1E1E) : Colors.transparent,
               shape: BoxShape.circle,
-              border: isToday && !isSelected ? Border.all(color: const Color(0xFF5473F7).withValues(alpha: 0.5), width: 1.5) : null,
+              border: isToday && !isSelected
+                  ? Border.all(
+                      color: const Color(0xFF5473F7).withValues(alpha: 0.5),
+                      width: 1.5,
+                    )
+                  : null,
             ),
             child: Text(
               date.day.toString(),
               style: GoogleFonts.roboto(
-                color: isSelected 
-                    ? Colors.white 
+                color: isSelected
+                    ? Colors.white
                     : (isPadding ? Colors.grey.shade400 : Colors.black87),
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
@@ -530,30 +626,41 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
               separatorBuilder: (context, index) => const SizedBox(height: 2),
               itemBuilder: (context, index) {
                 if (index == 6 && tasks.length > 7) {
-                   return Center(
-                     child: Text(
-                       '···',
-                       style: TextStyle(fontSize: 10, color: Colors.grey.shade400, fontWeight: FontWeight.bold),
-                     ),
-                   );
+                  return Center(
+                    child: Text(
+                      '···',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
                 }
                 final task = tasks[index];
                 return Opacity(
                   opacity: isPadding ? 0.7 : 1.0,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
-                      color: (task.category.name.toLowerCase() == 'work' 
-                          ? const Color(0xFFE8EEFF) 
+                      color: (task.category.name.toLowerCase() == 'work'
+                          ? const Color(0xFFE8EEFF)
                           : const Color(0xFFF0FDF4)),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          task.isCompleted ? Icons.check_circle : Icons.circle_outlined,
+                          task.isCompleted
+                              ? Icons.check_circle
+                              : Icons.circle_outlined,
                           size: 8,
-                          color: task.isCompleted ? const Color(0xFF5473F7) : Colors.grey.shade400,
+                          color: task.isCompleted
+                              ? const Color(0xFF5473F7)
+                              : Colors.grey.shade400,
                         ),
                         const SizedBox(width: 2),
                         Expanded(
@@ -588,29 +695,29 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
   List<DateTime> _getMonthDays(DateTime source) {
     final firstDayOfMonth = DateTime(source.year, source.month, 1);
     final lastDayOfMonth = DateTime(source.year, source.month + 1, 0);
-    
+
     final daysInMonth = lastDayOfMonth.day;
     final firstWeekday = (firstDayOfMonth.weekday - 1);
-    
+
     final days = <DateTime>[];
-    
+
     // Padding previous month
     for (var i = firstWeekday; i > 0; i--) {
       days.add(firstDayOfMonth.subtract(Duration(days: i)));
     }
-    
+
     // Current month
     for (var i = 0; i < daysInMonth; i++) {
       days.add(firstDayOfMonth.add(Duration(days: i)));
     }
-    
+
     // Padding next month to exactly 42 days (6 rows)
     final totalDaysSoFar = days.length;
     final remaining = 42 - totalDaysSoFar;
     for (var i = 1; i <= remaining; i++) {
       days.add(lastDayOfMonth.add(Duration(days: i)));
     }
-    
+
     return days;
   }
 

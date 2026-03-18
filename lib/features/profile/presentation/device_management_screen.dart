@@ -11,10 +11,12 @@ class DeviceManagementScreen extends ConsumerStatefulWidget {
   const DeviceManagementScreen({super.key});
 
   @override
-  ConsumerState<DeviceManagementScreen> createState() => _DeviceManagementScreenState();
+  ConsumerState<DeviceManagementScreen> createState() =>
+      _DeviceManagementScreenState();
 }
 
-class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen> {
+class _DeviceManagementScreenState
+    extends ConsumerState<DeviceManagementScreen> {
   final DeviceService _deviceService = DeviceService();
   String? _currentDeviceId;
 
@@ -58,7 +60,7 @@ class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen>
       body: userAsync.when(
         data: (user) {
           if (user == null) return const Center(child: Text('User not found'));
-          
+
           final devices = user.activeDevices;
           final limit = user.planTier == PlanTier.pro ? 'Unlimited' : '1';
 
@@ -82,7 +84,8 @@ class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen>
                 Expanded(
                   child: ListView.separated(
                     itemCount: devices.length,
-                    separatorBuilder: (context, index) => const Divider(height: 32),
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 32),
                     itemBuilder: (context, index) {
                       final device = devices[index];
                       final isCurrent = device['id'] == _currentDeviceId;
@@ -124,7 +127,9 @@ class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tier == PlanTier.pro ? 'Pro Device Sync' : 'Free Device Limit',
+                  tier == PlanTier.pro
+                      ? 'Pro Device Sync'
+                      : 'Free Device Limit',
                   style: GoogleFonts.roboto(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -145,7 +150,11 @@ class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen>
     );
   }
 
-  Widget _buildDeviceItem(String uid, Map<String, dynamic> device, bool isCurrent) {
+  Widget _buildDeviceItem(
+    String uid,
+    Map<String, dynamic> device,
+    bool isCurrent,
+  ) {
     String lastSeenStr = 'Unknown';
     if (device['last_seen'] != null) {
       if (device['last_seen'] is Timestamp) {
@@ -157,7 +166,9 @@ class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen>
     return Row(
       children: [
         Icon(
-          isCurrent ? Icons.phone_android_rounded : Icons.desktop_windows_rounded,
+          isCurrent
+              ? Icons.phone_android_rounded
+              : Icons.desktop_windows_rounded,
           color: isCurrent ? const Color(0xFF5473F7) : Colors.grey,
         ),
         const SizedBox(width: 16),
@@ -177,7 +188,10 @@ class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen>
                   if (isCurrent) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF5473F7).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -207,18 +221,25 @@ class _DeviceManagementScreenState extends ConsumerState<DeviceManagementScreen>
         if (!isCurrent)
           IconButton(
             icon: const Icon(Icons.remove_circle_outline, color: Colors.grey),
-            onPressed: () => _confirmRemoveDevice(uid, device['id'], device['name']),
+            onPressed: () =>
+                _confirmRemoveDevice(uid, device['id'], device['name']),
           ),
       ],
     );
   }
 
-  Future<void> _confirmRemoveDevice(String uid, String deviceId, String name) async {
+  Future<void> _confirmRemoveDevice(
+    String uid,
+    String deviceId,
+    String name,
+  ) async {
     final shouldRemove = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove Device?'),
-        content: Text('Are you sure you want to remove "$name"? You will be signed out on that device.'),
+        content: Text(
+          'Are you sure you want to remove "$name"? You will be signed out on that device.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),

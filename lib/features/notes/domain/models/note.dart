@@ -1,12 +1,11 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'recurrence_rule.dart'; 
+import 'recurrence_rule.dart';
 
 part 'note.freezed.dart';
 part 'note.g.dart';
 
 /// Category for notes and tasks
 enum NoteCategory { work, personal, idea }
-
 
 enum TaskPriority { low, medium, high }
 
@@ -20,7 +19,8 @@ class SubTask with _$SubTask {
     @Default(false) bool isCompleted,
   }) = _SubTask;
 
-  factory SubTask.fromJson(Map<String, dynamic> json) => _$SubTaskFromJson(json);
+  factory SubTask.fromJson(Map<String, dynamic> json) =>
+      _$SubTaskFromJson(json);
 }
 
 @freezed
@@ -38,21 +38,21 @@ class Note with _$Note {
     DateTime? scheduledTime,
     DateTime? endTime,
     DateTime? reminderTime,
-    RecurrenceRule? recurrenceRule, 
-    String? parentRecurringId, 
-    DateTime? originalScheduledTime, 
+    RecurrenceRule? recurrenceRule,
+    String? parentRecurringId,
+    DateTime? originalScheduledTime,
     DateTime? completedAt,
     @Default(TaskPriority.medium) TaskPriority priority,
-    @Default(false) bool isTask, 
-    @Default(false) bool isAllDay, 
-    @Default(false) bool isRecurringInstance, 
+    @Default(false) bool isTask,
+    @Default(false) bool isAllDay,
+    @Default(false) bool isRecurringInstance,
     @Default(false) bool isCompleted,
     @Default([]) List<String> tags,
-    @Default([]) List<String> attachments, 
-    @Default([]) List<String> links, 
-    @Default([]) List<SubTask> subtasks, 
-    String? folderId, 
-    DateTime? updatedAt, 
+    @Default([]) List<String> attachments,
+    @Default([]) List<String> links,
+    @Default([]) List<SubTask> subtasks,
+    String? folderId,
+    DateTime? updatedAt,
     String? deviceLastEdited,
     int? color,
     @Default(0) int order,
@@ -60,23 +60,22 @@ class Note with _$Note {
 
   factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);
 
-  Duration? get duration => 
-    (scheduledTime != null && endTime != null) 
-      ? endTime!.difference(scheduledTime!) 
+  Duration? get duration => (scheduledTime != null && endTime != null)
+      ? endTime!.difference(scheduledTime!)
       : null;
-      
+
   /// Checks if the task is currently happening (Now is between Start and End)
   bool get isActive {
     if (scheduledTime == null || endTime == null) return false;
     final now = DateTime.now();
     return now.isAfter(scheduledTime!) && now.isBefore(endTime!);
   }
-  
+
   /// Checks if the task is starting within the next hour
   bool get isUpcoming {
     if (scheduledTime == null) return false;
     final now = DateTime.now();
-    return scheduledTime!.isAfter(now) && 
-           scheduledTime!.isBefore(now.add(const Duration(hours: 1)));
+    return scheduledTime!.isAfter(now) &&
+        scheduledTime!.isBefore(now.add(const Duration(hours: 1)));
   }
 }

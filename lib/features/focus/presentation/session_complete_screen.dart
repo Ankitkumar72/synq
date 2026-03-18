@@ -23,7 +23,7 @@ class SessionCompleteScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 32),
-              
+
               // Title
               Text(
                 'Session Complete',
@@ -35,7 +35,7 @@ class SessionCompleteScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // Checkmark Circle
               Container(
                 width: 120,
@@ -51,7 +51,7 @@ class SessionCompleteScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 48),
-              
+
               // Summary Card
               Container(
                 padding: const EdgeInsets.all(24),
@@ -87,7 +87,7 @@ class SessionCompleteScreen extends StatelessWidget {
                       padding: EdgeInsets.symmetric(vertical: 16.0),
                       child: Divider(color: Color(0xFFE5E7EB), height: 1),
                     ),
-                    
+
                     // Task Name Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -116,7 +116,7 @@ class SessionCompleteScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Quote
                     Text(
                       '"Consistency is the hallmark of the unimaginative, but the foundation of design."',
@@ -132,7 +132,7 @@ class SessionCompleteScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 64),
-              
+
               // Buttons
               SizedBox(
                 width: double.infinity,
@@ -151,7 +151,9 @@ class SessionCompleteScreen extends StatelessWidget {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5372F6), // Blue matching back to tasks in design
+                    backgroundColor: const Color(
+                      0xFF5372F6,
+                    ), // Blue matching back to tasks in design
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

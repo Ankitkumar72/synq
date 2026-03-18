@@ -9,9 +9,7 @@ class GoogleLogo extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _GoogleLogoPainter(),
-      ),
+      child: CustomPaint(painter: _GoogleLogoPainter()),
     );
   }
 }
@@ -32,7 +30,7 @@ class _GoogleLogoPainter extends CustomPainter {
     final Paint paint = Paint()..style = PaintingStyle.fill;
 
     // Path Data (Approximated from standard SVG)
-    
+
     // 1. Blue (Right + Center Bar)
     // M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z
     final Path bluePath = Path();
@@ -68,7 +66,7 @@ class _GoogleLogoPainter extends CustomPainter {
     // Green: Bottom
     // Yellow: Left (bottom)
     // Red: Top (and Left top)
-    
+
     // M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z
     final Path yellowPath = Path();
     yellowPath.moveTo(10.53, 28.59);

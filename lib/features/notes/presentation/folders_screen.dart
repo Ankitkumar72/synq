@@ -23,10 +23,7 @@ import '../../../../core/navigation/fade_page_route.dart';
 final folderSearchEngineProvider = Provider<FolderSearchEngine>((ref) {
   final folders = ref.watch(foldersProvider).value ?? const <Folder>[];
   final notes = ref.watch(notesProvider).value ?? const <Note>[];
-  return FolderSearchEngine(
-    folders: folders,
-    notes: notes,
-  );
+  return FolderSearchEngine(folders: folders, notes: notes);
 });
 
 class FoldersScreen extends ConsumerStatefulWidget {
@@ -41,7 +38,8 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
   Timer? _searchDebounce;
   String _searchQuery = '';
   static const double _gridSpacing = 12;
-  static const double _gridAspectRatio = 2.5; // Changed from 1.78 to 2.5 for horizontal pills
+  static const double _gridAspectRatio =
+      2.5; // Changed from 1.78 to 2.5 for horizontal pills
 
   @override
   void dispose() {
@@ -83,9 +81,11 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                 .whereType<Folder>()
                 .where((f) => isSearching ? true : f.parentId == null)
                 .toList(growable: false);
-            
+
             // Favorites (filtered by search when query exists)
-            final favorites = visibleFolders.where((f) => f.isFavorite).toList();
+            final favorites = visibleFolders
+                .where((f) => f.isFavorite)
+                .toList();
             final contentWidth = MediaQuery.sizeOf(context).width - 48;
             final itemWidth = (contentWidth - _gridSpacing) / 2;
             final itemHeight = itemWidth / _gridAspectRatio;
@@ -93,8 +93,8 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
             final favoriteGridHeight = favoriteRowCount == 0
                 ? 0.0
                 : (favoriteRowCount * itemHeight) +
-                    ((favoriteRowCount - 1) * _gridSpacing);
-            
+                      ((favoriteRowCount - 1) * _gridSpacing);
+
             return CustomScrollView(
               slivers: [
                 SliverPadding(
@@ -107,7 +107,8 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                         children: [
                           Text(
                             'Folders', // Capitalized normally as per design
-                            style: GoogleFonts.roboto( // Changed to Serif
+                            style: GoogleFonts.roboto(
+                              // Changed to Serif
                               fontSize: 32, // Increased size
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
@@ -117,13 +118,14 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                         ],
                       ),
                       const SizedBox(height: 32), // Increased spacing
-                      
                       // Search Bar
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(100), // Pill shape
+                          borderRadius: BorderRadius.circular(
+                            100,
+                          ), // Pill shape
                         ),
                         child: TextField(
                           controller: _searchController,
@@ -139,14 +141,14 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                               },
                             );
                           },
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                          ),
+                          style: const TextStyle(color: AppColors.textPrimary),
                           decoration: InputDecoration(
                             icon: const Icon(Icons.search, color: Colors.grey),
                             hintText: 'Search folders, notes, tags...',
-                            hintStyle: const TextStyle(color: AppColors.textSecondary),
-                            filled: false, 
+                            hintStyle: const TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
+                            filled: false,
                             fillColor: Colors.transparent,
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
@@ -154,10 +156,15 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                             disabledBorder: InputBorder.none,
                             errorBorder: InputBorder.none,
                             focusedErrorBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
                             suffixIcon: isSearching
                                 ? IconButton(
-                                    icon: const Icon(Icons.close, color: Colors.grey),
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.grey,
+                                    ),
                                     onPressed: () {
                                       _searchDebounce?.cancel();
                                       _searchController.clear();
@@ -171,12 +178,12 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                         ),
                       ),
                       const SizedBox(height: 32), // Increased spacing
-                      
                       // Favorites Section
                       if (favorites.isNotEmpty) ...[
                         Text(
                           'FAVORITES',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
                                 color: AppColors.textSecondary,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2,
@@ -186,36 +193,45 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                         SizedBox(
                           height: favoriteGridHeight,
                           child: GridView.count(
-                             crossAxisCount: 2,
-                             mainAxisSpacing: _gridSpacing,
-                             crossAxisSpacing: _gridSpacing,
-                             childAspectRatio: _gridAspectRatio,
-                             shrinkWrap: true,
-                             physics: const NeverScrollableScrollPhysics(),
-                             children: favorites.map((folder) {
-                               final count = noteCountByFolderId[folder.id] ?? 0;
-                               return FolderCard(
-                                 folder: folder,
-                                 itemCount: count,
-                                 onTap: () => Navigator.push(
-                                   context,
-                                   FadePageRoute(builder: (_) => FolderDetailScreen(folder: folder)),
-                                 ),
-                                 onLongPress: () => _showFolderOptionsMenu(context, folder, count, notesSettings),
-                               );
-                             }).toList(),
+                            crossAxisCount: 2,
+                            mainAxisSpacing: _gridSpacing,
+                            crossAxisSpacing: _gridSpacing,
+                            childAspectRatio: _gridAspectRatio,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: favorites.map((folder) {
+                              final count = noteCountByFolderId[folder.id] ?? 0;
+                              return FolderCard(
+                                folder: folder,
+                                itemCount: count,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  FadePageRoute(
+                                    builder: (_) =>
+                                        FolderDetailScreen(folder: folder),
+                                  ),
+                                ),
+                                onLongPress: () => _showFolderOptionsMenu(
+                                  context,
+                                  folder,
+                                  count,
+                                  notesSettings,
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
                         const SizedBox(height: 32),
                       ],
-                      
+
                       // All Folders Header
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'ALL FOLDERS',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
                                   color: AppColors.textSecondary,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
@@ -225,9 +241,8 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                             isSearching
                                 ? '${visibleFolders.length} Results'
                                 : '${folders.length} Total', // Dynamic count text
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: AppColors.textSecondary),
                           ),
                         ],
                       ),
@@ -242,49 +257,57 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                     child: Center(
                       child: Text(
                         'No matching folders found',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(color: AppColors.textSecondary),
                       ),
                     ),
                   ),
-                
+
                 // All Folders Grid
                 if (!isSearching || visibleFolders.isNotEmpty)
                   SliverPadding(
-                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                     sliver: SliverGrid(
-                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                         crossAxisCount: 2,
-                         mainAxisSpacing: _gridSpacing,
-                         crossAxisSpacing: _gridSpacing,
-                         childAspectRatio: _gridAspectRatio,
-                       ),
-                       delegate: SliverChildBuilderDelegate(
-                         (context, index) {
-                           if (!isSearching && index == visibleFolders.length) {
-                             // Add New Folder Card only on default list
-                             return _buildAddNewFolderCard(context);
-                           }
-                           final folder = visibleFolders[index];
-                           final count = noteCountByFolderId[folder.id] ?? 0;
-                           return FolderCard(
-                             folder: folder,
-                             itemCount: count,
-                             onTap: () => Navigator.push(
-                               context,
-                               FadePageRoute(builder: (_) => FolderDetailScreen(folder: folder)),
-                             ),
-                             onLongPress: () => _showFolderOptionsMenu(context, folder, count, notesSettings),
-                           );
-                         },
-                         childCount: isSearching
-                             ? visibleFolders.length
-                             : visibleFolders.length + 1, // +1 for Add New
-                       ),
-                     ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: _gridSpacing,
+                            crossAxisSpacing: _gridSpacing,
+                            childAspectRatio: _gridAspectRatio,
+                          ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (!isSearching && index == visibleFolders.length) {
+                            // Add New Folder Card only on default list
+                            return _buildAddNewFolderCard(context);
+                          }
+                          final folder = visibleFolders[index];
+                          final count = noteCountByFolderId[folder.id] ?? 0;
+                          return FolderCard(
+                            folder: folder,
+                            itemCount: count,
+                            onTap: () => Navigator.push(
+                              context,
+                              FadePageRoute(
+                                builder: (_) =>
+                                    FolderDetailScreen(folder: folder),
+                              ),
+                            ),
+                            onLongPress: () => _showFolderOptionsMenu(
+                              context,
+                              folder,
+                              count,
+                              notesSettings,
+                            ),
+                          );
+                        },
+                        childCount: isSearching
+                            ? visibleFolders.length
+                            : visibleFolders.length + 1, // +1 for Add New
+                      ),
+                    ),
                   ),
-                 const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
               ],
             );
           },
@@ -299,12 +322,15 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
       child: CustomPaint(
         painter: _DashedBorderPainter(
           color: Colors.grey.withValues(alpha: 0.5),
-          strokeWidth: 1.0, 
+          strokeWidth: 1.0,
           radius: 100,
         ),
         child: Container(
           // No decoration border, handled by painter
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), // Same padding as FolderCard
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ), // Same padding as FolderCard
           child: Row(
             children: [
               Container(
@@ -318,7 +344,8 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Align( // Vertical center alignment
+                child: Align(
+                  // Vertical center alignment
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'New Folder',
@@ -338,7 +365,13 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
       ),
     );
   }
-  void _showFolderOptionsMenu(BuildContext context, Folder folder, int itemCount, NotesSettingsState settings) {
+
+  void _showFolderOptionsMenu(
+    BuildContext context,
+    Folder folder,
+    int itemCount,
+    NotesSettingsState settings,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -350,7 +383,9 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
         onNewNote: () {
           Navigator.push(
             context,
-            FadePageRoute(builder: (_) => NoteDetailScreen(initialFolderId: folder.id)),
+            FadePageRoute(
+              builder: (_) => NoteDetailScreen(initialFolderId: folder.id),
+            ),
           );
         },
         onNewFolder: () => showAddFolderSheet(context),
@@ -365,11 +400,15 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
 
           final notesState = ref.read(notesProvider);
           final allNotes = notesState.value ?? [];
-          final notesToCopy = allNotes.where((n) => n.folderId == folder.id).toList();
+          final notesToCopy = allNotes
+              .where((n) => n.folderId == folder.id)
+              .toList();
 
           for (final note in notesToCopy) {
             final newNote = note.copyWith(
-              id: DateTime.now().millisecondsSinceEpoch.toString() + note.id.hashCode.toString(),
+              id:
+                  DateTime.now().millisecondsSinceEpoch.toString() +
+                  note.id.hashCode.toString(),
               folderId: newFolderId,
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),
@@ -379,7 +418,12 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Copied ${folder.name} and ${notesToCopy.length} notes'), behavior: SnackBarBehavior.floating),
+              SnackBar(
+                content: Text(
+                  'Copied ${folder.name} and ${notesToCopy.length} notes',
+                ),
+                behavior: SnackBarBehavior.floating,
+              ),
             );
           }
         },
@@ -390,7 +434,11 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
           ref.read(foldersProvider.notifier).toggleFavorite(folder.id);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(folder.isFavorite ? 'Removed from favorites' : 'Added to favorites'), 
+              content: Text(
+                folder.isFavorite
+                    ? 'Removed from favorites'
+                    : 'Added to favorites',
+              ),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -398,7 +446,10 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
         onCopyPath: () {
           Clipboard.setData(ClipboardData(text: 'Synq / ${folder.name}'));
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Path copied to clipboard'), behavior: SnackBarBehavior.floating),
+            const SnackBar(
+              content: Text('Path copied to clipboard'),
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         },
         onRename: () => showAddFolderSheet(context, folderToEdit: folder),
@@ -407,7 +458,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
             ref.read(foldersProvider.notifier).deleteFolder(folder.id);
             return;
           }
-          
+
           showModalBottomSheet(
             context: context,
             backgroundColor: Colors.transparent,
@@ -417,7 +468,9 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                 ref.read(foldersProvider.notifier).deleteFolder(folder.id);
               },
               onDeleteAndDontAsk: () {
-                ref.read(notesSettingsProvider.notifier).setSkipFolderDeleteConfirmation(true);
+                ref
+                    .read(notesSettingsProvider.notifier)
+                    .setSkipFolderDeleteConfirmation(true);
                 ref.read(foldersProvider.notifier).deleteFolder(folder.id);
               },
             ),
@@ -433,12 +486,18 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     );
   }
 
-  Future<void> _moveFolder(BuildContext context, WidgetRef ref, Folder folderToMove) async {
+  Future<void> _moveFolder(
+    BuildContext context,
+    WidgetRef ref,
+    Folder folderToMove,
+  ) async {
     final foldersState = ref.read(foldersProvider);
     final folders = foldersState.value ?? const <Folder>[];
 
     // Exclude self and direct children to prevent cycles
-    final validTargets = folders.where((f) => f.id != folderToMove.id && f.parentId != folderToMove.id).toList();
+    final validTargets = folders
+        .where((f) => f.id != folderToMove.id && f.parentId != folderToMove.id)
+        .toList();
 
     const rootValue = '__root__';
     final selected = await showModalBottomSheet<String>(
@@ -482,9 +541,23 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         ListTile(
-                          leading: const Icon(Icons.home_outlined, color: Colors.grey),
-                          title: const Text('Top Level (Root)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                          trailing: folderToMove.parentId == null ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
+                          leading: const Icon(
+                            Icons.home_outlined,
+                            color: Colors.grey,
+                          ),
+                          title: const Text(
+                            'Top Level (Root)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          trailing: folderToMove.parentId == null
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Color(0xFF5473F7),
+                                )
+                              : null,
                           onTap: () => Navigator.pop(context, rootValue),
                         ),
                         const Divider(height: 1),
@@ -495,8 +568,19 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                               Icons.folder_outlined,
                               color: Color(f.colorValue),
                             ),
-                            title: Text(f.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                            trailing: isSelected ? const Icon(Icons.check, color: Color(0xFF5473F7)) : null,
+                            title: Text(
+                              f.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Color(0xFF5473F7),
+                                  )
+                                : null,
                             onTap: () => Navigator.pop(context, f.id),
                           );
                         }),
@@ -516,15 +600,31 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
     final nextParentId = selected == rootValue ? null : selected;
     if (nextParentId == folderToMove.parentId) return;
 
-    await ref.read(foldersProvider.notifier).updateFolder(folderToMove.copyWith(parentId: nextParentId));
+    await ref
+        .read(foldersProvider.notifier)
+        .updateFolder(folderToMove.copyWith(parentId: nextParentId));
 
     if (context.mounted) {
-      final parentName = nextParentId == null 
-          ? 'Root' 
-          : folders.firstWhere((f) => f.id == nextParentId, orElse: () => Folder(id: '', name: 'Folder', iconCodePoint: 0, colorValue: 0, createdAt: DateTime.now())).name;
-      
+      final parentName = nextParentId == null
+          ? 'Root'
+          : folders
+                .firstWhere(
+                  (f) => f.id == nextParentId,
+                  orElse: () => Folder(
+                    id: '',
+                    name: 'Folder',
+                    iconCodePoint: 0,
+                    colorValue: 0,
+                    createdAt: DateTime.now(),
+                  ),
+                )
+                .name;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Moved ${folderToMove.name} to $parentName'), behavior: SnackBarBehavior.floating),
+        SnackBar(
+          content: Text('Moved ${folderToMove.name} to $parentName'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }
@@ -568,7 +668,7 @@ class _DashedBorderPainter extends CustomPainter {
         distance += dashWidth + dashSpace;
       }
     }
-    
+
     canvas.drawPath(dashedPath, paint);
   }
 

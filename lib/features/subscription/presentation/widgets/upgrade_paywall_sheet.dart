@@ -12,7 +12,8 @@ class UpgradePaywallSheet extends ConsumerStatefulWidget {
   const UpgradePaywallSheet({super.key});
 
   @override
-  ConsumerState<UpgradePaywallSheet> createState() => _UpgradePaywallSheetState();
+  ConsumerState<UpgradePaywallSheet> createState() =>
+      _UpgradePaywallSheetState();
 }
 
 class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
@@ -27,9 +28,9 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
       await ref.read(paddleServiceProvider).launchCheckout(_selectedPlanSlug);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -46,9 +47,9 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
       Future.microtask(() {
         if (context.mounted) {
           Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Welcome to Synq Pro!')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Welcome to Synq Pro!')));
         }
       });
     }
@@ -80,7 +81,7 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
           const Text(
             'Upgrade to Pro',
             style: TextStyle(
-              fontSize: 24, 
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.black, // Explicitly black
             ),
@@ -95,11 +96,7 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
           const SizedBox(height: 24),
 
           // Plan Selection
-          _buildPlanOption(
-            title: 'Monthly',
-            price: '\$3.99',
-            slug: 'monthly',
-          ),
+          _buildPlanOption(title: 'Monthly', price: '\$3.99', slug: 'monthly'),
           const SizedBox(height: 12),
           _buildPlanOption(
             title: 'Yearly',
@@ -129,7 +126,9 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       ),
                       SizedBox(width: 12),
@@ -137,8 +136,11 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
                     ],
                   )
                 : const Text(
-                    'Upgrade Now', 
-                    style: TextStyle(fontSize: 16, color: Colors.white), // Explicitly white on black button
+                    'Upgrade Now',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                    ), // Explicitly white on black button
                   ),
           ),
 
@@ -148,7 +150,10 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
               child: Text(
                 'Processing your upgrade...',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54, fontStyle: FontStyle.italic), // Explicitly dark
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontStyle: FontStyle.italic,
+                ), // Explicitly dark
               ),
             ),
 
@@ -191,7 +196,9 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       fontSize: 16,
                       color: Colors.black, // Explicitly black
                     ),
@@ -207,7 +214,7 @@ class _UpgradePaywallSheetState extends ConsumerState<UpgradePaywallSheet> {
             Text(
               price,
               style: const TextStyle(
-                fontWeight: FontWeight.bold, 
+                fontWeight: FontWeight.bold,
                 fontSize: 16,
                 color: Colors.black, // Explicitly black
               ),

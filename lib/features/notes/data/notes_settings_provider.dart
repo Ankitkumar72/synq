@@ -15,7 +15,8 @@ class NotesSettingsState {
     bool? isLoading,
   }) {
     return NotesSettingsState(
-      skipFolderDeleteConfirmation: skipFolderDeleteConfirmation ?? this.skipFolderDeleteConfirmation,
+      skipFolderDeleteConfirmation:
+          skipFolderDeleteConfirmation ?? this.skipFolderDeleteConfirmation,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -44,6 +45,7 @@ class NotesSettingsNotifier extends StateNotifier<NotesSettingsState> {
   }
 }
 
-final notesSettingsProvider = StateNotifierProvider<NotesSettingsNotifier, NotesSettingsState>((ref) {
-  return NotesSettingsNotifier();
-});
+final notesSettingsProvider =
+    StateNotifierProvider<NotesSettingsNotifier, NotesSettingsState>((ref) {
+      return NotesSettingsNotifier();
+    });

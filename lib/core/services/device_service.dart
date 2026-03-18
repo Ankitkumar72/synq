@@ -39,9 +39,6 @@ class DeviceService {
       debugPrint('Error getting device info: $e');
     }
 
-    return {
-      'id': deviceId,
-      'name': deviceName,
-    };
+    return {'id': deviceId, 'name': deviceName};
   }
 }

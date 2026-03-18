@@ -3,9 +3,11 @@ import '../domain/models/folder.dart';
 import 'folders_repository.dart';
 import 'repository_provider.dart';
 
-final foldersProvider = StreamNotifierProvider<FoldersNotifier, List<Folder>>(() {
-  return FoldersNotifier();
-});
+final foldersProvider = StreamNotifierProvider<FoldersNotifier, List<Folder>>(
+  () {
+    return FoldersNotifier();
+  },
+);
 
 class FoldersNotifier extends StreamNotifier<List<Folder>> {
   late FoldersRepository _repository;
@@ -31,7 +33,10 @@ class FoldersNotifier extends StreamNotifier<List<Folder>> {
 
   Future<void> toggleFavorite(String id) async {
     final currentFolders = state.value ?? [];
-    final folder = currentFolders.firstWhere((f) => f.id == id, orElse: () => throw Exception('Folder not found'));
+    final folder = currentFolders.firstWhere(
+      (f) => f.id == id,
+      orElse: () => throw Exception('Folder not found'),
+    );
     final updatedFolder = folder.copyWith(isFavorite: !folder.isFavorite);
     await updateFolder(updatedFolder);
   }

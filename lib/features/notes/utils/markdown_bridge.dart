@@ -5,8 +5,9 @@ import 'package:markdown_quill/markdown_quill.dart';
 
 class MarkdownBridge {
   static final md.Document _mdDocument = md.Document(encodeHtml: false);
-  static final MarkdownToDelta _mdToDelta =
-      MarkdownToDelta(markdownDocument: _mdDocument);
+  static final MarkdownToDelta _mdToDelta = MarkdownToDelta(
+    markdownDocument: _mdDocument,
+  );
   static final DeltaToMarkdown _deltaToMd = DeltaToMarkdown();
 
   /// Converts a Markdown string from Firestore into a Quill [Document] Delta format

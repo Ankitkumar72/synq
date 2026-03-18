@@ -15,6 +15,7 @@ import '../../../notes/domain/models/note.dart';
 import '../../../notes/presentation/task_detail_screen.dart';
 import '../../../shell/presentation/main_shell.dart';
 import '../pages/create_event_page.dart';
+import '../pages/view_event_page.dart';
 import '../pages/schedule_timeline_content.dart';
 import '../pages/weekly_timeline_content.dart';
 
@@ -151,7 +152,9 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
     // Parse tapped time into a DateTime for pre-filling.
     DateTime? initialDateTime;
     try {
-      final parsed = DateFormat('h:mm a').parse(tappedTime.trim().toUpperCase());
+      final parsed = DateFormat(
+        'h:mm a',
+      ).parse(tappedTime.trim().toUpperCase());
       initialDateTime = DateTime(
         selectedDate.year,
         selectedDate.month,
@@ -186,10 +189,7 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
             const SizedBox(height: 16),
             Text(
               'Create at $tappedTime',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 20),
             Row(
@@ -235,17 +235,24 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
     if (task == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Task details not found'),
+          content: Text('Event details not found'),
           duration: Duration(seconds: 1),
         ),
       );
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)),
-    );
+    if (task.isTask) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ViewEventPage(event: task)),
+      );
+    }
   }
 
   Note? _findTaskForEvent(TimelineEvent event) {

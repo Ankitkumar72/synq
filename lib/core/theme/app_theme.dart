@@ -6,29 +6,41 @@ class AppColors {
   static const Color background = Color(0xFFF8F9FA); // Very light grey/white
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFF1C1C1E);
-  
+
   // Text
   static const Color textPrimary = Color(0xFF1A1A1A);
   static const Color textSecondary = Color(0xFF8E8E93);
-  
+
   // Accents
   static const Color primary = Color(0xFF4B7BFF); // Electric Blue from design
-  static const Color accentPurple = Color(0xFF8E84FF); // Soft Purple (AI/Smart accent)
+  static const Color accentPurple = Color(
+    0xFF8E84FF,
+  ); // Soft Purple (AI/Smart accent)
   static const Color success = Color(0xFF34C759);
-  
+
   // Specific Visuals
-  static const Color deepWorkDark = Color(0xFF121212); // Almost black for 'Completed' card
+  static const Color deepWorkDark = Color(
+    0xFF121212,
+  ); // Almost black for 'Completed' card
   static const Color shadow = Color(0x0F000000); // Very soft shadow
-  
+
   // Timeline Specific
-  static const Color tagPurple = Color(0xFFF3E8FF); // Light purple for tags (strategy, design)
+  static const Color tagPurple = Color(
+    0xFFF3E8FF,
+  ); // Light purple for tags (strategy, design)
   static const Color textPurple = Color(0xFF9333EA); // Dark purple for tag text
   static const Color tagAdmin = Color(0xFFE5E7EB); // Grey for admin tag
   static const Color textAdmin = Color(0xFF374151); // Dark grey for admin text
-  static const Color activeCardBg = Color(0xFFF0F6FF); // Light blue bg for active card
-  static const Color activeCardBorder = Color(0xFF4B7BFF); // Blue border for active card
+  static const Color activeCardBg = Color(
+    0xFFF0F6FF,
+  ); // Light blue bg for active card
+  static const Color activeCardBorder = Color(
+    0xFF4B7BFF,
+  ); // Blue border for active card
   static const Color restGreen = Color(0xFF34C759); // Green for rest dot
-  static const Color restGreenBg = Color(0xFFE8F5E9); // Light green for rest tag
+  static const Color restGreenBg = Color(
+    0xFFE8F5E9,
+  ); // Light green for rest tag
   static const Color activeHighlight = Color(0xFF00FFFF); // Cyan highlight
 }
 
@@ -62,9 +74,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       // Global TextField styling
       inputDecorationTheme: InputDecorationTheme(
@@ -110,12 +120,10 @@ class AppTheme {
         surface: AppColors.surfaceDark,
       ),
       textTheme: GoogleFonts.robotoTextTheme(ThemeData.dark().textTheme),
-       cardTheme: CardThemeData(
+      cardTheme: CardThemeData(
         color: AppColors.surfaceDark,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       // Global TextField styling for dark theme
       inputDecorationTheme: InputDecorationTheme(

@@ -34,7 +34,10 @@ class ProfileScreen extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.only(bottom: 16),
                             child: IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.black),
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.black,
+                              ),
                               onPressed: () => Navigator.pop(context),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
@@ -57,7 +60,11 @@ class ProfileScreen extends StatelessWidget {
                                 const CircleAvatar(
                                   radius: 35,
                                   backgroundColor: Colors.grey,
-                                  child: Icon(Icons.person, size: 35, color: Colors.white),
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 35,
+                                    color: Colors.white,
+                                  ),
                                 ),
                                 Container(
                                   padding: const EdgeInsets.all(4),
@@ -65,7 +72,11 @@ class ProfileScreen extends StatelessWidget {
                                     color: Colors.white,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(Icons.edit, size: 14, color: AppColors.primary),
+                                  child: Icon(
+                                    Icons.edit,
+                                    size: 14,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -73,8 +84,12 @@ class ProfileScreen extends StatelessWidget {
                             Consumer(
                               builder: (context, ref, _) {
                                 final userAsync = ref.watch(userProvider);
-                                final isPro = userAsync.valueOrNull?.planTier == PlanTier.pro;
-                                final email = FirebaseAuth.instance.currentUser?.email ?? 'User';
+                                final isPro =
+                                    userAsync.valueOrNull?.planTier ==
+                                    PlanTier.pro;
+                                final email =
+                                    FirebaseAuth.instance.currentUser?.email ??
+                                    'User';
                                 return Column(
                                   children: [
                                     Text(
@@ -88,10 +103,15 @@ class ProfileScreen extends StatelessWidget {
                                     const SizedBox(height: 8),
                                     if (isPro)
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 6,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: AppColors.primary,
-                                          borderRadius: BorderRadius.circular(20),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
                                         ),
                                         child: const Text(
                                           'PRO',
@@ -104,7 +124,7 @@ class ProfileScreen extends StatelessWidget {
                                       ),
                                   ],
                                 );
-                              }
+                              },
                             ),
                           ],
                         ),
@@ -114,11 +134,21 @@ class ProfileScreen extends StatelessWidget {
                       // Stats Row
                       Row(
                         children: [
-                          Expanded(child: _buildStatCard('124h', 'FOCUS\nHOURS')),
+                          Expanded(
+                            child: _buildStatCard('124h', 'FOCUS\nHOURS'),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(child: _buildStatCard('18', 'COMPLETED\nPROJECTS')),
+                          Expanded(
+                            child: _buildStatCard('18', 'COMPLETED\nPROJECTS'),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(child: _buildStatCard('Master', 'APP\nRANK', isPurple: true)),
+                          Expanded(
+                            child: _buildStatCard(
+                              'Master',
+                              'APP\nRANK',
+                              isPurple: true,
+                            ),
+                          ),
                         ],
                       ),
 
@@ -149,7 +179,8 @@ class ProfileScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const SubscriptionScreen(),
+                                    builder: (context) =>
+                                        const SubscriptionScreen(),
                                   ),
                                 );
                               },
@@ -160,7 +191,8 @@ class ProfileScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const DeviceManagementScreen(),
+                                    builder: (context) =>
+                                        const DeviceManagementScreen(),
                                   ),
                                 );
                               },
@@ -169,16 +201,18 @@ class ProfileScreen extends StatelessWidget {
                             _buildSettingItem('Privacy'),
 
                             const SizedBox(height: 16),
-                            
+
                             // Logout Button
                             Consumer(
                               builder: (context, ref, _) {
                                 return GestureDetector(
                                   onTap: () {
-                                     ref.read(authProvider.notifier).logout();
-                                     if (Navigator.canPop(context)) {
-                                       Navigator.pop(context); // Close profile screen
-                                     }
+                                    ref.read(authProvider.notifier).logout();
+                                    if (Navigator.canPop(context)) {
+                                      Navigator.pop(
+                                        context,
+                                      ); // Close profile screen
+                                    }
                                   },
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 12),
@@ -198,7 +232,7 @@ class ProfileScreen extends StatelessWidget {
                                     ),
                                   ),
                                 );
-                              }
+                              },
                             ),
                           ],
                         ),
@@ -257,10 +291,7 @@ class ProfileScreen extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
             ),
             Icon(Icons.chevron_right, color: Colors.grey[400]),
           ],

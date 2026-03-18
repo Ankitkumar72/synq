@@ -27,28 +27,34 @@ class UserRepository {
         activeDevices: [],
         storageUsedBytes: 0,
       );
-      
+
       await docRef.set(newUser.toJson(), SetOptions(merge: true));
     }
   }
 
   /// Adds a device to the user's active devices list if it doesn't exist.
-  Future<void> registerDevice(String uid, String deviceId, String deviceName) async {
+  Future<void> registerDevice(
+    String uid,
+    String deviceId,
+    String deviceName,
+  ) async {
     final docRef = _usersCollection.doc(uid);
     final snapshot = await docRef.get();
-    
+
     if (snapshot.exists) {
       final user = SynqUser.fromJson(snapshot.data()!, snapshot.id);
       final exists = user.activeDevices.any((d) => d['id'] == deviceId);
-      
+
       if (!exists) {
-        final updatedDevices = List<Map<String, dynamic>>.from(user.activeDevices);
+        final updatedDevices = List<Map<String, dynamic>>.from(
+          user.activeDevices,
+        );
         updatedDevices.add({
           'id': deviceId,
           'name': deviceName,
           'last_seen': FieldValue.serverTimestamp(),
         });
-        
+
         await docRef.update({
           'active_devices': updatedDevices,
           'active_device_ids': FieldValue.arrayUnion([deviceId]),
@@ -57,10 +63,7 @@ class UserRepository {
         // Update last_seen for existing device
         final updatedDevices = user.activeDevices.map((d) {
           if (d['id'] == deviceId) {
-            return {
-              ...d,
-              'last_seen': FieldValue.serverTimestamp(),
-            };
+            return {...d, 'last_seen': FieldValue.serverTimestamp()};
           }
           return d;
         }).toList();
@@ -73,10 +76,12 @@ class UserRepository {
   Future<void> unregisterDevice(String uid, String deviceId) async {
     final docRef = _usersCollection.doc(uid);
     final snapshot = await docRef.get();
-    
+
     if (snapshot.exists) {
       final user = SynqUser.fromJson(snapshot.data()!, snapshot.id);
-      final updatedDevices = user.activeDevices.where((d) => d['id'] != deviceId).toList();
+      final updatedDevices = user.activeDevices
+          .where((d) => d['id'] != deviceId)
+          .toList();
       await docRef.update({
         'active_devices': updatedDevices,
         'active_device_ids': FieldValue.arrayRemove([deviceId]),
@@ -88,15 +93,15 @@ class UserRepository {
   Future<bool> isDeviceAllowed(String uid, String currentDeviceId) async {
     final docRef = _usersCollection.doc(uid);
     final snapshot = await docRef.get();
-    
+
     if (snapshot.exists) {
       final user = SynqUser.fromJson(snapshot.data()!, snapshot.id);
-      
+
       // If device is already registered, it's allowed
       if (user.activeDevices.any((d) => d['id'] == currentDeviceId)) {
         return true;
       }
-      
+
       // If not registered, check limit
       final limit = user.planTier == PlanTier.pro ? 999 : 1;
       return user.activeDevices.length < limit;

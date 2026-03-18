@@ -43,7 +43,9 @@ class TimelineTaskCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: color != null ? Color(color!) : const Color(0xFFA5B4FC), // Soft Periwinkle/Blue from image
+            color: color != null
+                ? Color(color!)
+                : const Color(0xFFA5B4FC), // Soft Periwinkle/Blue from image
             borderRadius: BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
@@ -56,18 +58,22 @@ class TimelineTaskCard extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(isCompleted ? Icons.check_circle : Icons.check_circle_outline, size: 16, color: Colors.white),
+              Icon(
+                isCompleted ? Icons.check_circle : Icons.check_circle_outline,
+                size: 16,
+                color: Colors.white,
+              ),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: Colors.white,
-                        decoration: isCompleted ? TextDecoration.lineThrough : null,
-                        decorationColor: Colors.white,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Colors.white,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
+                    decorationColor: Colors.white,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -81,7 +87,9 @@ class TimelineTaskCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: color != null ? Color(color!).withValues(alpha: 0.1) : AppColors.surface,
+          color: color != null
+              ? Color(color!).withValues(alpha: 0.1)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(100), // Pill shape
         ),
         child: Row(
@@ -103,14 +111,17 @@ class TimelineTaskCard extends StatelessWidget {
                     child: Text(
                       title,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.restGreenBg,
                       borderRadius: BorderRadius.circular(4),
@@ -118,9 +129,9 @@ class TimelineTaskCard extends StatelessWidget {
                     child: Text(
                       'AI Suggested',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.restGreen,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: AppColors.restGreen,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -139,9 +150,14 @@ class TimelineTaskCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: color != null ? Color(color!).withValues(alpha: 0.1) : AppColors.activeCardBg,
-           border: Border(
-             left: BorderSide(color: color != null ? Color(color!) : AppColors.activeCardBorder, width: 4),
+          color: color != null
+              ? Color(color!).withValues(alpha: 0.1)
+              : AppColors.activeCardBg,
+          border: Border(
+            left: BorderSide(
+              color: color != null ? Color(color!) : AppColors.activeCardBorder,
+              width: 4,
+            ),
           ),
           borderRadius: const BorderRadius.only(
             topRight: Radius.circular(8),
@@ -165,28 +181,28 @@ class TimelineTaskCard extends StatelessWidget {
               children: [
                 Text(
                   'CURRENT BLOCK',
-                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
                 ),
-            ],
-          ),
+              ],
+            ),
             const SizedBox(height: 8),
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                height: 1.2,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(height: 1.2),
             ),
             const SizedBox(height: 8),
             if (subtitle != null)
               Text(
                 subtitle!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                  color: AppColors.textSecondary,
+                ),
               ),
             const SizedBox(height: 8),
           ],
@@ -197,7 +213,7 @@ class TimelineTaskCard extends StatelessWidget {
     // Standard Card
     Color? tagBg;
     Color? tagText;
-    
+
     if (type == TaskType.strategy || type == TaskType.design) {
       tagBg = AppColors.tagPurple;
       tagText = AppColors.textPurple;
@@ -211,11 +227,17 @@ class TimelineTaskCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: color != null 
-              ? (isCompleted ? Color(color!).withValues(alpha: 0.05) : Color(color!).withValues(alpha: 0.1))
-              : (isCompleted ? AppColors.surface.withAlpha(150) : AppColors.surface),
+          color: color != null
+              ? (isCompleted
+                    ? Color(color!).withValues(alpha: 0.05)
+                    : Color(color!).withValues(alpha: 0.1))
+              : (isCompleted
+                    ? AppColors.surface.withAlpha(150)
+                    : AppColors.surface),
           borderRadius: BorderRadius.circular(8),
-          border: color != null ? Border.all(color: Color(color!).withValues(alpha: 0.3)) : null,
+          border: color != null
+              ? Border.all(color: Color(color!).withValues(alpha: 0.3))
+              : null,
           boxShadow: const [
             BoxShadow(
               color: AppColors.shadow,
@@ -225,113 +247,136 @@ class TimelineTaskCard extends StatelessWidget {
           ],
         ),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (onToggleCompletion != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: Checkbox(
-                      value: isCompleted,
-                      onChanged: onToggleCompletion,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      activeColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.textSecondary.withAlpha(128), width: 2),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (onToggleCompletion != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: isCompleted,
+                        onChanged: onToggleCompletion,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        activeColor: AppColors.primary,
+                        side: BorderSide(
+                          color: AppColors.textSecondary.withAlpha(128),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      decoration: isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
+                      color: isCompleted ? AppColors.textSecondary : null,
                     ),
                   ),
                 ),
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                if (tag != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: tagBg ?? Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      tag!.toUpperCase(),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: tagText ?? Colors.grey.shade600,
                         fontWeight: FontWeight.bold,
-                        decoration: isCompleted ? TextDecoration.lineThrough : null,
-                        color: isCompleted ? AppColors.textSecondary : null,
+                        letterSpacing: 0.5,
                       ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.schedule, size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: 6),
+                Text(
+                  timeRange,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                subtitle!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
                 ),
               ),
-              if (tag != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: tagBg ?? Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
+            ],
+            if (type == TaskType.admin) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Text(
+                      'S',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    tag!.toUpperCase(),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: tagText ?? Colors.grey.shade600,
+                  Transform.translate(
+                    offset: const Offset(-6, 0),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade100,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                      child: const Text(
+                        'M',
+                        style: TextStyle(
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                          color: Colors.blue,
                         ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Clear inbox zero',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-               Icon(Icons.schedule, size: 16, color: AppColors.textSecondary),
-               const SizedBox(width: 6),
-               Text(
-                 timeRange,
-                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                   color: AppColors.textSecondary,
-                 ),
-               ),
-            ],
-          ),
-          if (subtitle != null) ...[
-             const SizedBox(height: 8),
-             Text(
-               subtitle!,
-               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                 color: AppColors.textSecondary,
-               ),
-             ),
           ],
-           if (type == TaskType.admin) ...[
-             const SizedBox(height: 12),
-             Row(
-               children: [
-                 Container(
-                   padding: const EdgeInsets.all(4),
-                   decoration: BoxDecoration(
-                     color: Colors.grey.shade200,
-                     shape: BoxShape.circle,
-                   ),
-                   child: const Text('S', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                 ),
-                 Transform.translate(
-                   offset: const Offset(-6, 0),
-                   child: Container(
-                     padding: const EdgeInsets.all(4),
-                     decoration: BoxDecoration(
-                       color: Colors.blue.shade100,
-                       shape: BoxShape.circle,
-                       border: Border.all(color: Colors.white, width: 1),
-                     ),
-                     child: const Text('M', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue)),
-                   ),
-                 ),
-                 const SizedBox(width: 8),
-                 Text(
-                   'Clear inbox zero',
-                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                     color: AppColors.textSecondary,
-                   ),
-                 ),
-               ],
-             ),
-           ],
-        ],
-      ),
+        ),
       ),
     );
   }

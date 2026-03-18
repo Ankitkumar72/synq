@@ -9,7 +9,8 @@ class WaveformGraph extends StatefulWidget {
   State<WaveformGraph> createState() => _WaveformGraphState();
 }
 
-class _WaveformGraphState extends State<WaveformGraph> with SingleTickerProviderStateMixin {
+class _WaveformGraphState extends State<WaveformGraph>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -45,9 +46,9 @@ class _WaveformGraphState extends State<WaveformGraph> with SingleTickerProvider
               Text(
                 "FOCUS QUALITY",
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      letterSpacing: 1.2,
-                    ),
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1.2,
+                ),
               ),
               Row(
                 children: [
@@ -63,8 +64,8 @@ class _WaveformGraphState extends State<WaveformGraph> with SingleTickerProvider
                   Text(
                     "Live",
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -94,7 +95,8 @@ class WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF66C2A5) // Soft Green/Teal
+      ..color =
+          const Color(0xFF66C2A5) // Soft Green/Teal
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
@@ -106,21 +108,42 @@ class WavePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     _drawWave(canvas, size, paint, 1.0, 0.0);
-    _drawWave(canvas, size, paintOverlay, 0.8, 0.5); // Second slightly offset wave
+    _drawWave(
+      canvas,
+      size,
+      paintOverlay,
+      0.8,
+      0.5,
+    ); // Second slightly offset wave
   }
 
-  void _drawWave(Canvas canvas, Size size, Paint paint, double amplitudeFactor, double phaseShift) {
+  void _drawWave(
+    Canvas canvas,
+    Size size,
+    Paint paint,
+    double amplitudeFactor,
+    double phaseShift,
+  ) {
     final path = Path();
     final midY = size.height * 0.7;
-    
+
     path.moveTo(0, midY);
 
     for (double x = 0; x <= size.width; x += 2) {
       // Multiple sine waves combined for "random" look
-      final wave1 = math.sin((x / size.width * 2 * math.pi) + (animationValue * 2 * math.pi) + phaseShift);
-      final wave2 = math.sin((x / size.width * 4 * math.pi) - (animationValue * 3 * math.pi));
-      
-      final y = midY + (wave1 * 15 * amplitudeFactor) + (wave2 * 10 * amplitudeFactor);
+      final wave1 = math.sin(
+        (x / size.width * 2 * math.pi) +
+            (animationValue * 2 * math.pi) +
+            phaseShift,
+      );
+      final wave2 = math.sin(
+        (x / size.width * 4 * math.pi) - (animationValue * 3 * math.pi),
+      );
+
+      final y =
+          midY +
+          (wave1 * 15 * amplitudeFactor) +
+          (wave2 * 10 * amplitudeFactor);
       path.lineTo(x, y);
     }
 
@@ -128,6 +151,6 @@ class WavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant WavePainter oldDelegate) => 
+  bool shouldRepaint(covariant WavePainter oldDelegate) =>
       oldDelegate.animationValue != animationValue;
 }

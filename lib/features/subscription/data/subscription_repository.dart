@@ -60,7 +60,9 @@ class PaddleService {
 
     if (response.statusCode != 200) {
       if (kDebugMode) {
-        debugPrint('Checkout request failed with status ${response.statusCode}');
+        debugPrint(
+          'Checkout request failed with status ${response.statusCode}',
+        );
       }
       throw Exception('Failed to create checkout session.');
     }
@@ -80,14 +82,8 @@ class PaddleService {
     var fixedUrlString = urlString;
     if (urlString.contains('localhost') && !_baseUrl.contains('localhost')) {
       fixedUrlString = urlString
-          .replaceFirst(
-            'https://localhost/',
-            '$_baseUrl/paddle-checkout?',
-          )
-          .replaceFirst(
-            'http://localhost/',
-            '$_baseUrl/paddle-checkout?',
-          );
+          .replaceFirst('https://localhost/', '$_baseUrl/paddle-checkout?')
+          .replaceFirst('http://localhost/', '$_baseUrl/paddle-checkout?');
     }
 
     final checkoutUrl = Uri.tryParse(fixedUrlString);

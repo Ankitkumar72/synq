@@ -42,8 +42,8 @@ class TimelineHourRow extends ConsumerWidget {
                 _formatHour(hour),
                 style: GoogleFonts.roboto(
                   fontSize: 13,
-                  fontWeight: (isSelectedDateToday && currentHour == hour) 
-                      ? FontWeight.bold 
+                  fontWeight: (isSelectedDateToday && currentHour == hour)
+                      ? FontWeight.bold
                       : FontWeight.w500,
                   color: (isSelectedDateToday && currentHour == hour)
                       ? AppColors.primary
@@ -60,7 +60,10 @@ class TimelineHourRow extends ConsumerWidget {
               children: [
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   constraints: const BoxConstraints(minHeight: 66),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
@@ -85,7 +88,10 @@ class TimelineHourRow extends ConsumerWidget {
                     top: 0,
                     bottom: 0,
                     child: Align(
-                      alignment: Alignment(-1.0, -1.0 + 2.0 * (DateTime.now().minute / 60)),
+                      alignment: Alignment(
+                        -1.0,
+                        -1.0 + 2.0 * (DateTime.now().minute / 60),
+                      ),
                       child: FractionalTranslation(
                         translation: const Offset(0, -0.5),
                         child: Row(
@@ -117,7 +123,11 @@ class TimelineHourRow extends ConsumerWidget {
     );
   }
 
-  Widget _buildTaskBlocks(BuildContext context, List<TimelineEvent> events, WidgetRef ref) {
+  Widget _buildTaskBlocks(
+    BuildContext context,
+    List<TimelineEvent> events,
+    WidgetRef ref,
+  ) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -131,13 +141,17 @@ class TimelineHourRow extends ConsumerWidget {
           isCompleted: event.isCompleted,
           color: event.color,
           compact: true,
-          isActive: isSelectedDateToday && _isTaskCurrentlyActive(event.startTime, event.endTime),
+          isActive:
+              isSelectedDateToday &&
+              _isTaskCurrentlyActive(event.startTime, event.endTime),
           onTap: () {
             final tasks = ref.read(notesProvider).value;
             // First try matching exact event ID, fallback to title matching due to some timeline_events being dummy items
             var task = tasks?.where((n) => n.id == event.id).firstOrNull;
-            task ??= tasks?.where((n) => n.isTask && n.title == event.title).firstOrNull;
-            
+            task ??= tasks
+                ?.where((n) => n.isTask && n.title == event.title)
+                .firstOrNull;
+
             if (task != null) {
               Navigator.push(
                 context,
@@ -147,12 +161,17 @@ class TimelineHourRow extends ConsumerWidget {
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Task details not found'), duration: Duration(seconds: 1)),
+                const SnackBar(
+                  content: Text('Task details not found'),
+                  duration: Duration(seconds: 1),
+                ),
               );
             }
           },
           onToggleCompletion: (_) {
-            ref.read(timelineEventsProvider.notifier).toggleEventCompletion(event.id);
+            ref
+                .read(timelineEventsProvider.notifier)
+                .toggleEventCompletion(event.id);
           },
         );
       }).toList(),
@@ -170,7 +189,7 @@ class TimelineHourRow extends ConsumerWidget {
     final currentMinutes = now.hour * 60 + now.minute;
     final startMinutes = _parseMinutes(startTime);
     final endMinutes = _parseMinutes(endTime);
-    
+
     if (endMinutes < startMinutes) {
       return currentMinutes >= startMinutes || currentMinutes < endMinutes;
     }

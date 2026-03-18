@@ -21,14 +21,18 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
     super.initState();
     final focusState = ref.read(weeklyFocusProvider);
     _objectiveController = TextEditingController(text: focusState.objective);
-    _priority = focusState.priority.isEmpty ? 'High Priority' : focusState.priority;
-    
+    _priority = focusState.priority.isEmpty
+        ? 'High Priority'
+        : focusState.priority;
+
     // Copy existing criteria
     if (focusState.criteria.isEmpty) {
       _criteriaControllers = [TextEditingController()];
       _criteriaStatus = [false];
     } else {
-      _criteriaControllers = focusState.criteria.map((c) => TextEditingController(text: c)).toList();
+      _criteriaControllers = focusState.criteria
+          .map((c) => TextEditingController(text: c))
+          .toList();
       _criteriaStatus = List<bool>.from(focusState.criteriaStatus);
     }
   }
@@ -46,10 +50,10 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
     final notifier = ref.read(weeklyFocusProvider.notifier);
     notifier.updateObjective(_objectiveController.text.trim());
     notifier.updatePriority(_priority);
-    
+
     final validCriteria = <String>[];
     final validStatus = <bool>[];
-    
+
     for (int i = 0; i < _criteriaControllers.length; i++) {
       final text = _criteriaControllers[i].text.trim();
       if (text.isNotEmpty) {
@@ -57,7 +61,7 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
         validStatus.add(_criteriaStatus[i]);
       }
     }
-    
+
     notifier.updateCriteria(validCriteria, validStatus);
     Navigator.pop(context);
   }
@@ -66,7 +70,7 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
   Widget build(BuildContext context) {
     // Determine screen height and apply padding
     final bottomInsets = MediaQuery.of(context).viewInsets.bottom;
-    
+
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFFF7F8FA),
@@ -99,7 +103,7 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -121,7 +125,7 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
                 ],
               ),
               const SizedBox(height: 32),
-              
+
               Flexible(
                 child: SingleChildScrollView(
                   child: Column(
@@ -152,8 +156,15 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
                           ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            prefixIcon: Icon(Icons.track_changes, color: Color(0xFF9CA3AF), size: 20),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.track_changes,
+                              color: Color(0xFF9CA3AF),
+                              size: 20,
+                            ),
                             filled: true,
                             fillColor: Colors.transparent,
                             hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
@@ -161,7 +172,7 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Priority Tag
                       Text(
                         'Priority Tag',
@@ -185,7 +196,7 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Success Criteria Header
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -201,11 +212,17 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
                           TextButton.icon(
                             onPressed: () {
                               setState(() {
-                                _criteriaControllers.add(TextEditingController());
+                                _criteriaControllers.add(
+                                  TextEditingController(),
+                                );
                                 _criteriaStatus.add(false);
                               });
                             },
-                            icon: const Icon(Icons.add, size: 16, color: Color(0xFF5473F7)),
+                            icon: const Icon(
+                              Icons.add,
+                              size: 16,
+                              color: Color(0xFF5473F7),
+                            ),
                             label: Text(
                               'Add Criteria',
                               style: GoogleFonts.roboto(
@@ -223,7 +240,7 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      
+
                       // Criteria List
                       ListView.separated(
                         shrinkWrap: true,
@@ -239,13 +256,15 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
                   ),
                 ),
               ),
-              
+
               // Actions
               ElevatedButton(
                 onPressed: _saveGoal,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5473F7),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   elevation: 4,
                   shadowColor: const Color(0xFF5473F7).withAlpha(100),
@@ -287,12 +306,17 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
         });
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: hasIcon ? 14 : 20, vertical: 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: hasIcon ? 14 : 20,
+          vertical: 10,
+        ),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF5473F7) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF5473F7) : const Color(0xFFE5E7EB),
+            color: isSelected
+                ? const Color(0xFF5473F7)
+                : const Color(0xFFE5E7EB),
           ),
         ),
         child: Row(
@@ -322,7 +346,7 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
 
   Widget _buildCriteriaItem(int index) {
     final isChecked = _criteriaStatus[index];
-    
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -346,7 +370,9 @@ class _UpdateGoalSheetState extends ConsumerState<UpdateGoalSheet> {
                 color: isChecked ? const Color(0xFF10B981) : Colors.white,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isChecked ? const Color(0xFF10B981) : const Color(0xFFD1D5DB),
+                  color: isChecked
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFD1D5DB),
                   width: 2,
                 ),
               ),

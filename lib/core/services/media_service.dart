@@ -14,7 +14,7 @@ class MediaService {
       maxHeight: 1080,
       imageQuality: 85,
     );
-    
+
     if (pickedFile != null) {
       return File(pickedFile.path);
     }
@@ -25,7 +25,8 @@ class MediaService {
   Future<String?> saveToLocalDocuments(File file) async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
       final savedImage = await file.copy('${appDir.path}/$fileName');
       return savedImage.path;
     } catch (e) {
@@ -35,10 +36,14 @@ class MediaService {
   }
 
   /// Save raw image bytes (e.g. from clipboard) to local storage
-  Future<String?> saveBytesToLocalDocuments(Uint8List bytes, {String extension = 'png'}) async {
+  Future<String?> saveBytesToLocalDocuments(
+    Uint8List bytes, {
+    String extension = 'png',
+  }) async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
-      final fileName = 'pasted_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final fileName =
+          'pasted_${DateTime.now().millisecondsSinceEpoch}.$extension';
       final file = File('${appDir.path}/$fileName');
       await file.writeAsBytes(bytes);
       return file.path;
@@ -49,7 +54,9 @@ class MediaService {
   }
 
   /// Pick and save an image locally, returning the file path
-  Future<String?> pickAndSaveImage({ImageSource source = ImageSource.gallery}) async {
+  Future<String?> pickAndSaveImage({
+    ImageSource source = ImageSource.gallery,
+  }) async {
     final file = await pickImage(source: source);
     if (file != null) {
       return await saveToLocalDocuments(file);

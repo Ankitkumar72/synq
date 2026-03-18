@@ -33,17 +33,17 @@ class StatsCard extends ConsumerWidget {
                 Text(
                   stats.completed.toString(),
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.normal,
-                        height: 1.0,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.normal,
+                    height: 1.0,
+                  ),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   'of ${stats.total}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.6),
-                      ),
+                    color: Colors.white.withValues(alpha: 0.6),
+                  ),
                 ),
               ],
             ),
@@ -51,8 +51,8 @@ class StatsCard extends ConsumerWidget {
             Text(
               'Tasks Completed',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.6),
-                  ),
+                color: Colors.white.withValues(alpha: 0.6),
+              ),
             ),
             if (stats.total > 0) ...[
               const SizedBox(height: 12),
@@ -68,8 +68,12 @@ class StatsCard extends ConsumerWidget {
             ],
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator(color: Colors.white24)),
-        error: (_, __) => const Center(child: Icon(Icons.error_outline, color: Colors.white24)),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: Colors.white24),
+        ),
+        error: (_, __) => const Center(
+          child: Icon(Icons.error_outline, color: Colors.white24),
+        ),
       ),
     );
   }

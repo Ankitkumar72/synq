@@ -25,7 +25,8 @@ class NoteEditorDraft {
 }
 
 class NoteEditorDraftStore {
-  static final Map<String, NoteEditorDraft> _drafts = <String, NoteEditorDraft>{};
+  static final Map<String, NoteEditorDraft> _drafts =
+      <String, NoteEditorDraft>{};
 
   static NoteEditorDraft? read(String key) => _drafts[key];
 

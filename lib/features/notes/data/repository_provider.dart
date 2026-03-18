@@ -34,7 +34,9 @@ final localDbNotesRepositoryProvider = Provider<LocalDbNotesRepository>((ref) {
   return LocalDbNotesRepository(database);
 });
 
-final localDbFoldersRepositoryProvider = Provider<LocalDbFoldersRepository>((ref) {
+final localDbFoldersRepositoryProvider = Provider<LocalDbFoldersRepository>((
+  ref,
+) {
   final database = ref.watch(localDatabaseProvider);
   return LocalDbFoldersRepository(database);
 });
@@ -44,7 +46,7 @@ final useCloudSyncProvider = Provider<bool>((ref) {
   final authState = ref.watch(authProvider);
   final userAsync = ref.watch(userProvider);
   final user = FirebaseAuth.instance.currentUser;
-  
+
   final isPro = userAsync.valueOrNull?.planTier == PlanTier.pro;
 
   return syncAccess.cloudSyncEnabled &&

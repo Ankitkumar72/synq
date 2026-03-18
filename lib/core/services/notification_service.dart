@@ -15,8 +15,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 /// Callback that the service invokes when a notification action is tapped.
 /// [actionId] is 'check_off' or 'snooze', [noteId] is the task ID.
-typedef NotificationActionCallback = Future<void> Function(
-    String actionId, String noteId);
+typedef NotificationActionCallback =
+    Future<void> Function(String actionId, String noteId);
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -41,16 +41,16 @@ class NotificationService {
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        );
 
     const InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-    );
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsDarwin,
+        );
 
     try {
       await flutterLocalNotificationsPlugin.initialize(
@@ -58,7 +58,9 @@ class NotificationService {
         onDidReceiveNotificationResponse: _handleNotificationResponse,
       );
     } catch (e) {
-      debugPrint('⚠️ [NotificationService] Failed to initialize with custom icon, falling back: $e');
+      debugPrint(
+        '⚠️ [NotificationService] Failed to initialize with custom icon, falling back: $e',
+      );
       await flutterLocalNotificationsPlugin.initialize(
         const InitializationSettings(
           android: AndroidInitializationSettings('@mipmap/launcher_icon'),
@@ -80,7 +82,8 @@ class NotificationService {
   }
 
   Future<void> _handleNotificationResponse(
-      NotificationResponse response) async {
+    NotificationResponse response,
+  ) async {
     final actionId = response.actionId;
     final payload = response.payload;
 
@@ -110,12 +113,9 @@ class NotificationService {
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         await flutterLocalNotificationsPlugin
             .resolvePlatformSpecificImplementation<
-                IOSFlutterLocalNotificationsPlugin>()
-            ?.requestPermissions(
-              alert: true,
-              badge: true,
-              sound: true,
-            );
+              IOSFlutterLocalNotificationsPlugin
+            >()
+            ?.requestPermissions(alert: true, badge: true, sound: true);
         return;
       }
 
@@ -126,16 +126,19 @@ class NotificationService {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
           flutterLocalNotificationsPlugin
               .resolvePlatformSpecificImplementation<
-                  AndroidFlutterLocalNotificationsPlugin>();
+                AndroidFlutterLocalNotificationsPlugin
+              >();
 
       if (androidImplementation == null) {
-        debugPrint('[NotificationService] Android notification implementation is unavailable.');
+        debugPrint(
+          '[NotificationService] Android notification implementation is unavailable.',
+        );
         return;
       }
 
       // Android 13+ (API 33+) requires permission for POST_NOTIFICATIONS
       await androidImplementation.requestNotificationsPermission();
-      
+
       // Android 12+ (API 31+) requires permission for exact alarms
       await androidImplementation.requestExactAlarmsPermission();
 
@@ -170,10 +173,7 @@ class NotificationService {
         largeIcon: const DrawableResourceAndroidBitmap('ic_large_notification'),
         color: const Color(0xFF00B0FF), // Electric blue branding
         // Rich text
-        styleInformation: BigTextStyleInformation(
-          body,
-          contentTitle: title,
-        ),
+        styleInformation: BigTextStyleInformation(body, contentTitle: title),
         // Action buttons
         actions: const <AndroidNotificationAction>[
           AndroidNotificationAction(
@@ -194,8 +194,12 @@ class NotificationService {
       bool canScheduleExact = true;
       if (defaultTargetPlatform == TargetPlatform.android) {
         final androidImplementation = flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-        canScheduleExact = await androidImplementation?.canScheduleExactNotifications() ?? false;
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        canScheduleExact =
+            await androidImplementation?.canScheduleExactNotifications() ??
+            false;
       }
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
@@ -216,7 +220,9 @@ class NotificationService {
       );
 
       if (kDebugMode) {
-        debugPrint('[NotificationService] Notification scheduled successfully.');
+        debugPrint(
+          '[NotificationService] Notification scheduled successfully.',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -240,7 +246,8 @@ class NotificationService {
     String bodyText = note.body ?? 'Task reminder';
     if (note.reminderTime != null) {
       notifyTime = note.reminderTime;
-      bodyText = '${note.body ?? "Reminder"} · Due ${_formatTime(note.scheduledTime)}';
+      bodyText =
+          '${note.body ?? "Reminder"} · Due ${_formatTime(note.scheduledTime)}';
     } else if (note.scheduledTime != null) {
       if (note.isAllDay) {
         // Default to 9:00 AM on the scheduled date for all-day tasks
@@ -254,13 +261,16 @@ class NotificationService {
         bodyText = note.body ?? 'All day task';
       } else {
         notifyTime = note.scheduledTime;
-        bodyText = '${note.body ?? "Task starting now"} · ${_formatTime(note.scheduledTime)}';
+        bodyText =
+            '${note.body ?? "Task starting now"} · ${_formatTime(note.scheduledTime)}';
       }
     }
 
     if (notifyTime != null && notifyTime.isAfter(now)) {
       if (kDebugMode) {
-        debugPrint('[NotificationService] Scheduling notification for task id ${note.id}');
+        debugPrint(
+          '[NotificationService] Scheduling notification for task id ${note.id}',
+        );
       }
       await scheduleNotification(
         id: notifId,
@@ -271,11 +281,15 @@ class NotificationService {
       );
     } else if (notifyTime != null) {
       if (kDebugMode) {
-        debugPrint('[NotificationService] Notify time is in the past, skipping.');
+        debugPrint(
+          '[NotificationService] Notify time is in the past, skipping.',
+        );
       }
     } else {
       if (kDebugMode) {
-        debugPrint('[NotificationService] Task has no specific notification time.');
+        debugPrint(
+          '[NotificationService] Task has no specific notification time.',
+        );
       }
     }
   }
