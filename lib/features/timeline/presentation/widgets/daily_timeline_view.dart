@@ -53,10 +53,6 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
   String? _activeResizeEventId;
   double? _liveResizeBottom;
 
-  // Task drag state
-  String? _activeDragTaskId;
-  double? _liveDragTaskTop;
-
   late final ValueNotifier<DateTime> _now;
 
   @override
@@ -165,12 +161,8 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         final eventAreaWidth =
             constraints.maxWidth - widget.gutterWidth - widget.gutterPadding;
 
-        // --- Partition ---
-        final events = _eventItems();
-        final tasks = _taskItems();
-
-        // --- Event layout (only events go through the engine) ---
-        final previewEvents = _buildPreviewEvents(events);
+        // --- Event layout (both events and tasks go through the engine) ---
+        final previewEvents = _buildPreviewEvents(widget.events);
         final positioned = TimelineLayoutEngine.calculatePositions(
           events: previewEvents,
           containerWidth: eventAreaWidth,
@@ -178,15 +170,12 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         final basePositioned = _activeDragEventId == null
             ? const <PositionedTimelineEvent>[]
             : TimelineLayoutEngine.calculatePositions(
-                events: events,
+                events: widget.events,
                 containerWidth: eventAreaWidth,
               );
 
-        // --- Task chip positions (grouped by hour, stacked by index) ---
-        final taskChips = _buildTaskChipData(tasks, eventAreaWidth);
-
         // --- Active drag snap line position ---
-        final snapLineTop = _liveDragTop ?? _liveDragTaskTop;
+        final snapLineTop = _liveDragTop;
 
         return SingleChildScrollView(
           controller: _scrollController,
@@ -232,78 +221,64 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                           if (_activeDragEventId != null)
                             ..._buildGhostTiles(basePositioned),
 
-                          // Event tiles (full blocks)
-                          ...positioned.map(
-                            (p) => DraggableTimelineEvent(
-                              key: ValueKey(p.event.id),
-                              positioned: p,
-                              onRescheduled: (event, start, end) {
-                                setState(() {
-                                  _activeDragEventId = null;
-                                  _liveDragTop = null;
-                                });
-                                widget.onEventRescheduled?.call(
-                                  event,
-                                  start,
-                                  end,
-                                );
-                              },
-                              onResized: (event, end) {
-                                setState(() {
-                                  _activeResizeEventId = null;
-                                  _liveResizeBottom = null;
-                                });
-                                widget.onEventResized?.call(event, end);
-                              },
-                              onTapped: widget.onEventTapped,
-                              onDragTopChanged: (top) {
-                                setState(() {
-                                  _activeDragEventId = top != null
-                                      ? p.event.id
-                                      : null;
-                                  _liveDragTop = top;
-                                });
-                              },
-                              onResizeBottomChanged: (bottom) {
-                                setState(() {
-                                  _activeResizeEventId = bottom != null
-                                      ? p.event.id
-                                      : null;
-                                  _liveResizeBottom = bottom;
-                                });
-                              },
-                            ),
-                          ),
-
-                          // Task chips (separate pipeline)
-                          ...taskChips.map(
-                            (tc) => TimelineTaskChip(
-                              key: ValueKey('chip_${tc.task.id}'),
-                              task: tc.task,
-                              top: tc.top,
-                              width: eventAreaWidth,
-                              onRescheduled: (task, start, end) {
-                                setState(() {
-                                  _activeDragTaskId = null;
-                                  _liveDragTaskTop = null;
-                                });
-                                widget.onEventRescheduled?.call(
-                                  task,
-                                  start,
-                                  end,
-                                );
-                              },
-                              onTapped: widget.onEventTapped,
-                              onDragTopChanged: (top) {
-                                setState(() {
-                                  _activeDragTaskId = top != null
-                                      ? tc.task.id
-                                      : null;
-                                  _liveDragTaskTop = top;
-                                });
-                              },
-                            ),
-                          ),
+                          // Event and Task tiles
+                          ...positioned.map((p) {
+                            if (p.event.kind == EventKind.task) {
+                              return TimelineTaskChip(
+                                key: ValueKey('chip_${p.event.id}'),
+                                task: p.event,
+                                top: p.top, // from engine
+                                left: p.left, // from engine
+                                width: p.width, // from engine
+                                onRescheduled: (task, start, end) {
+                                  setState(() {
+                                    _activeDragEventId = null;
+                                    _liveDragTop = null;
+                                  });
+                                  widget.onEventRescheduled?.call(task, start, end);
+                                },
+                                onTapped: widget.onEventTapped,
+                                onDragTopChanged: (top) {
+                                  setState(() {
+                                    _activeDragEventId = top != null ? p.event.id : null;
+                                    _liveDragTop = top;
+                                  });
+                                },
+                              );
+                            } else {
+                              return DraggableTimelineEvent(
+                                key: ValueKey(p.event.id),
+                                positioned: p,
+                                onRescheduled: (event, start, end) {
+                                  setState(() {
+                                    _activeDragEventId = null;
+                                    _liveDragTop = null;
+                                  });
+                                  widget.onEventRescheduled?.call(event, start, end);
+                                },
+                                onResized: (event, end) {
+                                  setState(() {
+                                    _activeResizeEventId = null;
+                                    _liveResizeBottom = null;
+                                  });
+                                  widget.onEventResized?.call(event, end);
+                                },
+                                onTapped: widget.onEventTapped,
+                                onDragTopChanged: (top) {
+                                  setState(() {
+                                    _activeDragEventId = top != null ? p.event.id : null;
+                                    _liveDragTop = top;
+                                  });
+                                },
+                                onResizeBottomChanged: (bottom) {
+                                  setState(() {
+                                    _activeResizeEventId = bottom != null ? p.event.id : null;
+                                    _liveResizeBottom = bottom;
+                                  });
+                                },
+                              );
+                            }
+                          }),
 
                           // Horizontal snap line during drag
                           if (snapLineTop != null)
@@ -332,15 +307,6 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                               colorScheme: colorScheme,
                             ),
 
-                          // Live drag tooltip for task chip
-                          if (_liveDragTaskTop != null)
-                            _TimeDragTooltip(
-                              top: _liveDragTaskTop!,
-                              label: TimelineLayoutEngine.topToTime(
-                                _liveDragTaskTop!,
-                              ),
-                              colorScheme: colorScheme,
-                            ),
                         ],
                       ),
                     ),
@@ -351,48 +317,6 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
           );
       },
     );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Task chip positioning — group by hour, stack by index within hour
-  // ---------------------------------------------------------------------------
-
-  List<_TaskChipData> _buildTaskChipData(
-    List<TimelineEvent> tasks,
-    double availableWidth,
-  ) {
-    // Group tasks by their start hour
-    final Map<int, List<TimelineEvent>> byHour = {};
-    for (final task in tasks) {
-      final minutes = _parseMinutes(task.startTime);
-      final hour = minutes ~/ 60;
-      byHour.putIfAbsent(hour, () => []).add(task);
-    }
-
-    final result = <_TaskChipData>[];
-    for (final entry in byHour.entries) {
-      final hourTasks = entry.value;
-      for (int i = 0; i < hourTasks.length; i++) {
-        final task = hourTasks[i];
-
-        // If this task is actively being dragged, use the live top
-        double top;
-        if (_activeDragTaskId == task.id && _liveDragTaskTop != null) {
-          top = _liveDragTaskTop!;
-        } else {
-          // Anchor at start time + stacking offset within the hour
-          final minutes = _parseMinutes(task.startTime);
-          top =
-              (minutes / 60.0) * TimelineLayoutEngine.pixelsPerHour +
-              TimelineLayoutEngine.verticalGap / 2 +
-              i * TimelineTaskChip.chipStepHeight;
-        }
-
-        result.add(_TaskChipData(task: task, top: top));
-      }
-    }
-
-    return result;
   }
 
   // ---------------------------------------------------------------------------
@@ -489,17 +413,6 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     final m = safe % 60;
     return DateFormat('h:mm a').format(DateTime(2000, 1, 1, h, m));
   }
-}
-
-// ---------------------------------------------------------------------------
-// Helper class for task chip positioning
-// ---------------------------------------------------------------------------
-
-class _TaskChipData {
-  final TimelineEvent task;
-  final double top;
-
-  const _TaskChipData({required this.task, required this.top});
 }
 
 // ---------------------------------------------------------------------------

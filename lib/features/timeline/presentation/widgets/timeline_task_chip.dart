@@ -31,6 +31,7 @@ class TimelineTaskChip extends StatefulWidget {
 
   /// Vertical offset = hour-top + (indexInHour * chipStepHeight)
   final double top;
+  final double left;
   final double width;
 
   final TaskRescheduledCallback? onRescheduled;
@@ -47,6 +48,7 @@ class TimelineTaskChip extends StatefulWidget {
     super.key,
     required this.task,
     required this.top,
+    required this.left,
     required this.width,
     this.onRescheduled,
     this.onTapped,
@@ -168,7 +170,7 @@ class _TimelineTaskChipState extends State<TimelineTaskChip> {
       duration: _isDragging ? Duration.zero : const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
       top: displayTop,
-      left: 0,
+      left: widget.left,
       height: TimelineTaskChip.chipHeight,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: widget.width),
