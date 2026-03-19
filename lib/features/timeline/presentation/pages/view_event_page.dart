@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../notes/domain/models/note.dart';
-import '../../../notes/domain/models/recurrence_rule.dart';
 import '../../../notes/data/notes_provider.dart';
 
 class ViewEventPage extends ConsumerStatefulWidget {
@@ -106,7 +105,6 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
     TimeOfDay? selectedStartTime = TimeOfDay.fromDateTime(selectedDate);
     TimeOfDay? selectedEndTime = currentEvent.endTime != null ? TimeOfDay.fromDateTime(currentEvent.endTime!) : selectedStartTime.replacing(hour: (selectedStartTime.hour + 1) % 24);
     var selectedIsAllDay = currentEvent.isAllDay;
-    var selectedRule = currentEvent.recurrenceRule;
 
     await showDialog<void>(
       context: context,

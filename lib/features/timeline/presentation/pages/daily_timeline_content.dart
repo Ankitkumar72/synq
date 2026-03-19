@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -247,24 +246,6 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
     return null;
   }
 
-  String _formatSelectedDate(DateTime date) {
-    final day = date.day;
-    final suffix = (day >= 11 && day <= 13) ? 'th' : _ordinalSuffix(day % 10);
-    return '${DateFormat('EEEE, d').format(date)}$suffix';
-  }
-
-  String _ordinalSuffix(int digit) {
-    switch (digit) {
-      case 1:
-        return 'st';
-      case 2:
-        return 'nd';
-      case 3:
-        return 'rd';
-      default:
-        return 'th';
-    }
-  }
 }
 
 // ---------------------------------------------------------------------------
