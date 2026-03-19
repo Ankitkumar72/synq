@@ -243,10 +243,10 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
   final notesAsync = ref.watch(notesProvider);
   final notes = notesAsync.value ?? [];
 
-  // Include ALL tasks, even those without a scheduled time
-  final tasks = notes.where((n) => n.isTask).toList();
+  // Include ALL items (tasks and events)
+  final items = notes.toList();
 
-  tasks.sort((a, b) {
+  items.sort((a, b) {
     final dateA = a.scheduledTime ?? a.createdAt;
     final dateB = b.scheduledTime ?? b.createdAt;
     return dateA.compareTo(dateB);
@@ -254,26 +254,28 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
 
   final grouped = <DateTime, List<TimelineEvent>>{};
 
-  for (final task in tasks) {
-    final dateToUse = task.scheduledTime ?? task.createdAt;
+  for (final item in items) {
+    final dateToUse = item.scheduledTime ?? item.createdAt;
     final dateKey = DateTime(dateToUse.year, dateToUse.month, dateToUse.day);
 
     final startFormat = DateFormat('h:mm a');
     final endFormat = DateFormat('h:mm a');
 
     String startTimeString = 'TODO';
-    if (task.isAllDay) {
+    if (!item.isTask && item.scheduledTime != null) {
+      startTimeString = startFormat.format(item.scheduledTime!);
+    } else if (item.isAllDay) {
       startTimeString = 'All Day';
-    } else if (task.scheduledTime != null) {
-      startTimeString = startFormat.format(task.scheduledTime!);
+    } else if (item.scheduledTime != null) {
+      startTimeString = startFormat.format(item.scheduledTime!);
     }
 
-    String endTimeString = task.endTime != null
-        ? endFormat.format(task.endTime!)
+    String endTimeString = item.endTime != null
+        ? endFormat.format(item.endTime!)
         : startTimeString;
 
     TimelineEventType type = TimelineEventType.standard;
-    switch (task.category.name.toLowerCase()) {
+    switch (item.category.name.toLowerCase()) {
       case 'work':
         type = TimelineEventType.active;
         break;
@@ -285,22 +287,26 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
         break;
     }
 
-    String displayTitle = task.title;
-    if (task.scheduledTime == null &&
+    String displayTitle = item.title;
+    if (item.isTask &&
+        item.scheduledTime == null &&
         !displayTitle.toLowerCase().startsWith('todo')) {
       displayTitle = 'TODO - $displayTitle';
     }
 
+    final prefix = item.isTask ? 'task' : 'event';
+    final subTag = item.isTask ? item.category.name.toUpperCase() : 'EVENT';
+
     final event = TimelineEvent(
-      id: 'task_${task.id}',
+      id: '${prefix}_${item.id}',
       title: displayTitle,
-      subtitle: task.category.name.toUpperCase(),
+      subtitle: subTag,
       startTime: startTimeString,
       endTime: endTimeString,
       type: type,
-      tag: task.category.name.toUpperCase(),
-      isCompleted: task.isCompleted,
-      color: task.color,
+      tag: subTag,
+      isCompleted: item.isCompleted,
+      color: item.color,
     );
 
     grouped.putIfAbsent(dateKey, () => []).add(event);

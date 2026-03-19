@@ -125,6 +125,13 @@ class SynqDrawer extends ConsumerWidget {
               isChecked: true,
               onTap: () {},
             ),
+            _buildCheckboxItem(
+              context,
+              color: Colors.orange,
+              title: 'Events',
+              isChecked: true,
+              onTap: () {},
+            ),
             _buildDrawerItem(
               context,
               icon: Icons.settings_outlined,

@@ -222,9 +222,9 @@ class _ScheduleTimelineContentState
                                       width: double.infinity,
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFF5C84D4,
-                                        ), // Matching the blue card color from reference
+                                        color: event.color != null
+                                            ? Color(event.color!)
+                                            : const Color(0xFF5C84D4),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Column(
