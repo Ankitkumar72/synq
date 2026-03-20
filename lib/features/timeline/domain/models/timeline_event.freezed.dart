@@ -12,8 +12,7 @@ part of 'timeline_event.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
 mixin _$TimelineEvent {
@@ -30,6 +29,7 @@ mixin _$TimelineEvent {
   bool get isCompleted => throw _privateConstructorUsedError;
   bool get isCurrent => throw _privateConstructorUsedError;
   int? get color => throw _privateConstructorUsedError;
+  List<TimelineEvent>? get groupedTasks => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $TimelineEventCopyWith<TimelineEvent> get copyWith =>
@@ -39,24 +39,23 @@ mixin _$TimelineEvent {
 /// @nodoc
 abstract class $TimelineEventCopyWith<$Res> {
   factory $TimelineEventCopyWith(
-    TimelineEvent value,
-    $Res Function(TimelineEvent) then,
-  ) = _$TimelineEventCopyWithImpl<$Res, TimelineEvent>;
+          TimelineEvent value, $Res Function(TimelineEvent) then) =
+      _$TimelineEventCopyWithImpl<$Res, TimelineEvent>;
   @useResult
-  $Res call({
-    String id,
-    String title,
-    String startTime,
-    String endTime,
-    TimelineEventType type,
-    EventKind kind,
-    String? subtitle,
-    String? tag,
-    String? category,
-    bool isCompleted,
-    bool isCurrent,
-    int? color,
-  });
+  $Res call(
+      {String id,
+      String title,
+      String startTime,
+      String endTime,
+      TimelineEventType type,
+      EventKind kind,
+      String? subtitle,
+      String? tag,
+      String? category,
+      bool isCompleted,
+      bool isCurrent,
+      int? color,
+      List<TimelineEvent>? groupedTasks});
 }
 
 /// @nodoc
@@ -84,60 +83,62 @@ class _$TimelineEventCopyWithImpl<$Res, $Val extends TimelineEvent>
     Object? isCompleted = null,
     Object? isCurrent = null,
     Object? color = freezed,
+    Object? groupedTasks = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            title: null == title
-                ? _value.title
-                : title // ignore: cast_nullable_to_non_nullable
-                      as String,
-            startTime: null == startTime
-                ? _value.startTime
-                : startTime // ignore: cast_nullable_to_non_nullable
-                      as String,
-            endTime: null == endTime
-                ? _value.endTime
-                : endTime // ignore: cast_nullable_to_non_nullable
-                      as String,
-            type: null == type
-                ? _value.type
-                : type // ignore: cast_nullable_to_non_nullable
-                      as TimelineEventType,
-            kind: null == kind
-                ? _value.kind
-                : kind // ignore: cast_nullable_to_non_nullable
-                      as EventKind,
-            subtitle: freezed == subtitle
-                ? _value.subtitle
-                : subtitle // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            tag: freezed == tag
-                ? _value.tag
-                : tag // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            category: freezed == category
-                ? _value.category
-                : category // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            isCompleted: null == isCompleted
-                ? _value.isCompleted
-                : isCompleted // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            isCurrent: null == isCurrent
-                ? _value.isCurrent
-                : isCurrent // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            color: freezed == color
-                ? _value.color
-                : color // ignore: cast_nullable_to_non_nullable
-                      as int?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      startTime: null == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as String,
+      endTime: null == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as TimelineEventType,
+      kind: null == kind
+          ? _value.kind
+          : kind // ignore: cast_nullable_to_non_nullable
+              as EventKind,
+      subtitle: freezed == subtitle
+          ? _value.subtitle
+          : subtitle // ignore: cast_nullable_to_non_nullable
+              as String?,
+      tag: freezed == tag
+          ? _value.tag
+          : tag // ignore: cast_nullable_to_non_nullable
+              as String?,
+      category: freezed == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isCompleted: null == isCompleted
+          ? _value.isCompleted
+          : isCompleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isCurrent: null == isCurrent
+          ? _value.isCurrent
+          : isCurrent // ignore: cast_nullable_to_non_nullable
+              as bool,
+      color: freezed == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as int?,
+      groupedTasks: freezed == groupedTasks
+          ? _value.groupedTasks
+          : groupedTasks // ignore: cast_nullable_to_non_nullable
+              as List<TimelineEvent>?,
+    ) as $Val);
   }
 }
 
@@ -145,25 +146,24 @@ class _$TimelineEventCopyWithImpl<$Res, $Val extends TimelineEvent>
 abstract class _$$TimelineEventImplCopyWith<$Res>
     implements $TimelineEventCopyWith<$Res> {
   factory _$$TimelineEventImplCopyWith(
-    _$TimelineEventImpl value,
-    $Res Function(_$TimelineEventImpl) then,
-  ) = __$$TimelineEventImplCopyWithImpl<$Res>;
+          _$TimelineEventImpl value, $Res Function(_$TimelineEventImpl) then) =
+      __$$TimelineEventImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    String title,
-    String startTime,
-    String endTime,
-    TimelineEventType type,
-    EventKind kind,
-    String? subtitle,
-    String? tag,
-    String? category,
-    bool isCompleted,
-    bool isCurrent,
-    int? color,
-  });
+  $Res call(
+      {String id,
+      String title,
+      String startTime,
+      String endTime,
+      TimelineEventType type,
+      EventKind kind,
+      String? subtitle,
+      String? tag,
+      String? category,
+      bool isCompleted,
+      bool isCurrent,
+      int? color,
+      List<TimelineEvent>? groupedTasks});
 }
 
 /// @nodoc
@@ -171,9 +171,8 @@ class __$$TimelineEventImplCopyWithImpl<$Res>
     extends _$TimelineEventCopyWithImpl<$Res, _$TimelineEventImpl>
     implements _$$TimelineEventImplCopyWith<$Res> {
   __$$TimelineEventImplCopyWithImpl(
-    _$TimelineEventImpl _value,
-    $Res Function(_$TimelineEventImpl) _then,
-  ) : super(_value, _then);
+      _$TimelineEventImpl _value, $Res Function(_$TimelineEventImpl) _then)
+      : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
@@ -190,79 +189,83 @@ class __$$TimelineEventImplCopyWithImpl<$Res>
     Object? isCompleted = null,
     Object? isCurrent = null,
     Object? color = freezed,
+    Object? groupedTasks = freezed,
   }) {
-    return _then(
-      _$TimelineEventImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        title: null == title
-            ? _value.title
-            : title // ignore: cast_nullable_to_non_nullable
-                  as String,
-        startTime: null == startTime
-            ? _value.startTime
-            : startTime // ignore: cast_nullable_to_non_nullable
-                  as String,
-        endTime: null == endTime
-            ? _value.endTime
-            : endTime // ignore: cast_nullable_to_non_nullable
-                  as String,
-        type: null == type
-            ? _value.type
-            : type // ignore: cast_nullable_to_non_nullable
-                  as TimelineEventType,
-        kind: null == kind
-            ? _value.kind
-            : kind // ignore: cast_nullable_to_non_nullable
-                  as EventKind,
-        subtitle: freezed == subtitle
-            ? _value.subtitle
-            : subtitle // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        tag: freezed == tag
-            ? _value.tag
-            : tag // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        category: freezed == category
-            ? _value.category
-            : category // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        isCompleted: null == isCompleted
-            ? _value.isCompleted
-            : isCompleted // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        isCurrent: null == isCurrent
-            ? _value.isCurrent
-            : isCurrent // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        color: freezed == color
-            ? _value.color
-            : color // ignore: cast_nullable_to_non_nullable
-                  as int?,
-      ),
-    );
+    return _then(_$TimelineEventImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      startTime: null == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as String,
+      endTime: null == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as TimelineEventType,
+      kind: null == kind
+          ? _value.kind
+          : kind // ignore: cast_nullable_to_non_nullable
+              as EventKind,
+      subtitle: freezed == subtitle
+          ? _value.subtitle
+          : subtitle // ignore: cast_nullable_to_non_nullable
+              as String?,
+      tag: freezed == tag
+          ? _value.tag
+          : tag // ignore: cast_nullable_to_non_nullable
+              as String?,
+      category: freezed == category
+          ? _value.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isCompleted: null == isCompleted
+          ? _value.isCompleted
+          : isCompleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isCurrent: null == isCurrent
+          ? _value.isCurrent
+          : isCurrent // ignore: cast_nullable_to_non_nullable
+              as bool,
+      color: freezed == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as int?,
+      groupedTasks: freezed == groupedTasks
+          ? _value._groupedTasks
+          : groupedTasks // ignore: cast_nullable_to_non_nullable
+              as List<TimelineEvent>?,
+    ));
   }
 }
 
 /// @nodoc
 
 class _$TimelineEventImpl implements _TimelineEvent {
-  const _$TimelineEventImpl({
-    required this.id,
-    required this.title,
-    required this.startTime,
-    required this.endTime,
-    required this.type,
-    this.kind = EventKind.event,
-    this.subtitle,
-    this.tag,
-    this.category,
-    this.isCompleted = false,
-    this.isCurrent = false,
-    this.color,
-  });
+  const _$TimelineEventImpl(
+      {required this.id,
+      required this.title,
+      required this.startTime,
+      required this.endTime,
+      required this.type,
+      this.kind = EventKind.event,
+      this.subtitle,
+      this.tag,
+      this.category,
+      this.isCompleted = false,
+      this.isCurrent = false,
+      this.color,
+      final List<TimelineEvent>? groupedTasks})
+      : _groupedTasks = groupedTasks;
 
   @override
   final String id;
@@ -283,7 +286,7 @@ class _$TimelineEventImpl implements _TimelineEvent {
   final String? tag;
   @override
   final String? category;
-  // E.g., "Personal", "Work"
+// E.g., "Personal", "Work"
   @override
   @JsonKey()
   final bool isCompleted;
@@ -292,10 +295,19 @@ class _$TimelineEventImpl implements _TimelineEvent {
   final bool isCurrent;
   @override
   final int? color;
+  final List<TimelineEvent>? _groupedTasks;
+  @override
+  List<TimelineEvent>? get groupedTasks {
+    final value = _groupedTasks;
+    if (value == null) return null;
+    if (_groupedTasks is EqualUnmodifiableListView) return _groupedTasks;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'TimelineEvent(id: $id, title: $title, startTime: $startTime, endTime: $endTime, type: $type, kind: $kind, subtitle: $subtitle, tag: $tag, category: $category, isCompleted: $isCompleted, isCurrent: $isCurrent, color: $color)';
+    return 'TimelineEvent(id: $id, title: $title, startTime: $startTime, endTime: $endTime, type: $type, kind: $kind, subtitle: $subtitle, tag: $tag, category: $category, isCompleted: $isCompleted, isCurrent: $isCurrent, color: $color, groupedTasks: $groupedTasks)';
   }
 
   @override
@@ -319,25 +331,27 @@ class _$TimelineEventImpl implements _TimelineEvent {
                 other.isCompleted == isCompleted) &&
             (identical(other.isCurrent, isCurrent) ||
                 other.isCurrent == isCurrent) &&
-            (identical(other.color, color) || other.color == color));
+            (identical(other.color, color) || other.color == color) &&
+            const DeepCollectionEquality()
+                .equals(other._groupedTasks, _groupedTasks));
   }
 
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    title,
-    startTime,
-    endTime,
-    type,
-    kind,
-    subtitle,
-    tag,
-    category,
-    isCompleted,
-    isCurrent,
-    color,
-  );
+      runtimeType,
+      id,
+      title,
+      startTime,
+      endTime,
+      type,
+      kind,
+      subtitle,
+      tag,
+      category,
+      isCompleted,
+      isCurrent,
+      color,
+      const DeepCollectionEquality().hash(_groupedTasks));
 
   @JsonKey(ignore: true)
   @override
@@ -347,20 +361,20 @@ class _$TimelineEventImpl implements _TimelineEvent {
 }
 
 abstract class _TimelineEvent implements TimelineEvent {
-  const factory _TimelineEvent({
-    required final String id,
-    required final String title,
-    required final String startTime,
-    required final String endTime,
-    required final TimelineEventType type,
-    final EventKind kind,
-    final String? subtitle,
-    final String? tag,
-    final String? category,
-    final bool isCompleted,
-    final bool isCurrent,
-    final int? color,
-  }) = _$TimelineEventImpl;
+  const factory _TimelineEvent(
+      {required final String id,
+      required final String title,
+      required final String startTime,
+      required final String endTime,
+      required final TimelineEventType type,
+      final EventKind kind,
+      final String? subtitle,
+      final String? tag,
+      final String? category,
+      final bool isCompleted,
+      final bool isCurrent,
+      final int? color,
+      final List<TimelineEvent>? groupedTasks}) = _$TimelineEventImpl;
 
   @override
   String get id;
@@ -386,6 +400,8 @@ abstract class _TimelineEvent implements TimelineEvent {
   bool get isCurrent;
   @override
   int? get color;
+  @override
+  List<TimelineEvent>? get groupedTasks;
   @override
   @JsonKey(ignore: true)
   _$$TimelineEventImplCopyWith<_$TimelineEventImpl> get copyWith =>

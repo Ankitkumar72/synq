@@ -43,9 +43,6 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
   double _dragScrollCompensation = 0;
   int _dragDurationMinutes = TimelineLayoutEngine.minimumEventDurationMinutes;
 
-  bool _isResizing = false;
-  double _liveHeight = 0;
-
   late final AnimationController _pressController;
   late final Animation<double> _pressScale;
 
@@ -53,7 +50,6 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
   void initState() {
     super.initState();
     _liveTop = widget.positioned.top;
-    _liveHeight = widget.positioned.height;
 
     _pressController = AnimationController(
       vsync: this,
@@ -69,7 +65,6 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
   void didUpdateWidget(DraggableTimelineEvent oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_isDragging) _liveTop = widget.positioned.top;
-    if (!_isResizing) _liveHeight = widget.positioned.height;
   }
 
   @override
@@ -97,7 +92,7 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
         _dragStartTop + details.offsetFromOrigin.dy + _dragScrollCompensation;
     final snapped = TimelineLayoutEngine.snapTop(
       rawTop: raw,
-      eventHeight: _liveHeight,
+      eventHeight: widget.positioned.height,
     );
     setState(() => _liveTop = snapped);
     widget.onDragTopChanged?.call(snapped);
@@ -117,33 +112,7 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
     widget.onRescheduled?.call(widget.positioned.event, newStart, newEnd);
   }
 
-  void _onResizePanStart(DragStartDetails details) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _isResizing = true;
-      _liveHeight = widget.positioned.height;
-    });
-    widget.onResizeBottomChanged?.call(_liveTop + _liveHeight);
-  }
 
-  void _onResizePanUpdate(DragUpdateDetails details) {
-    final scrolled = _maybeAutoScroll(details.globalPosition);
-    final rawBottom = _liveTop + _liveHeight + details.delta.dy + scrolled;
-    final snapped = TimelineLayoutEngine.snapHeight(
-      eventTop: _liveTop,
-      rawBottom: rawBottom,
-    );
-    setState(() => _liveHeight = snapped);
-    widget.onResizeBottomChanged?.call(_liveTop + _liveHeight);
-  }
-
-  void _onResizePanEnd(DragEndDetails details) {
-    HapticFeedback.lightImpact();
-    final newEnd = TimelineLayoutEngine.topToTime(_liveTop + _liveHeight);
-    setState(() => _isResizing = false);
-    widget.onResizeBottomChanged?.call(null);
-    widget.onResized?.call(widget.positioned.event, newEnd);
-  }
 
   double _maybeAutoScroll(Offset globalPosition) {
     final scrollable = Scrollable.maybeOf(context);
@@ -208,9 +177,9 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
     final event = widget.positioned.event;
     final pos = widget.positioned;
 
-    final isActive = _isDragging || _isResizing;
+    final isActive = _isDragging;
     final displayTop = _isDragging ? _liveTop : pos.top;
-    final displayHeight = _isResizing ? _liveHeight : pos.height;
+    final displayHeight = pos.height;
 
     final tileColor = _eventColor(event);
     final textColor = _contrastColor(tileColor);
@@ -256,30 +225,13 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(6, 4, 6, 0),
-                      child: _EventBody(
-                        event: event,
-                        height: displayHeight,
-                        textColor: textColor,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onVerticalDragStart: _onResizePanStart,
-                    onVerticalDragUpdate: _onResizePanUpdate,
-                    onVerticalDragEnd: _onResizePanEnd,
-                    child: _ResizeHandle(
-                      color: textColor.withValues(alpha: 0.5),
-                      isActive: _isResizing,
-                    ),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4), // Tighter padding for shrunken events
+                child: _EventBody(
+                  event: event,
+                  height: displayHeight,
+                  textColor: textColor,
+                ),
               ),
             ),
           ),
@@ -353,28 +305,37 @@ class _EventBody extends StatelessWidget {
             Expanded(
               child: Text(
                 event.title,
-                maxLines: height < 44 ? 1 : 2,
+                maxLines: 2, // Allow up to 2 lines before truncating
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: textColor,
-                  fontSize: 15,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  height: 1.2,
+                  height: 1.1,
                 ),
               ),
             ),
           ],
         ),
         if (showTime)
-          Text(
-            '${event.startTime} - ${event.endTime}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: textColor.withValues(alpha: 0.8),
-              fontSize: 14,
-              height: 1.2,
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // If the column is extremely narrow (e.g. < 50px), just show the start time to save space!
+              final timeText = constraints.maxWidth < 50
+                  ? event.startTime
+                  : '${event.startTime} - ${event.endTime}';
+                  
+              return Text(
+                timeText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.8),
+                  fontSize: 12, // slightly smaller to fit better
+                  height: 1.2,
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -382,32 +343,7 @@ class _EventBody extends StatelessWidget {
   }
 }
 
-class _ResizeHandle extends StatelessWidget {
-  final Color color;
-  final bool isActive;
 
-  const _ResizeHandle({required this.color, required this.isActive});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: TimelineLayoutEngine.resizeHandleHeight,
-      child: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: isActive ? 32 : 24,
-          height: 3,
-          decoration: BoxDecoration(
-            color: isActive
-                ? color.withValues(alpha: 0.9)
-                : color.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 extension _ColorDarken on Color {
   Color darken(double amount) {

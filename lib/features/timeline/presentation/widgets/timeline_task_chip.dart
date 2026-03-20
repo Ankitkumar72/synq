@@ -15,17 +15,6 @@ typedef TaskRescheduledCallback =
 typedef TaskTappedCallback = void Function(TimelineEvent task);
 typedef TaskToggleCallback = void Function(TimelineEvent task);
 
-// ---------------------------------------------------------------------------
-// TimelineTaskChip
-// ---------------------------------------------------------------------------
-
-/// A fixed-height chip rendered at its due hour on the timeline grid.
-/// Tasks skip the column layout engine entirely.
-///
-/// - 32px tall, full available width, anchored at the left edge
-/// - Checkbox icon on the left
-/// - Completed tasks: muted background + strikethrough title
-/// - Supports long-press drag to reschedule (30-min snap grid)
 class TimelineTaskChip extends StatefulWidget {
   final TimelineEvent task;
 

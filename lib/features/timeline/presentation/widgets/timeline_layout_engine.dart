@@ -115,7 +115,27 @@ class TimelineLayoutEngine {
       }
 
       final totalColumns = columns.length;
-      final columnWidth = containerWidth / totalColumns;
+
+      // Calculate relative weights to allow events to shrink and tasks to expand
+      final columnWeights = List.filled(totalColumns, 1.0);
+      double totalWeight = 0;
+      for (var col = 0; col < totalColumns; col++) {
+        final hasTaskGroup = columns[col].any((r) => r.event.kind == EventKind.taskGroup);
+        if (hasTaskGroup && totalColumns > 1) {
+          columnWeights[col] = 3.0; // Give task groups 3x the space of a normal event!
+        }
+        totalWeight += columnWeights[col];
+      }
+
+      final columnStarts = <double>[];
+      final columnWidths = <double>[];
+      double currentLeft = 0;
+      for (var col = 0; col < totalColumns; col++) {
+        final w = (columnWeights[col] / totalWeight) * containerWidth;
+        columnStarts.add(currentLeft);
+        columnWidths.add(w);
+        currentLeft += w;
+      }
 
       for (final range in group) {
         var maxColumn = range.column;
@@ -137,8 +157,13 @@ class TimelineLayoutEngine {
 
         final columnSpan = maxColumn - range.column + 1;
 
-        var tileWidth = columnWidth * columnSpan - horizontalGap;
-        final tileLeft = range.column * columnWidth + horizontalGap / 2;
+        var tileWidth = 0.0;
+        for (var c = range.column; c < range.column + columnSpan; c++) {
+          tileWidth += columnWidths[c];
+        }
+        tileWidth -= horizontalGap;
+        
+        final tileLeft = columnStarts[range.column] + horizontalGap / 2;
 
         final tileTop =
             (range.startMinutes / 60.0) * pixelsPerHour + verticalGap / 2;
@@ -148,7 +173,7 @@ class TimelineLayoutEngine {
         if (tileHeight < minimumEventHeight) tileHeight = minimumEventHeight;
         tileHeight -= verticalGap;
 
-        if (tileWidth < 50) tileWidth = 50;
+        // tileWidth shrinks naturally based on available columns without artificial overlap!
 
         positioned.add(
           PositionedTimelineEvent(

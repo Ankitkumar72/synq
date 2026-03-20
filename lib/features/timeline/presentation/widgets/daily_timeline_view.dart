@@ -5,13 +5,13 @@ import 'package:intl/intl.dart';
 import '../../domain/models/timeline_event.dart';
 import 'draggable_timeline_event.dart';
 import 'timeline_layout_engine.dart';
-import 'timeline_task_chip.dart';
+import 'timeline_task_group_widget.dart';
 
 // ---------------------------------------------------------------------------
 // Callbacks for empty-slot tap
 // ---------------------------------------------------------------------------
-
 typedef EmptySlotTapCallback = void Function(String tappedTime);
+typedef EventTappedCallback = void Function(TimelineEvent event);
 
 class DailyTimelineView extends StatefulWidget {
   final List<TimelineEvent> events;
@@ -20,9 +20,6 @@ class DailyTimelineView extends StatefulWidget {
   final EventRescheduledCallback? onEventRescheduled;
   final EventResizedCallback? onEventResized;
   final EventTappedCallback? onEventTapped;
-
-  /// Called when the user taps an empty slot on the timeline.
-  /// Receives the snapped time string (e.g. "6:15 PM").
   final EmptySlotTapCallback? onEmptySlotTap;
 
   final double gutterWidth;
@@ -119,41 +116,19 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     return (now.hour + now.minute / 60.0) * TimelineLayoutEngine.pixelsPerHour;
   }
 
-  // ---------------------------------------------------------------------------
-  // Partition events vs tasks
-  // ---------------------------------------------------------------------------
-
-  List<TimelineEvent> _eventItems() =>
-      widget.events.where((e) => e.kind == EventKind.event).toList();
-
-  List<TimelineEvent> _taskItems() =>
-      widget.events.where((e) => e.kind == EventKind.task).toList();
-
-  // ---------------------------------------------------------------------------
-  // Empty slot tap handler
-  // ---------------------------------------------------------------------------
-
   void _onEmptySlotTap(TapUpDetails details, BoxConstraints constraints) {
     if (widget.onEmptySlotTap == null) return;
-
-    // The tap Y is relative to the scrollable content (Stack), not viewport.
     final localY = details.localPosition.dy;
-    // Snap to nearest 15-min slot
     final pixelsPerSnap = TimelineLayoutEngine.pixelsPerHour * 15 / 60.0;
     final snappedY = (localY / pixelsPerSnap).round() * pixelsPerSnap;
     final timeStr = TimelineLayoutEngine.topToTime(snappedY);
     widget.onEmptySlotTap?.call(timeStr);
   }
 
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
     final totalHeight = TimelineLayoutEngine.pixelsPerHour * 24;
 
     return LayoutBuilder(
@@ -161,12 +136,26 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         final eventAreaWidth =
             constraints.maxWidth - widget.gutterWidth - widget.gutterPadding;
 
-        // --- Event layout (both events and tasks go through the engine) ---
-        final previewEvents = _buildPreviewEvents(widget.events);
-        final positioned = TimelineLayoutEngine.calculatePositions(
-          events: previewEvents,
+        // --- Separate tasks from events BEFORE layout ---
+        final rawEvents =
+            widget.events.where((e) => e.kind == EventKind.event).toList();
+        final rawTasks =
+            widget.events.where((e) => e.kind == EventKind.task).toList();
+
+        // Group tasks by hour into taskGroup pseudo-events
+        final taskGroups = _groupTasksByHour(rawTasks);
+
+        // Preview events for live drag/resize reflow (events only)
+        final previewEvents = _buildPreviewEvents(rawEvents);
+
+        // Combine taskGroups and previewEvents to layout together so they share columns
+        final combinedEvents = [...previewEvents, ...taskGroups];
+
+        final positionedItems = TimelineLayoutEngine.calculatePositions(
+          events: combinedEvents,
           containerWidth: eventAreaWidth,
         );
+
         final basePositioned = _activeDragEventId == null
             ? const <PositionedTimelineEvent>[]
             : TimelineLayoutEngine.calculatePositions(
@@ -174,154 +163,120 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                 containerWidth: eventAreaWidth,
               );
 
-        // --- Active drag snap line position ---
         final snapLineTop = _liveDragTop;
 
         return SingleChildScrollView(
           controller: _scrollController,
           physics: const ClampingScrollPhysics(),
-            child: SizedBox(
-              height: totalHeight,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: widget.gutterWidth,
-                    child: ValueListenableBuilder<DateTime>(
-                      valueListenable: _now,
-                      builder: (context, now, child) {
-                        return _HourGutter(
-                          totalHeight: totalHeight,
-                          colorScheme: colorScheme,
-                          now: now,
-                          isToday: _isToday(),
-                        );
-                      },
-                    ),
+          child: SizedBox(
+            height: totalHeight,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: widget.gutterWidth,
+                  child: ValueListenableBuilder<DateTime>(
+                    valueListenable: _now,
+                    builder: (context, now, child) {
+                      return _HourGutter(
+                        totalHeight: totalHeight,
+                        colorScheme: colorScheme,
+                        now: now,
+                        isToday: _isToday(),
+                      );
+                    },
                   ),
-                  SizedBox(width: widget.gutterPadding),
-                  Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onTapUp: (details) =>
-                          _onEmptySlotTap(details, constraints),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          _HourSlots(
-                            totalHeight: totalHeight,
-                            colorScheme: colorScheme,
-                          ),
-                          _GridLines(
-                            totalHeight: totalHeight,
-                            colorScheme: colorScheme,
-                          ),
+                ),
+                SizedBox(width: widget.gutterPadding),
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTapUp: (details) => _onEmptySlotTap(details, constraints),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        _HourSlots(totalHeight: totalHeight, colorScheme: colorScheme),
+                        _GridLines(totalHeight: totalHeight, colorScheme: colorScheme),
 
-                          // Ghost tile (original slot while event is dragging)
-                          if (_activeDragEventId != null)
-                            ..._buildGhostTiles(basePositioned),
+                        if (_activeDragEventId != null)
+                          ..._buildGhostTiles(basePositioned),
 
-                          // Event and Task tiles
-                          ...positioned.map((p) {
-                            if (p.event.kind == EventKind.task) {
-                              return TimelineTaskChip(
-                                key: ValueKey('chip_${p.event.id}'),
-                                task: p.event,
-                                top: p.top, // from engine
-                                left: p.left, // from engine
-                                width: p.width, // from engine
-                                onRescheduled: (task, start, end) {
-                                  setState(() {
-                                    _activeDragEventId = null;
-                                    _liveDragTop = null;
-                                  });
-                                  widget.onEventRescheduled?.call(task, start, end);
-                                },
-                                onTapped: widget.onEventTapped,
-                                onDragTopChanged: (top) {
-                                  setState(() {
-                                    _activeDragEventId = top != null ? p.event.id : null;
-                                    _liveDragTop = top;
-                                  });
-                                },
-                              );
-                            } else {
-                              return DraggableTimelineEvent(
-                                key: ValueKey(p.event.id),
-                                positioned: p,
-                                onRescheduled: (event, start, end) {
-                                  setState(() {
-                                    _activeDragEventId = null;
-                                    _liveDragTop = null;
-                                  });
-                                  widget.onEventRescheduled?.call(event, start, end);
-                                },
-                                onResized: (event, end) {
-                                  setState(() {
-                                    _activeResizeEventId = null;
-                                    _liveResizeBottom = null;
-                                  });
-                                  widget.onEventResized?.call(event, end);
-                                },
-                                onTapped: widget.onEventTapped,
-                                onDragTopChanged: (top) {
-                                  setState(() {
-                                    _activeDragEventId = top != null ? p.event.id : null;
-                                    _liveDragTop = top;
-                                  });
-                                },
-                                onResizeBottomChanged: (bottom) {
-                                  setState(() {
-                                    _activeResizeEventId = bottom != null ? p.event.id : null;
-                                    _liveResizeBottom = bottom;
-                                  });
-                                },
-                              );
-                            }
-                          }),
+                        // Render Unified Items
+                        ...positionedItems.map((p) {
+                          if (p.event.kind == EventKind.taskGroup) {
+                            return TimelineTaskGroupWidget(
+                              key: ValueKey(p.event.id),
+                              taskGroup: p.event,
+                              top: p.top,
+                              left: p.left,
+                              width: p.width,
+                              height: TimelineLayoutEngine.pixelsPerHour.toDouble(),
+                              onTapped: widget.onEventTapped,
+                            );
+                          } else {
+                            return DraggableTimelineEvent(
+                              key: ValueKey(p.event.id),
+                              positioned: p,
+                              onRescheduled: (event, start, end) {
+                                setState(() {
+                                  _activeDragEventId = null;
+                                  _liveDragTop = null;
+                                });
+                                widget.onEventRescheduled?.call(event, start, end);
+                              },
+                              onResized: (event, end) {
+                                setState(() {
+                                  _activeResizeEventId = null;
+                                  _liveResizeBottom = null;
+                                });
+                                widget.onEventResized?.call(event, end);
+                              },
+                              onTapped: widget.onEventTapped,
+                              onDragTopChanged: (top) {
+                                setState(() {
+                                  _activeDragEventId = top != null ? p.event.id : null;
+                                  _liveDragTop = top;
+                                });
+                              },
+                              onResizeBottomChanged: (bottom) {
+                                setState(() {
+                                  _activeResizeEventId = bottom != null ? p.event.id : null;
+                                  _liveResizeBottom = bottom;
+                                });
+                              },
+                            );
+                          }
+                        }),
 
-                          // Horizontal snap line during drag
-                          if (snapLineTop != null)
-                            _SnapLine(
-                              top: snapLineTop,
+                        if (snapLineTop != null)
+                          _SnapLine(top: snapLineTop, colorScheme: colorScheme),
+
+                        if (_isToday())
+                          ValueListenableBuilder<DateTime>(
+                            valueListenable: _now,
+                            builder: (_, __, ___) => _CurrentTimeLine(
+                              top: _currentTimeTop(),
                               colorScheme: colorScheme,
                             ),
+                          ),
 
-                          // Current-time indicator (today only)
-                          if (_isToday())
-                            ValueListenableBuilder<DateTime>(
-                              valueListenable: _now,
-                              builder: (_, __, ___) => _CurrentTimeLine(
-                                top: _currentTimeTop(),
-                                colorScheme: colorScheme,
-                              ),
-                            ),
-
-                          // Live drag tooltip (time label above dragged tile)
-                          if (_liveDragTop != null)
-                            _TimeDragTooltip(
-                              top: _liveDragTop!,
-                              label: TimelineLayoutEngine.topToTime(
-                                _liveDragTop!,
-                              ),
-                              colorScheme: colorScheme,
-                            ),
-
-                        ],
-                      ),
+                        if (_liveDragTop != null)
+                          _TimeDragTooltip(
+                            top: _liveDragTop!,
+                            label: TimelineLayoutEngine.topToTime(_liveDragTop!),
+                            colorScheme: colorScheme,
+                          ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
+          ),
+        );
       },
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Ghost tile builder (for events only)
-  // ---------------------------------------------------------------------------
 
   List<Widget> _buildGhostTiles(List<PositionedTimelineEvent> positioned) {
     return positioned
@@ -347,10 +302,6 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         .toList();
   }
 
-  // ---------------------------------------------------------------------------
-  // Preview events — apply live drag/resize positions for reflow
-  // ---------------------------------------------------------------------------
-
   List<TimelineEvent> _buildPreviewEvents(List<TimelineEvent> original) {
     if ((_activeDragEventId == null || _liveDragTop == null) &&
         (_activeResizeEventId == null || _liveResizeBottom == null)) {
@@ -375,8 +326,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
           TimelineLayoutEngine.topToTime(_liveResizeBottom!),
         );
         if (endMinutes <= startMinutes) {
-          endMinutes =
-              startMinutes + TimelineLayoutEngine.minimumEventDurationMinutes;
+          endMinutes = startMinutes + TimelineLayoutEngine.minimumEventDurationMinutes;
         }
         endMinutes = endMinutes.clamp(0, 23 * 60 + 59);
         return event.copyWith(endTime: _formatMinutes(endMinutes));
@@ -385,10 +335,6 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
       return event;
     }).toList();
   }
-
-  // ---------------------------------------------------------------------------
-  // Time helpers
-  // ---------------------------------------------------------------------------
 
   int _durationMinutes(String start, String end) {
     final startMinutes = _parseMinutes(start);
@@ -413,8 +359,28 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     final m = safe % 60;
     return DateFormat('h:mm a').format(DateTime(2000, 1, 1, h, m));
   }
-}
+  /// Groups task events by their start-hour into taskGroup pseudo-events.
+  List<TimelineEvent> _groupTasksByHour(List<TimelineEvent> tasks) {
+    final Map<int, List<TimelineEvent>> hourlyTasks = {};
+    for (final t in tasks) {
+      final hour = _parseMinutes(t.startTime) ~/ 60;
+      hourlyTasks.putIfAbsent(hour, () => []).add(t);
+    }
 
+    return [
+      for (final entry in hourlyTasks.entries)
+        TimelineEvent(
+          id: 'task_group_${entry.key}',
+          title: 'Task Group',
+          startTime: _formatMinutes(entry.key * 60),
+          endTime: _formatMinutes((entry.key + 1) * 60),
+          type: TimelineEventType.standard,
+          kind: EventKind.taskGroup,
+          groupedTasks: entry.value,
+        ),
+    ];
+  }
+}
 // ---------------------------------------------------------------------------
 // _HourGutter
 // ---------------------------------------------------------------------------
@@ -443,7 +409,6 @@ class _HourGutter extends StatelessWidget {
           final amPm = hour < 12 ? 'am' : 'pm';
           final label = '$displayHour $amPm';
 
-          // Skip 12 am to keep it clean like the design
           if (hour == 0) return const SizedBox.shrink();
 
           final isCurrentHour = isToday && now.hour == hour;
@@ -459,8 +424,9 @@ class _HourGutter extends StatelessWidget {
                 fontSize: 13,
                 color: isCurrentHour
                     ? const Color(0xFF4B7BFF)
-                    : const Color(0xFF94A3B8), // Slate grey
-                fontWeight: isCurrentHour ? FontWeight.bold : FontWeight.w600,
+                    : const Color(0xFF94A3B8),
+                fontWeight:
+                    isCurrentHour ? FontWeight.bold : FontWeight.w600,
               ),
             ),
           );
@@ -546,13 +512,11 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GridPainter oldDelegate) {
-    return false;
-  }
+  bool shouldRepaint(_GridPainter oldDelegate) => false;
 }
 
 // ---------------------------------------------------------------------------
-// _SnapLine — horizontal guide shown during drag
+// _SnapLine
 // ---------------------------------------------------------------------------
 
 class _SnapLine extends StatelessWidget {
@@ -590,8 +554,8 @@ class _CurrentTimeLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: top - 4, // Center the 8px dot exactly on the current time
-      left: -4, // Shift left so the center of the dot hits the card's edge
+      top: top - 4,
+      left: -4,
       right: 0,
       child: Row(
         children: [
@@ -599,14 +563,14 @@ class _CurrentTimeLine extends StatelessWidget {
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
-              color: Color(0xFF4B7BFF), // Deep blue matching the active block
+              color: Color(0xFF4B7BFF),
               shape: BoxShape.circle,
             ),
           ),
           Expanded(
             child: Container(
               height: 1.5,
-              color: const Color(0xFF4B7BFF).withValues(alpha: 0.8), // Faint blue line
+              color: const Color(0xFF4B7BFF).withValues(alpha: 0.8),
             ),
           ),
         ],

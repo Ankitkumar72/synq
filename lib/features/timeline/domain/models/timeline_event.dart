@@ -6,7 +6,7 @@ part 'timeline_event.freezed.dart';
 enum TimelineEventType { strategy, active, rest, standard, admin, design }
 
 /// Distinguishes tasks (rendered as chips) from events (rendered as blocks).
-enum EventKind { event, task }
+enum EventKind { event, task, taskGroup }
 
 @freezed
 class TimelineEvent with _$TimelineEvent {
@@ -23,5 +23,6 @@ class TimelineEvent with _$TimelineEvent {
     @Default(false) bool isCompleted,
     @Default(false) bool isCurrent,
     int? color,
+    List<TimelineEvent>? groupedTasks,
   }) = _TimelineEvent;
 }

@@ -12,8 +12,7 @@ part of 'recurrence_rule.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 RecurrenceRule _$RecurrenceRuleFromJson(Map<String, dynamic> json) {
   return _RecurrenceRule.fromJson(json);
@@ -37,18 +36,16 @@ mixin _$RecurrenceRule {
 /// @nodoc
 abstract class $RecurrenceRuleCopyWith<$Res> {
   factory $RecurrenceRuleCopyWith(
-    RecurrenceRule value,
-    $Res Function(RecurrenceRule) then,
-  ) = _$RecurrenceRuleCopyWithImpl<$Res, RecurrenceRule>;
+          RecurrenceRule value, $Res Function(RecurrenceRule) then) =
+      _$RecurrenceRuleCopyWithImpl<$Res, RecurrenceRule>;
   @useResult
-  $Res call({
-    int interval,
-    RecurrenceUnit unit,
-    RecurrenceEndType endType,
-    DateTime? endDate,
-    int? occurrenceCount,
-    List<int>? daysOfWeek,
-  });
+  $Res call(
+      {int interval,
+      RecurrenceUnit unit,
+      RecurrenceEndType endType,
+      DateTime? endDate,
+      int? occurrenceCount,
+      List<int>? daysOfWeek});
 }
 
 /// @nodoc
@@ -71,55 +68,50 @@ class _$RecurrenceRuleCopyWithImpl<$Res, $Val extends RecurrenceRule>
     Object? occurrenceCount = freezed,
     Object? daysOfWeek = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            interval: null == interval
-                ? _value.interval
-                : interval // ignore: cast_nullable_to_non_nullable
-                      as int,
-            unit: null == unit
-                ? _value.unit
-                : unit // ignore: cast_nullable_to_non_nullable
-                      as RecurrenceUnit,
-            endType: null == endType
-                ? _value.endType
-                : endType // ignore: cast_nullable_to_non_nullable
-                      as RecurrenceEndType,
-            endDate: freezed == endDate
-                ? _value.endDate
-                : endDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            occurrenceCount: freezed == occurrenceCount
-                ? _value.occurrenceCount
-                : occurrenceCount // ignore: cast_nullable_to_non_nullable
-                      as int?,
-            daysOfWeek: freezed == daysOfWeek
-                ? _value.daysOfWeek
-                : daysOfWeek // ignore: cast_nullable_to_non_nullable
-                      as List<int>?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      interval: null == interval
+          ? _value.interval
+          : interval // ignore: cast_nullable_to_non_nullable
+              as int,
+      unit: null == unit
+          ? _value.unit
+          : unit // ignore: cast_nullable_to_non_nullable
+              as RecurrenceUnit,
+      endType: null == endType
+          ? _value.endType
+          : endType // ignore: cast_nullable_to_non_nullable
+              as RecurrenceEndType,
+      endDate: freezed == endDate
+          ? _value.endDate
+          : endDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      occurrenceCount: freezed == occurrenceCount
+          ? _value.occurrenceCount
+          : occurrenceCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      daysOfWeek: freezed == daysOfWeek
+          ? _value.daysOfWeek
+          : daysOfWeek // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$RecurrenceRuleImplCopyWith<$Res>
     implements $RecurrenceRuleCopyWith<$Res> {
-  factory _$$RecurrenceRuleImplCopyWith(
-    _$RecurrenceRuleImpl value,
-    $Res Function(_$RecurrenceRuleImpl) then,
-  ) = __$$RecurrenceRuleImplCopyWithImpl<$Res>;
+  factory _$$RecurrenceRuleImplCopyWith(_$RecurrenceRuleImpl value,
+          $Res Function(_$RecurrenceRuleImpl) then) =
+      __$$RecurrenceRuleImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    int interval,
-    RecurrenceUnit unit,
-    RecurrenceEndType endType,
-    DateTime? endDate,
-    int? occurrenceCount,
-    List<int>? daysOfWeek,
-  });
+  $Res call(
+      {int interval,
+      RecurrenceUnit unit,
+      RecurrenceEndType endType,
+      DateTime? endDate,
+      int? occurrenceCount,
+      List<int>? daysOfWeek});
 }
 
 /// @nodoc
@@ -127,9 +119,8 @@ class __$$RecurrenceRuleImplCopyWithImpl<$Res>
     extends _$RecurrenceRuleCopyWithImpl<$Res, _$RecurrenceRuleImpl>
     implements _$$RecurrenceRuleImplCopyWith<$Res> {
   __$$RecurrenceRuleImplCopyWithImpl(
-    _$RecurrenceRuleImpl _value,
-    $Res Function(_$RecurrenceRuleImpl) _then,
-  ) : super(_value, _then);
+      _$RecurrenceRuleImpl _value, $Res Function(_$RecurrenceRuleImpl) _then)
+      : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
@@ -141,48 +132,46 @@ class __$$RecurrenceRuleImplCopyWithImpl<$Res>
     Object? occurrenceCount = freezed,
     Object? daysOfWeek = freezed,
   }) {
-    return _then(
-      _$RecurrenceRuleImpl(
-        interval: null == interval
-            ? _value.interval
-            : interval // ignore: cast_nullable_to_non_nullable
-                  as int,
-        unit: null == unit
-            ? _value.unit
-            : unit // ignore: cast_nullable_to_non_nullable
-                  as RecurrenceUnit,
-        endType: null == endType
-            ? _value.endType
-            : endType // ignore: cast_nullable_to_non_nullable
-                  as RecurrenceEndType,
-        endDate: freezed == endDate
-            ? _value.endDate
-            : endDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        occurrenceCount: freezed == occurrenceCount
-            ? _value.occurrenceCount
-            : occurrenceCount // ignore: cast_nullable_to_non_nullable
-                  as int?,
-        daysOfWeek: freezed == daysOfWeek
-            ? _value._daysOfWeek
-            : daysOfWeek // ignore: cast_nullable_to_non_nullable
-                  as List<int>?,
-      ),
-    );
+    return _then(_$RecurrenceRuleImpl(
+      interval: null == interval
+          ? _value.interval
+          : interval // ignore: cast_nullable_to_non_nullable
+              as int,
+      unit: null == unit
+          ? _value.unit
+          : unit // ignore: cast_nullable_to_non_nullable
+              as RecurrenceUnit,
+      endType: null == endType
+          ? _value.endType
+          : endType // ignore: cast_nullable_to_non_nullable
+              as RecurrenceEndType,
+      endDate: freezed == endDate
+          ? _value.endDate
+          : endDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      occurrenceCount: freezed == occurrenceCount
+          ? _value.occurrenceCount
+          : occurrenceCount // ignore: cast_nullable_to_non_nullable
+              as int?,
+      daysOfWeek: freezed == daysOfWeek
+          ? _value._daysOfWeek
+          : daysOfWeek // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$RecurrenceRuleImpl implements _RecurrenceRule {
-  const _$RecurrenceRuleImpl({
-    required this.interval,
-    required this.unit,
-    required this.endType,
-    this.endDate,
-    this.occurrenceCount,
-    final List<int>? daysOfWeek,
-  }) : _daysOfWeek = daysOfWeek;
+  const _$RecurrenceRuleImpl(
+      {required this.interval,
+      required this.unit,
+      required this.endType,
+      this.endDate,
+      this.occurrenceCount,
+      final List<int>? daysOfWeek})
+      : _daysOfWeek = daysOfWeek;
 
   factory _$RecurrenceRuleImpl.fromJson(Map<String, dynamic> json) =>
       _$$RecurrenceRuleImplFromJson(json);
@@ -224,48 +213,38 @@ class _$RecurrenceRuleImpl implements _RecurrenceRule {
             (identical(other.endDate, endDate) || other.endDate == endDate) &&
             (identical(other.occurrenceCount, occurrenceCount) ||
                 other.occurrenceCount == occurrenceCount) &&
-            const DeepCollectionEquality().equals(
-              other._daysOfWeek,
-              _daysOfWeek,
-            ));
+            const DeepCollectionEquality()
+                .equals(other._daysOfWeek, _daysOfWeek));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    interval,
-    unit,
-    endType,
-    endDate,
-    occurrenceCount,
-    const DeepCollectionEquality().hash(_daysOfWeek),
-  );
+  int get hashCode => Object.hash(runtimeType, interval, unit, endType, endDate,
+      occurrenceCount, const DeepCollectionEquality().hash(_daysOfWeek));
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$RecurrenceRuleImplCopyWith<_$RecurrenceRuleImpl> get copyWith =>
       __$$RecurrenceRuleImplCopyWithImpl<_$RecurrenceRuleImpl>(
-        this,
-        _$identity,
-      );
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$RecurrenceRuleImplToJson(this);
+    return _$$RecurrenceRuleImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _RecurrenceRule implements RecurrenceRule {
-  const factory _RecurrenceRule({
-    required final int interval,
-    required final RecurrenceUnit unit,
-    required final RecurrenceEndType endType,
-    final DateTime? endDate,
-    final int? occurrenceCount,
-    final List<int>? daysOfWeek,
-  }) = _$RecurrenceRuleImpl;
+  const factory _RecurrenceRule(
+      {required final int interval,
+      required final RecurrenceUnit unit,
+      required final RecurrenceEndType endType,
+      final DateTime? endDate,
+      final int? occurrenceCount,
+      final List<int>? daysOfWeek}) = _$RecurrenceRuleImpl;
 
   factory _RecurrenceRule.fromJson(Map<String, dynamic> json) =
       _$RecurrenceRuleImpl.fromJson;
