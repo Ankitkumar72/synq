@@ -46,17 +46,21 @@ class TimelineTaskGroupWidget extends StatelessWidget {
       left: left,
       width: width,
       height: height,
-      child: ClipRect(
-        child: Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: tasks.map((task) {
-            return _InlineTaskChip(
-              task: task,
-              maxWidth: maxChipWidth,
-              onTapped: onTapped,
-            );
-          }).toList(),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(), // Keeps standard scroll behavior without bouncy overstretch
+        child: SizedBox(
+          width: width, // Guarantees wrap takes exactly the assigned column bounds
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: tasks.map((task) {
+              return _InlineTaskChip(
+                task: task,
+                maxWidth: maxChipWidth,
+                onTapped: onTapped,
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
