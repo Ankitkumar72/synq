@@ -116,7 +116,6 @@ class TimelineLayoutEngine {
 
       final totalColumns = columns.length;
 
-      // Calculate relative weights to allow events to shrink and tasks to expand
       final columnWeights = List.filled(totalColumns, 1.0);
       double totalWeight = 0;
       for (var col = 0; col < totalColumns; col++) {

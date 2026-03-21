@@ -72,8 +72,10 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
       final startFormat = DateFormat('h:mm a');
       final endFormat = DateFormat('h:mm a');
 
-      // Use existing endTime or default duration
-      final endTime = item.endTime ?? date.add(const Duration(hours: 1));
+      // Force tasks to 0 duration so the layout engine shrinks them to the minimum height (e.g. 15 mins visually)
+      final endTime = item.isTask 
+          ? date // Same as start time
+          : (item.endTime ?? date.add(const Duration(hours: 1)));
       final prefix = item.isTask ? 'task' : 'event';
 
       allEvents.add(

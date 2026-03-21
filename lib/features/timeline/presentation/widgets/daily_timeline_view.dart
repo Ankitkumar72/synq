@@ -7,6 +7,7 @@ import 'draggable_timeline_event.dart';
 import 'timeline_layout_engine.dart';
 import 'timeline_task_group_widget.dart';
 
+
 // ---------------------------------------------------------------------------
 // Callbacks for empty-slot tap
 // ---------------------------------------------------------------------------
@@ -359,6 +360,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     final m = safe % 60;
     return DateFormat('h:mm a').format(DateTime(2000, 1, 1, h, m));
   }
+
   /// Groups task events by their start-hour into taskGroup pseudo-events.
   List<TimelineEvent> _groupTasksByHour(List<TimelineEvent> tasks) {
     final Map<int, List<TimelineEvent>> hourlyTasks = {};

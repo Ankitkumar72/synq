@@ -34,12 +34,8 @@ class TimelineTaskGroupWidget extends StatelessWidget {
 
     final tasks = taskGroup.groupedTasks!;
 
-    // Dynamically constrain long tasks so they don't hoard entire rows
-    final maxChipWidth = width >= 180
-        ? (width - 8) / 3 // 3 columns safely
-        : width >= 110
-            ? (width - 4) / 2 // 2 columns safely
-            : width; // 1 column
+    // Allow tasks to span the full width of the container
+    final maxChipWidth = width;
 
     return Positioned(
       top: top,
@@ -92,7 +88,7 @@ class _InlineTaskChip extends StatelessWidget {
     return GestureDetector(
       onTap: () => onTapped?.call(task),
       child: Container(
-        constraints: BoxConstraints(maxWidth: maxWidth),
+        constraints: BoxConstraints(maxWidth: maxWidth, minWidth: maxWidth),
         decoration: BoxDecoration(
           color: chipColor.withValues(alpha: isCompleted ? 0.45 : 0.92),
           borderRadius: BorderRadius.circular(6),

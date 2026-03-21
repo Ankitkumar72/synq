@@ -294,7 +294,14 @@ class _EventBody extends StatelessWidget {
         children: [
           Row(
           children: [
-            if (event.isCompleted) ...[
+            if (event.kind == EventKind.task) ...[
+              Icon(
+                event.isCompleted ? Icons.check_circle : Icons.check_circle_outline,
+                size: 14,
+                color: textColor.withValues(alpha: 0.9),
+              ),
+              const SizedBox(width: 4),
+            ] else if (event.isCompleted) ...[
               Icon(
                 Icons.check_circle_outline,
                 size: 12,
