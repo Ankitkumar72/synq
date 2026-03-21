@@ -145,7 +145,7 @@ class HomeScreenContent extends ConsumerWidget {
         allTasks.where((n) => n.scheduledTime == null).toList()
           ..sort((a, b) => a.order.compareTo(b.order));
 
-    final notesOnly = notes.where((n) => !n.isTask).toList();
+    final notesOnly = notes.where((n) => !n.isTask && n.scheduledTime == null).toList();
 
     if (notes.isEmpty) {
       return _buildEmptyState(context);
