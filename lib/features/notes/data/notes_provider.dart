@@ -9,6 +9,29 @@ final notesProvider = StreamNotifierProvider<NotesNotifier, List<Note>>(() {
   return NotesNotifier();
 });
 
+/// Leverages native SQLite indexes to fetch only incomplete overdue tasks in O(log n) time.
+final overdueTasksProvider = StreamProvider.autoDispose<List<Note>>((ref) {
+  final repository = ref.watch(notesRepositoryProvider);
+  final nowMs = DateTime.now().millisecondsSinceEpoch;
+  return repository.watchFilteredNotes(
+    isCompleted: false,
+    isTask: true,
+    scheduledBeforeMs: nowMs,
+  );
+});
+
+/// Leverages native SQLite indexes to fetch only tasks scheduled for a specific day in O(log n) time.
+final timelineTasksProvider = StreamProvider.autoDispose.family<List<Note>, DateTime>((ref, day) {
+  final repository = ref.watch(notesRepositoryProvider);
+  final startOfDay = DateTime(day.year, day.month, day.day);
+  final endOfDay = startOfDay.add(const Duration(days: 1));
+  
+  return repository.watchFilteredNotes(
+    scheduledAfterMs: startOfDay.millisecondsSinceEpoch,
+    scheduledBeforeMs: endOfDay.millisecondsSinceEpoch,
+  );
+});
+
 class NotesNotifier extends StreamNotifier<List<Note>> {
   late NotesRepository _repository;
 

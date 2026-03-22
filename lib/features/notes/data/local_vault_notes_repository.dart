@@ -26,17 +26,39 @@ class LocalVaultNotesRepository implements NotesRepository {
   }
 
   @override
-  Stream<List<Note>> watchNotes() async* {
-    await _ensureInitialized();
-    yield List<Note>.unmodifiable(_cache);
-    yield* _controller.stream;
+  Stream<List<Note>> watchNotes() {
+    _ensureInitialized().then((_) {
+      _controller.add(List<Note>.unmodifiable(_cache));
+    });
+    return _controller.stream;
   }
 
   @override
-  Stream<Note?> watchNote(String id) async* {
-    await _ensureInitialized();
-    yield _cache.firstWhereOrNull((note) => note.id == id);
-    yield* _controller.stream.map(
+  Stream<List<Note>> watchFilteredNotes({
+    bool? isCompleted,
+    bool? isTask,
+    int? scheduledBeforeMs,
+    int? scheduledAfterMs,
+    String? folderId,
+  }) {
+    return watchNotes().map((notes) {
+      return notes.where((note) {
+        if (isCompleted != null && note.isCompleted != isCompleted) return false;
+        if (isTask != null && note.isTask != isTask) return false;
+        if (folderId != null && note.folderId != folderId) return false;
+        
+        final schedMs = note.scheduledTime?.millisecondsSinceEpoch;
+        if (scheduledBeforeMs != null && (schedMs == null || schedMs >= scheduledBeforeMs)) return false;
+        if (scheduledAfterMs != null && (schedMs == null || schedMs < scheduledAfterMs)) return false;
+        
+        return true;
+      }).toList();
+    });
+  }
+
+  @override
+  Stream<Note?> watchNote(String id) {
+    return watchNotes().map(
       (notes) => notes.firstWhereOrNull((note) => note.id == id),
     );
   }

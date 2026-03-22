@@ -3,39 +3,52 @@ import 'local_database.dart';
 import 'notes_repository.dart';
 
 class LocalDbNotesRepository implements NotesRepository {
-  LocalDbNotesRepository(this._database);
+  LocalDbNotesRepository(this._localDb);
 
-  final LocalDatabase _database;
+  final LocalDatabase _localDb;
 
   @override
-  Stream<List<Note>> watchNotes() {
-    return _database.watchNotes();
+  Stream<List<Note>> watchNotes() => _localDb.watchNotes();
+
+  @override
+  Stream<List<Note>> watchFilteredNotes({
+    bool? isCompleted,
+    bool? isTask,
+    int? scheduledBeforeMs,
+    int? scheduledAfterMs,
+    String? folderId,
+  }) {
+    return _localDb.watchFilteredNotes(
+      isCompleted: isCompleted,
+      isTask: isTask,
+      scheduledBeforeMs: scheduledBeforeMs,
+      scheduledAfterMs: scheduledAfterMs,
+      folderId: folderId,
+    );
   }
 
   @override
-  Stream<Note?> watchNote(String id) {
-    return _database.watchNote(id);
-  }
+  Stream<Note?> watchNote(String id) => _localDb.watchNote(id);
 
   @override
   Future<void> addNote(Note note) async {
     final stamped = note.copyWith(updatedAt: DateTime.now());
-    await _database.upsertNote(stamped, source: SyncWriteSource.local);
+    await _localDb.upsertNote(stamped, source: SyncWriteSource.local);
   }
 
   @override
   Future<void> updateNote(Note note) async {
     final stamped = note.copyWith(updatedAt: DateTime.now());
-    await _database.upsertNote(stamped, source: SyncWriteSource.local);
+    await _localDb.upsertNote(stamped, source: SyncWriteSource.local);
   }
 
   @override
   Future<void> deleteNote(String id) async {
-    await _database.markNoteDeleted(id, source: SyncWriteSource.local);
+    await _localDb.markNoteDeleted(id, source: SyncWriteSource.local);
   }
 
   @override
   Future<void> deleteNotes(List<String> ids) async {
-    await _database.markNotesDeleted(ids, source: SyncWriteSource.local);
+    await _localDb.markNotesDeleted(ids, source: SyncWriteSource.local);
   }
 }

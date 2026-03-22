@@ -2,6 +2,13 @@ import '../domain/models/note.dart';
 
 abstract class NotesRepository {
   Stream<List<Note>> watchNotes();
+  Stream<List<Note>> watchFilteredNotes({
+    bool? isCompleted,
+    bool? isTask,
+    int? scheduledBeforeMs,
+    int? scheduledAfterMs,
+    String? folderId,
+  });
   Stream<Note?> watchNote(String id);
   Future<void> addNote(Note note);
   Future<void> updateNote(Note note);

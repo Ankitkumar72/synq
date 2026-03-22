@@ -47,23 +47,16 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     // 0. Tick for real-time updates
     ref.watch(minuteProvider);
 
-    // 1. Fetch real data sources
-    final notesAsync = ref.watch(notesProvider);
-    final notes = notesAsync.value ?? [];
+    // 1. Fetch real data sources (using the SQL optimized provider)
     final selectedDate = ref.watch(selectedDateProvider);
+    final notesAsync = ref.watch(timelineTasksProvider(selectedDate));
+    final notes = notesAsync.value ?? [];
 
     final allEvents = <TimelineEvent>[];
 
     // 2. Process scheduled timeline entries (tasks + events)
     final scheduledEntries = notes
-        .where(
-          (n) =>
-              !n.isAllDay && // Exclude all-day tasks from hourly blocks
-              n.scheduledTime != null &&
-              n.scheduledTime!.year == selectedDate.year &&
-              n.scheduledTime!.month == selectedDate.month &&
-              n.scheduledTime!.day == selectedDate.day,
-        )
+        .where((n) => !n.isAllDay) // Exclude all-day tasks from hourly blocks
         .toList();
 
     for (final item in scheduledEntries) {

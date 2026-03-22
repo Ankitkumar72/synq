@@ -26,28 +26,26 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
 
   @override
   Widget build(BuildContext context) {
-    final notesAsync = ref.watch(notesProvider);
-    final notes = notesAsync.value ?? [];
+    final overdueAsync = ref.watch(overdueTasksProvider);
+    final overdueTasks = overdueAsync.value ?? [];
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // Filter and group overdue tasks
+    // Group already-filtered overdue tasks
     final Map<DateTime, List<Note>> groupedTasks = {};
     int totalOverdue = 0;
 
-    for (final note in notes) {
-      if (note.isTask && !note.isCompleted && note.scheduledTime != null) {
-        if (note.scheduledTime!.isBefore(now)) {
-          final date = DateTime(
-            note.scheduledTime!.year,
-            note.scheduledTime!.month,
-            note.scheduledTime!.day,
-          );
-          // Group tasks by their scheduled date
-          groupedTasks.putIfAbsent(date, () => []).add(note);
-          totalOverdue++;
-        }
+    for (final note in overdueTasks) {
+      final scheduledTime = note.scheduledTime;
+      if (scheduledTime != null) {
+        final date = DateTime(
+          scheduledTime.year,
+          scheduledTime.month,
+          scheduledTime.day,
+        );
+        groupedTasks.putIfAbsent(date, () => []).add(note);
+        totalOverdue++;
       }
     }
 

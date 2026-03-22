@@ -18,12 +18,35 @@ class FirestoreNotesRepository implements NotesRepository {
   @override
   Stream<List<Note>> watchNotes() {
     return _notesCollection
-        .orderBy('updatedAt', descending: true)
+        .where('is_deleted', isEqualTo: false)
+        .orderBy('created_at_ms', descending: true)
         .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs.map((doc) => Note.fromJson(doc.data())).toList(),
-        );
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => Note.fromJson(doc.data())).toList();
+    });
+  }
+
+  @override
+  Stream<List<Note>> watchFilteredNotes({
+    bool? isCompleted,
+    bool? isTask,
+    int? scheduledBeforeMs,
+    int? scheduledAfterMs,
+    String? folderId,
+  }) {
+    return watchNotes().map((notes) {
+      return notes.where((note) {
+        if (isCompleted != null && note.isCompleted != isCompleted) return false;
+        if (isTask != null && note.isTask != isTask) return false;
+        if (folderId != null && note.folderId != folderId) return false;
+        
+        final schedMs = note.scheduledTime?.millisecondsSinceEpoch;
+        if (scheduledBeforeMs != null && (schedMs == null || schedMs >= scheduledBeforeMs)) return false;
+        if (scheduledAfterMs != null && (schedMs == null || schedMs < scheduledAfterMs)) return false;
+        
+        return true;
+      }).toList();
+    });
   }
 
   @override
