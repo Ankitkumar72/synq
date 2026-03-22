@@ -27,7 +27,7 @@ class CreateTaskSheet extends ConsumerStatefulWidget {
 
 class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
   NoteCategory _selectedTaskCategory = NoteCategory.work;
-  TaskPriority _selectedPriority = TaskPriority.medium;
+  TaskPriority _selectedPriority = TaskPriority.none;
   DateTime? _taskDueDate;
   DateTime? _taskEndTime;
   bool _isTaskAllDay = false;

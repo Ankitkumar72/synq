@@ -291,6 +291,7 @@ class HomeScreenContent extends ConsumerWidget {
 
   Widget _buildTaskItem(BuildContext context, WidgetRef ref, Note task) {
     final priorityColors = {
+      TaskPriority.none: Colors.orange, // Restoring default look
       TaskPriority.low: Colors.green,
       TaskPriority.medium: Colors.orange,
       TaskPriority.high: Colors.red,
@@ -452,7 +453,7 @@ class HomeScreenContent extends ConsumerWidget {
                                 ),
                               ),
                             Text(
-                              '${task.category.name.toUpperCase()} · ${task.priority.name}${task.isAllDay ? ' · ALL DAY' : (task.scheduledTime != null ? ' · ${task.scheduledTime!.hour > 12 ? task.scheduledTime!.hour - 12 : (task.scheduledTime!.hour == 0 ? 12 : task.scheduledTime!.hour)}:${task.scheduledTime!.minute.toString().padLeft(2, '0')} ${task.scheduledTime!.hour >= 12 ? 'PM' : 'AM'}' : '')}',
+                              '${task.category.name.toUpperCase()}${task.priority != TaskPriority.none ? ' · ${task.priority.name}' : ''}${task.isAllDay ? ' · ALL DAY' : (task.scheduledTime != null ? ' · ${task.scheduledTime!.hour > 12 ? task.scheduledTime!.hour - 12 : (task.scheduledTime!.hour == 0 ? 12 : task.scheduledTime!.hour)}:${task.scheduledTime!.minute.toString().padLeft(2, '0')} ${task.scheduledTime!.hour >= 12 ? 'PM' : 'AM'}' : '')}',
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(color: AppColors.textSecondary),
                             ),

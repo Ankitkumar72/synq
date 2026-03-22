@@ -7,7 +7,7 @@ part 'note.g.dart';
 /// Category for notes and tasks
 enum NoteCategory { work, personal, idea }
 
-enum TaskPriority { low, medium, high }
+enum TaskPriority { none, low, medium, high }
 
 @freezed
 class SubTask with _$SubTask {
@@ -42,7 +42,7 @@ class Note with _$Note {
     String? parentRecurringId,
     DateTime? originalScheduledTime,
     DateTime? completedAt,
-    @Default(TaskPriority.medium) TaskPriority priority,
+    @Default(TaskPriority.none) TaskPriority priority,
     @Default(false) bool isTask,
     @Default(false) bool isAllDay,
     @Default(false) bool isRecurringInstance,

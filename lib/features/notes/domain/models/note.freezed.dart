@@ -622,7 +622,7 @@ class _$NoteImpl extends _Note {
       this.parentRecurringId,
       this.originalScheduledTime,
       this.completedAt,
-      this.priority = TaskPriority.medium,
+      this.priority = TaskPriority.none,
       this.isTask = false,
       this.isAllDay = false,
       this.isRecurringInstance = false,

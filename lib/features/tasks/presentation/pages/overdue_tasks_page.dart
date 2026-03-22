@@ -250,14 +250,6 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          decoration: const BoxDecoration(
-            border: Border(
-              left: BorderSide(
-                color: accentRed,
-                width: 3,
-              ),
-            ),
-          ),
           padding: const EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,

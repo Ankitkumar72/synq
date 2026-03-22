@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
+import '../../../tasks/presentation/pages/overdue_tasks_page.dart';
 
 class SynqDrawer extends ConsumerWidget {
   const SynqDrawer({super.key});
@@ -110,6 +111,21 @@ class SynqDrawer extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.assignment_late_outlined,
+              title: 'Overdue Tasks',
+              isSelected: false,
+              onTap: () {
+                _closeDrawer(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const OverdueTasksPage(),
+                  ),
+                );
+              },
             ),
             _buildCheckboxItem(
               context,

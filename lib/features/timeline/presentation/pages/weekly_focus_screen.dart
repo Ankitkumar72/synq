@@ -454,12 +454,12 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
               final isHigh = task.priority == TaskPriority.high;
               final priorityLabel = isHigh
                   ? 'P1'
-                  : (task.priority == TaskPriority.medium ? 'P2' : 'P3');
+                  : (task.priority == TaskPriority.medium ? 'P2' : (task.priority == TaskPriority.low ? 'P3' : ''));
               final priorityColor = isHigh
                   ? const Color(0xFFFDE8E1)
                   : (task.priority == TaskPriority.medium
                         ? const Color(0xFFE8EFFF)
-                        : Colors.grey.shade200);
+                        : (task.priority == TaskPriority.low ? Colors.grey.shade200 : Colors.transparent));
               final priorityTextColor = isHigh
                   ? const Color(0xFFF97316)
                   : (task.priority == TaskPriority.medium
@@ -539,25 +539,27 @@ class _WeeklyFocusScreenState extends ConsumerState<WeeklyFocusScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: priorityColor,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                priority,
-                style: GoogleFonts.roboto(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: priorityTextColor,
+          if (priority.isNotEmpty) ...[
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: priorityColor,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  priority,
+                  style: GoogleFonts.roboto(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: priorityTextColor,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

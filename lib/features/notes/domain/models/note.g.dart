@@ -47,7 +47,7 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
           ? null
           : DateTime.parse(json['completedAt'] as String),
       priority: $enumDecodeNullable(_$TaskPriorityEnumMap, json['priority']) ??
-          TaskPriority.medium,
+          TaskPriority.none,
       isTask: json['isTask'] as bool? ?? false,
       isAllDay: json['isAllDay'] as bool? ?? false,
       isRecurringInstance: json['isRecurringInstance'] as bool? ?? false,
@@ -113,6 +113,7 @@ const _$NoteCategoryEnumMap = {
 };
 
 const _$TaskPriorityEnumMap = {
+  TaskPriority.none: 'none',
   TaskPriority.low: 'low',
   TaskPriority.medium: 'medium',
   TaskPriority.high: 'high',
