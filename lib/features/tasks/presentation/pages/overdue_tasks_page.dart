@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/page_transitions.dart';
+import '../../../../core/navigation/fade_page_route.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../notes/domain/models/note.dart';
 import '../../../notes/presentation/task_detail_screen.dart';
@@ -336,10 +336,10 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
                 ),
               ),
 
-              // Reschedule Button
               GestureDetector(
-                onTap: () {
-                  
+                behavior: HitTestBehavior.opaque,
+                onTap: () async {
+                  await _showCustomRescheduleDialog(context, task, ref);
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -364,7 +364,210 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
           ),
         ),
       ),
+    ),
+  );
+}
+
+  Future<void> _showCustomRescheduleDialog(BuildContext context, Note task, WidgetRef ref) async {
+    DateTime selectedDate = task.scheduledTime ?? DateTime.now();
+    TimeOfDay? selectedTime = task.scheduledTime != null
+        ? TimeOfDay.fromDateTime(task.scheduledTime!)
+        : null;
+
+    final schedulerTheme = Theme.of(context).copyWith(
+      brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF5473F7),
+        onPrimary: Colors.white,
+        surface: Color(0xFF242B35),
+        onSurface: Color(0xFFE7EBF0),
+      ),
+      dividerColor: const Color(0xFF708090),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: const Color(0xFF242B35),
+        headerForegroundColor: const Color(0xFF8A94A6),
+        weekdayStyle: const TextStyle(
+          fontSize: 13,
+          color: Color(0xFFBFC7D1),
+          fontWeight: FontWeight.w500,
+        ),
+        dayStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          if (states.contains(WidgetState.disabled)) {
+            return const Color(0xFF475569);
+          }
+          return const Color(0xFFE7EBF0);
+        }),
+        todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          return const Color(0xFF5473F7);
+        }),
+        todayBorder: BorderSide.none,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+      ),
     );
+
+    final applied = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return Theme(
+              data: schedulerTheme,
+              child: Dialog(
+                backgroundColor: const Color(0xFF242B35),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CalendarDatePicker(
+                          initialDate: selectedDate,
+                          firstDate: DateTime.now().subtract(const Duration(days: 3650)),
+                          lastDate: DateTime.now().add(const Duration(days: 3650)),
+                          onDateChanged: (date) {
+                            setModalState(() => selectedDate = date);
+                          },
+                        ),
+                        const Divider(height: 1, color: Color(0xFF708090)),
+                        ListTile(
+                          visualDensity: const VisualDensity(vertical: -4),
+                          leading: const Icon(Icons.access_time, color: Colors.white70),
+                          title: Text(
+                            selectedTime == null
+                                ? 'Set time'
+                                : '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}',
+                            style: const TextStyle(color: Color(0xFFE7EBF0), fontSize: 14),
+                          ),
+                          onTap: () async {
+                            final pickedTime = await showTimePicker(
+                              context: ctx,
+                              initialTime: selectedTime ?? const TimeOfDay(hour: 9, minute: 0),
+                            );
+                            if (pickedTime != null) {
+                              setModalState(() => selectedTime = pickedTime);
+                            }
+                          },
+                        ),
+                        const Divider(height: 1, color: Color(0xFF708090)),
+                        ListTile(
+                          visualDensity: const VisualDensity(vertical: -4),
+                          leading: const Icon(Icons.repeat, color: Colors.white70),
+                          title: const Text(
+                            'No Repeat',
+                            style: TextStyle(color: Color(0xFFE7EBF0), fontSize: 14),
+                          ),
+                          onTap: () {}, // Optional to implement full repeat here
+                        ),
+                        const Divider(height: 1, color: Color(0xFF708090)),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(dialogContext, false);
+                                },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFEF4444),
+                                ),
+                                child: const Text(
+                                  'Clear',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogContext, false),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFFE7EBF0),
+                                    ),
+                                    child: const Text(
+                                      'Cancel',
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pop(dialogContext, true);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF5473F7),
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(100),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Done',
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (applied == true && context.mounted) {
+      final updatedTask = task.copyWith(
+        scheduledTime: DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          selectedTime?.hour ?? 9,
+          selectedTime?.minute ?? 0,
+        ),
+      );
+      
+      await ref.read(notesProvider.notifier).updateNote(updatedTask);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Rescheduled to ${DateFormat('MMM d').format(selectedDate)}'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
+          ),
+        );
+      }
+    }
   }
 
 }

@@ -19,7 +19,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
     _repository = ref.watch(notesRepositoryProvider);
     
     bool hasMigrated = false;
-    ref.listenSelf((previous, next) {
+    listenSelf((previous, next) {
       if (hasMigrated || next.value == null) return;
       hasMigrated = true;
       for (final note in next.value!) {
