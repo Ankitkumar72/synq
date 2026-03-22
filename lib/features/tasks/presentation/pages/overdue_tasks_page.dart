@@ -4,8 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/page_transitions.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../notes/domain/models/note.dart';
+import '../../../notes/presentation/task_detail_screen.dart';
 import '../../../timeline/presentation/widgets/synq_drawer.dart';
 
 class OverdueTasksPage extends ConsumerStatefulWidget {
@@ -96,8 +98,6 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
           ],
         ),
       ),
-      // The duplicated hardcoded BottomNavigationBar has been removed.
-      // The main shell's persistent BottomNavigationBar will inherently handle it.
     );
   }
 
@@ -156,27 +156,23 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: accentRed.withAlpha(20),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accentRed.withAlpha(40), width: 1),
-        ),
         child: Row(
           children: [
-            const Icon(
-              Icons.calendar_today_rounded,
-              color: accentRed,
-              size: 20,
+            Image.asset(
+              'assets/images/check_logo.png',
+              width: 20,
+              height: 20,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'You have $tasksText across $daysText',
+                '$tasksText across $daysText',
+                textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                  color: accentRed,
-                  fontWeight: FontWeight.w500,
+                  color: textDark,
+                  fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
               ),
@@ -234,8 +230,16 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
   }
 
   Widget _buildTaskCard(Note task) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          FadePageRoute(builder: (_) => TaskDetailScreen(task: task)),
+        );
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -250,7 +254,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -280,13 +284,15 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
                   children: [
                     Text(
                       task.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: textDark,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Row(
                       children: [
                         Text(
@@ -333,12 +339,12 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
               // Reschedule Button
               GestureDetector(
                 onTap: () {
-                  // TODO: Implement reschedule logic (e.g. open a date picker)
+                  
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
+                    horizontal: 12,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     border: Border.all(color: textGray.withAlpha(60)),
