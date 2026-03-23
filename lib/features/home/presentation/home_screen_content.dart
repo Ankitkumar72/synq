@@ -11,6 +11,8 @@ import '../../focus/presentation/focus_screen.dart';
 
 import '../../notes/presentation/note_detail_screen.dart';
 import '../../notes/data/notes_provider.dart';
+import '../../notes/data/image_storage_service.dart';
+import 'dart:io';
 import '../../notes/presentation/task_detail_screen.dart';
 import '../../notes/utils/markdown_bridge.dart';
 
@@ -545,22 +547,42 @@ class HomeScreenContent extends ConsumerWidget {
                     itemCount: note.attachments.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
+                      final filename = note.attachments[index];
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          note.attachments[index],
+                        child: SizedBox(
                           width: 60,
                           height: 60,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 60,
-                            height: 60,
-                            color: Colors.grey[200],
-                            child: const Icon(
-                              Icons.broken_image,
-                              color: Colors.grey,
-                              size: 20,
-                            ),
+                          child: FutureBuilder<File>(
+                            future: ImageStorageService.getFile(filename),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return Container(
+                                  color: Colors.grey[100],
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                                );
+                              }
+                              if (snapshot.hasError || !snapshot.hasData) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.broken_image, color: Colors.grey, size: 20),
+                                );
+                              }
+                              return Image.file(
+                                snapshot.data!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.broken_image, color: Colors.grey, size: 20),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       );

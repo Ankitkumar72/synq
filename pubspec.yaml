@@ -1,5 +1,5 @@
 name: synq
-description: "A new Flutter project."
+description: "Task and Notes App."
 publish_to: 'none' 
 
 version: 1.0.0+1
@@ -48,6 +48,7 @@ dependencies:
   firebase_app_check: ^0.4.1+5
   just_audio: ^0.9.43
   device_info_plus: ^11.5.0
+  flutter_image_compress: ^2.4.0
 
 dev_dependencies:
   flutter_test:

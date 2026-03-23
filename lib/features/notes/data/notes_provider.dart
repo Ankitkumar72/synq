@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/notification_service.dart';
 import '../domain/models/note.dart';
 import '../domain/models/recurrence_rule.dart';
+import 'image_storage_service.dart';
 import 'notes_repository.dart';
 import 'repository_provider.dart';
 
@@ -83,6 +84,13 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   }
 
   Future<void> deleteNote(String id) async {
+    try {
+      final note = state.value?.firstWhere((n) => n.id == id);
+      if (note != null && note.attachments.isNotEmpty) {
+        await ImageStorageService.deleteFiles(note.attachments);
+      }
+    } catch (_) {}
+
     await _repository.deleteNote(id);
     await NotificationService().cancelNotification(id.hashCode);
   }
@@ -114,7 +122,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
     final allNotes = state.value ?? [];
 
     // Find all future instances of this series
-    final futureIds = allNotes
+    final futureNotes = allNotes
         .where(
           (n) =>
               (n.parentRecurringId == parentId ||
@@ -123,10 +131,15 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
               (n.scheduledTime!.isAfter(note.scheduledTime!) ||
                   n.id == note.id),
         ) // Future or This
-        .map((n) => n.id)
         .toList();
 
-    if (futureIds.isNotEmpty) {
+    if (futureNotes.isNotEmpty) {
+      for (final n in futureNotes) {
+        if (n.attachments.isNotEmpty) {
+          await ImageStorageService.deleteFiles(n.attachments);
+        }
+      }
+      final futureIds = futureNotes.map((n) => n.id).toList();
       await _repository.deleteNotes(futureIds);
       for (var id in futureIds) {
         await NotificationService().cancelNotification(id.hashCode);
@@ -138,12 +151,17 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
     final parentId = note.parentRecurringId ?? note.id;
     final allNotes = state.value ?? [];
 
-    final allIds = allNotes
+    final allInstances = allNotes
         .where((n) => n.parentRecurringId == parentId || n.id == parentId)
-        .map((n) => n.id)
         .toList();
 
-    if (allIds.isNotEmpty) {
+    if (allInstances.isNotEmpty) {
+      for (final n in allInstances) {
+        if (n.attachments.isNotEmpty) {
+          await ImageStorageService.deleteFiles(n.attachments);
+        }
+      }
+      final allIds = allInstances.map((n) => n.id).toList();
       await _repository.deleteNotes(allIds);
       for (var id in allIds) {
         await NotificationService().cancelNotification(id.hashCode);
@@ -158,7 +176,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
     // 1. Delete all future instances (excluding this one if possible, but easier to include and regenerate)
     // Actually, we want to KEEP this note but update it, and DELETE future ones.
 
-    final futureIdsToDelete = allNotes
+    final futureNotesToDelete = allNotes
         .where(
           (n) =>
               (n.parentRecurringId == parentId || n.id == parentId) &&
@@ -167,10 +185,15 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
               note.scheduledTime != null &&
               n.scheduledTime!.isAfter(note.scheduledTime!),
         )
-        .map((n) => n.id)
         .toList();
 
-    if (futureIdsToDelete.isNotEmpty) {
+    if (futureNotesToDelete.isNotEmpty) {
+      for (final n in futureNotesToDelete) {
+        if (n.attachments.isNotEmpty) {
+          await ImageStorageService.deleteFiles(n.attachments);
+        }
+      }
+      final futureIdsToDelete = futureNotesToDelete.map((n) => n.id).toList();
       await _repository.deleteNotes(futureIdsToDelete);
       for (var id in futureIdsToDelete) {
         await NotificationService().cancelNotification(id.hashCode);

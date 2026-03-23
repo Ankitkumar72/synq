@@ -10,10 +10,13 @@ import 'package:super_clipboard/super_clipboard.dart';
 import 'package:synq/features/notes/utils/markdown_bridge.dart';
 import 'package:synq/features/notes/utils/html_parser.dart';
 import 'package:synq/core/theme/app_theme.dart';
+import 'dart:io';
 import 'package:synq/core/services/media_service.dart';
 import 'package:synq/features/notes/domain/models/note.dart';
 import 'package:synq/features/notes/domain/models/folder.dart';
 import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/notes/data/image_storage_service.dart';
+import 'package:synq/features/notes/presentation/widgets/attachment_bubble.dart';
 import 'package:synq/features/notes/data/folder_provider.dart';
 import 'package:synq/features/notes/data/note_editor_draft_store.dart';
 import 'package:synq/features/notes/presentation/widgets/tag_manage_dialog.dart';
@@ -340,22 +343,39 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       return;
     }
 
-    // Proactive check (in a real app, you'd call the backend /check-storage-limit here)
-    if (user != null && user.storageUsedBytes > 5 * 1024 * 1024 * 1024) {
-      _showToast(context, 'Storage limit reached.');
+    if (_attachments.length >= ImageStorageService.maxAttachmentsPerNote) {
+      _showToast(context, 'Cannot add more than ${ImageStorageService.maxAttachmentsPerNote} images.');
       return;
     }
 
-    final path = await _mediaService.pickAndSaveImage(
-      source: ImageSource.gallery,
-    );
-    if (path != null) {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+    
+    try {
+      final savedFilename = await ImageStorageService.saveImage(
+        File(image.path), 
+        _attachments.length,
+      );
       setState(() {
-        _attachments.add(path);
+        _attachments.add(savedFilename);
         _hasUnsavedChanges = true;
       });
       _persistDraft();
+      _handleSave();
+    } catch (e) {
+      if (mounted) _showToast(context, e.toString());
     }
+  }
+
+  Future<void> _removeAttachment(String filename) async {
+    await ImageStorageService.deleteFile(filename);
+    setState(() {
+      _attachments.remove(filename);
+      _hasUnsavedChanges = true;
+    });
+    _persistDraft();
+    _handleSave();
   }
 
   Future<void> _openFolderPicker() async {
@@ -472,6 +492,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       _hasUnsavedChanges = true;
     });
     _persistDraft();
+    _handleSave();
 
     if (mounted) {
       final folderName = nextFolderId == null
@@ -745,6 +766,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         if (didPop) return;
         if (_hasUnsavedChanges) {
           _persistDraft();
+          await _handleSave();
         }
         if (context.mounted) Navigator.pop(context);
       },
@@ -879,6 +901,23 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                           ),
                         ),
                         const SizedBox(height: 24),
+
+                        // Attachments Section
+                        if (_attachments.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          ..._attachments.map((filename) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 24),
+                              child: AttachmentBubble(
+                                filename: filename,
+                                onDelete: () => _removeAttachment(filename),
+                                width: double.infinity,
+                                height: null,
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 24),
+                        ],
                       ],
                     ),
                   ),
@@ -953,6 +992,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                                       _hasUnsavedChanges = true;
                                     });
                                     _persistDraft();
+                                    _handleSave();
                                   },
                                 ),
                               );

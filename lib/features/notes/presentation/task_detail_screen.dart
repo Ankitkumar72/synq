@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../../../core/theme/app_theme.dart';
 import '../domain/models/note.dart';
 import '../data/notes_provider.dart';
+import '../data/image_storage_service.dart';
 import '../utils/markdown_controller.dart';
+import '../presentation/widgets/attachment_bubble.dart';
 import '../../home/presentation/providers/schedule_conflict_provider.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
@@ -47,6 +51,54 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _subTaskFocusNode = FocusNode();
     _scrollController = ScrollController();
     _isSubTasksExpanded = widget.task.subtasks.isNotEmpty;
+  }
+
+  Future<void> _pickImage() async {
+    final currentTask = _currentTask;
+    if (currentTask.attachments.length >= ImageStorageService.maxAttachmentsPerNote) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Cannot add more than ${ImageStorageService.maxAttachmentsPerNote} images.')),
+        );
+      }
+      return;
+    }
+
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image == null) return;
+      
+      final savedFilename = await ImageStorageService.saveImage(
+        File(image.path), 
+        currentTask.attachments.length,
+      );
+
+      final updatedTask = currentTask.copyWith(
+        attachments: [...currentTask.attachments, savedFilename],
+      );
+      
+      ref.read(notesProvider.notifier).updateNote(updatedTask);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeAttachment(String filename) async {
+    final currentTask = _currentTask;
+    
+    // 1. Delete physical file
+    await ImageStorageService.deleteFile(filename);
+    
+    // 2. Remove from Task record
+    final newAttachments = currentTask.attachments.where((f) => f != filename).toList();
+    final updatedTask = currentTask.copyWith(attachments: newAttachments);
+    
+    ref.read(notesProvider.notifier).updateNote(updatedTask);
   }
 
   void _onDescriptionChanged() {
@@ -480,6 +532,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     );
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     // Listen to changes to the specific task
@@ -749,6 +803,65 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                // Attachments
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const _SectionTitle(title: 'ATTACHMENTS'),
+                    if (task.attachments.length < ImageStorageService.maxAttachmentsPerNote)
+                      IconButton(
+                        icon: const Icon(Icons.add_photo_alternate_outlined, color: Color(0xFF5372F6)),
+                        onPressed: _pickImage,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (task.attachments.isNotEmpty) ...[
+                  SizedBox(
+                    height: 120,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: task.attachments.length,
+                      separatorBuilder: (context, index) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        final filename = task.attachments[index];
+                        return AttachmentBubble(
+                          filename: filename,
+                          onDelete: () => _removeAttachment(filename),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                if (task.attachments.isEmpty) ...[
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.image_outlined, color: Colors.grey.shade400, size: 32),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tap to attach images',
+                            style: GoogleFonts.roboto(color: Colors.grey.shade500, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
 
                 // Tags
                 if (task.tags.isNotEmpty) ...[
@@ -1028,44 +1141,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     ),
                   ),
 
-                // Attachments
-                // Force rebuild
-                if (task.attachments.isNotEmpty) ...[
-                  const _SectionTitle(title: 'ATTACHMENTS'),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        ...task.attachments.map(
-                          (url) => Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                url,
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+
               ],
             ),
           ),
@@ -1170,3 +1246,5 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
+
+
