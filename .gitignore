@@ -83,3 +83,7 @@ paddle_backend/*.key
 paddle_backend/*.crt
 paddle_backend/*.p8
 
+# Node.js and Firebase Functions
+node_modules/
+firebase-debug.log*
+.firebase/
