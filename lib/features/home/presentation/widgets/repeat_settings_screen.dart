@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../notes/domain/models/recurrence_rule.dart';
+import '../../../../core/domain/models/recurrence_rule.dart';
 
 class RepeatSettingsResult {
   const RepeatSettingsResult({required this.rule});

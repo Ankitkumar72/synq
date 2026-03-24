@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/subscription_repository.dart';
+import '../../../../core/services/subscription_service.dart';
 import '../../../auth/domain/models/synq_user.dart';
 import '../../../auth/presentation/providers/user_provider.dart';
 

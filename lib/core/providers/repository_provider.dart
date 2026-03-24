@@ -2,16 +2,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../auth/presentation/providers/auth_provider.dart';
-import '../../auth/presentation/providers/user_provider.dart';
-import '../../auth/domain/models/synq_user.dart';
-import 'firebase_sync_coordinator.dart';
-import 'folders_repository.dart';
-import 'local_database.dart';
-import 'local_db_folders_repository.dart';
-import 'local_db_notes_repository.dart';
-import 'notes_repository.dart';
-import 'sync_access_provider.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/auth/presentation/providers/user_provider.dart';
+import '../../features/auth/domain/models/synq_user.dart';
+import '../../features/sync/data/firebase_sync_coordinator.dart';
+import '../../features/folders/data/folders_repository.dart';
+import '../database/local_database.dart';
+import '../../features/folders/data/local_db_folders_repository.dart';
+import '../../features/notes/data/local_db_notes_repository.dart';
+import '../../features/tasks/data/local_db_tasks_repository.dart';
+import '../../features/notes/data/notes_repository.dart';
+import '../../features/tasks/data/tasks_repository.dart';
+import '../../features/sync/data/sync_access_provider.dart';
 
 final _currentUserIdProvider = Provider<String>((ref) {
   final authState = ref.watch(authProvider);
@@ -32,6 +34,11 @@ final localDatabaseProvider = Provider<LocalDatabase>((ref) {
 final localDbNotesRepositoryProvider = Provider<LocalDbNotesRepository>((ref) {
   final database = ref.watch(localDatabaseProvider);
   return LocalDbNotesRepository(database);
+});
+
+final localDbTasksRepositoryProvider = Provider<LocalDbTasksRepository>((ref) {
+  final database = ref.watch(localDatabaseProvider);
+  return LocalDbTasksRepository(database);
 });
 
 final localDbFoldersRepositoryProvider = Provider<LocalDbFoldersRepository>((
@@ -74,6 +81,10 @@ final syncCoordinatorProvider = Provider<FirebaseSyncCoordinator?>((ref) {
 
 final notesRepositoryProvider = Provider<NotesRepository>((ref) {
   return ref.watch(localDbNotesRepositoryProvider);
+});
+
+final tasksRepositoryProvider = Provider<TasksRepository>((ref) {
+  return ref.watch(localDbTasksRepositoryProvider);
 });
 
 final foldersRepositoryProvider = Provider<FoldersRepository>((ref) {

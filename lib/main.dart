@@ -12,7 +12,7 @@ import 'features/shell/presentation/main_shell.dart';
 import 'package:synq/core/widgets/responsive_wrapper.dart';
 import 'package:synq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:synq/features/auth/presentation/screens/login_screen.dart';
-import 'package:synq/features/notes/data/sync_access_provider.dart';
+import 'package:synq/features/sync/data/sync_access_provider.dart';
 import 'package:synq/features/auth/presentation/widgets/device_enforcement_guard.dart';
 import 'package:synq/features/auth/presentation/widgets/downgrade_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

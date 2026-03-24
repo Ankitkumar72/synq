@@ -1,35 +1,17 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../../notes/domain/models/note.dart' show NoteCategory, SubTask, TaskPriority;
 import '../../../../core/domain/models/recurrence_rule.dart';
 
-part 'note.freezed.dart';
-part 'note.g.dart';
-
-/// Category for notes and tasks
-enum NoteCategory { work, personal, idea }
-
-enum TaskPriority { none, low, medium, high }
+part 'task.freezed.dart';
+part 'task.g.dart';
 
 @freezed
-class SubTask with _$SubTask {
-  // ignore: invalid_annotation_target
-  @JsonSerializable(explicitToJson: true)
-  const factory SubTask({
-    required String id,
-    required String title,
-    @Default(false) bool isCompleted,
-  }) = _SubTask;
-
-  factory SubTask.fromJson(Map<String, dynamic> json) =>
-      _$SubTaskFromJson(json);
-}
-
-@freezed
-class Note with _$Note {
-  const Note._();
+class Task with _$Task {
+  const Task._();
 
   // ignore: invalid_annotation_target
   @JsonSerializable(explicitToJson: true)
-  const factory Note({
+  const factory Task({
     required String id,
     required String title,
     String? body,
@@ -43,7 +25,7 @@ class Note with _$Note {
     DateTime? originalScheduledTime,
     DateTime? completedAt,
     @Default(TaskPriority.none) TaskPriority priority,
-    @Default(false) bool isTask,
+    @Default(true) bool isTask,
     @Default(false) bool isAllDay,
     @Default(false) bool isRecurringInstance,
     @Default(false) bool isCompleted,
@@ -56,9 +38,9 @@ class Note with _$Note {
     String? deviceLastEdited,
     int? color,
     @Default(0) int order,
-  }) = _Note;
+  }) = _Task;
 
-  factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);
+  factory Task.fromJson(Map<String, dynamic> json) => _$TaskFromJson(json);
 
   Duration? get duration => (scheduledTime != null && endTime != null)
       ? endTime!.difference(scheduledTime!)

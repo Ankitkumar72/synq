@@ -5,9 +5,10 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/navigation/fade_page_route.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../notes/domain/models/note.dart';
-import '../../../notes/presentation/task_detail_screen.dart';
+import '../../data/tasks_provider.dart';
+import '../../domain/models/task.dart';
+import '../../../notes/domain/models/note.dart' show TaskPriority;
+import 'task_detail_screen.dart';
 import '../../../timeline/presentation/widgets/synq_drawer.dart';
 
 class OverdueTasksPage extends ConsumerStatefulWidget {
@@ -33,18 +34,18 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
     final today = DateTime(now.year, now.month, now.day);
 
     // Group already-filtered overdue tasks
-    final Map<DateTime, List<Note>> groupedTasks = {};
+    final Map<DateTime, List<Task>> groupedTasks = {};
     int totalOverdue = 0;
 
-    for (final note in overdueTasks) {
-      final scheduledTime = note.scheduledTime;
+    for (final task in overdueTasks) {
+      final scheduledTime = task.scheduledTime;
       if (scheduledTime != null) {
         final date = DateTime(
           scheduledTime.year,
           scheduledTime.month,
           scheduledTime.day,
         );
-        groupedTasks.putIfAbsent(date, () => []).add(note);
+        groupedTasks.putIfAbsent(date, () => []).add(task);
         totalOverdue++;
       }
     }
@@ -181,7 +182,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
     );
   }
 
-  Widget _buildDateGroup(DateTime date, List<Note> tasks, DateTime today) {
+  Widget _buildDateGroup(DateTime date, List<Task> tasks, DateTime today) {
     String dateLabel = DateFormat('MMM d').format(date);
     final difference = today.difference(date).inDays;
     
@@ -227,7 +228,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
     );
   }
 
-  Widget _buildTaskCard(Note task) {
+  Widget _buildTaskCard(Task task) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -259,7 +260,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
               // Checkbox empty circle
               GestureDetector(
                 onTap: () {
-                  ref.read(notesProvider.notifier).toggleCompleted(task.id);
+                  ref.read(tasksProvider.notifier).toggleCompleted(task.id);
                 },
                 child: Container(
                   width: 24,
@@ -366,7 +367,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
   );
 }
 
-  Future<void> _showCustomRescheduleDialog(BuildContext context, Note task, WidgetRef ref) async {
+  Future<void> _showCustomRescheduleDialog(BuildContext context, Task task, WidgetRef ref) async {
     DateTime selectedDate = task.scheduledTime ?? DateTime.now();
     TimeOfDay? selectedTime = task.scheduledTime != null
         ? TimeOfDay.fromDateTime(task.scheduledTime!)
@@ -551,7 +552,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
         ),
       );
       
-      await ref.read(notesProvider.notifier).updateNote(updatedTask);
+      await ref.read(tasksProvider.notifier).updateTask(updatedTask);
       
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

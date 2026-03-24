@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../notes/domain/models/note.dart';
-import '../../../notes/domain/models/recurrence_rule.dart';
+import '../../../../core/domain/models/recurrence_rule.dart';
 import '../../data/timeline_provider.dart';
 // Adjust this path to where your repeat_settings_screen.dart is located
 import '../../../home/presentation/widgets/repeat_settings_screen.dart';

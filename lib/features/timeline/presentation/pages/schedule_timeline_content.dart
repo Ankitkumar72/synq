@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
 import '../../../notes/data/notes_provider.dart';
-import '../../../notes/presentation/task_detail_screen.dart';
+import '../../../tasks/data/tasks_provider.dart';
+import '../../../tasks/presentation/pages/task_detail_screen.dart';
 import '../pages/view_event_page.dart';
 
 class ScheduleTimelineContent extends ConsumerStatefulWidget {
@@ -186,35 +187,20 @@ class _ScheduleTimelineContentState
                                   padding: const EdgeInsets.only(bottom: 8.0),
                                   child: InkWell(
                                     onTap: () {
-                                      final noteId = event.id.replaceFirst(
-                                        'task_',
-                                        '',
-                                      );
-                                      final notes =
-                                          ref.read(notesProvider).value ?? [];
-                                      try {
-                                        final note = notes.firstWhere(
-                                          (n) => n.id == noteId,
-                                        );
-                                if (note.isTask) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          TaskDetailScreen(task: note),
-                                    ),
-                                  );
-                                } else {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          ViewEventPage(event: note),
-                                    ),
-                                  );
-                                }
-                                      } catch (e) {
-                                        // Note not found
+                                      if (event.id.startsWith('task_')) {
+                                        final taskId = event.id.substring(5);
+                                        final tasks = ref.read(tasksProvider).value ?? [];
+                                        try {
+                                          final task = tasks.firstWhere((t) => t.id == taskId);
+                                          Navigator.push(context, MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)));
+                                        } catch (_) {}
+                                      } else if (event.id.startsWith('event_')) {
+                                        final noteId = event.id.substring(6);
+                                        final notes = ref.read(notesProvider).value ?? [];
+                                        try {
+                                          final note = notes.firstWhere((n) => n.id == noteId);
+                                          Navigator.push(context, MaterialPageRoute(builder: (context) => ViewEventPage(event: note)));
+                                        } catch (_) {}
                                       }
                                     },
                                     borderRadius: BorderRadius.circular(12),

@@ -14,7 +14,6 @@ class FirestoreNotesRepository implements NotesRepository {
   CollectionReference<Map<String, dynamic>> get _notesCollection =>
       _firestore.collection('users').doc(userId).collection('notes');
 
-  // Real-time stream (works offline too!)
   @override
   Stream<List<Note>> watchNotes() {
     return _notesCollection
@@ -22,14 +21,17 @@ class FirestoreNotesRepository implements NotesRepository {
         .orderBy('created_at_ms', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Note.fromJson(doc.data())).toList();
+      return snapshot.docs
+          .map((doc) => doc.data())
+          .where((data) => data['isTask'] == false || data['isTask'] == null)
+          .map((data) => Note.fromJson(data))
+          .toList();
     });
   }
 
   @override
   Stream<List<Note>> watchFilteredNotes({
     bool? isCompleted,
-    bool? isTask,
     int? scheduledBeforeMs,
     int? scheduledAfterMs,
     String? folderId,
@@ -37,7 +39,6 @@ class FirestoreNotesRepository implements NotesRepository {
     return watchNotes().map((notes) {
       return notes.where((note) {
         if (isCompleted != null && note.isCompleted != isCompleted) return false;
-        if (isTask != null && note.isTask != isTask) return false;
         if (folderId != null && note.folderId != folderId) return false;
         
         final schedMs = note.scheduledTime?.millisecondsSinceEpoch;
@@ -53,7 +54,10 @@ class FirestoreNotesRepository implements NotesRepository {
   Stream<Note?> watchNote(String id) {
     return _notesCollection.doc(id).snapshots().map((snapshot) {
       if (snapshot.exists && snapshot.data() != null) {
-        return Note.fromJson(snapshot.data()!);
+        final data = snapshot.data()!;
+        if (data['isTask'] == false || data['isTask'] == null) {
+          return Note.fromJson(data);
+        }
       }
       return null;
     });

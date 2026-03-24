@@ -4,6 +4,8 @@ import '../../notes/data/notes_provider.dart';
 import '../../notes/domain/models/note.dart';
 import '../domain/models/timeline_event.dart';
 
+import '../../tasks/data/tasks_provider.dart';
+
 final minuteProvider = StreamProvider<int>((ref) {
   return Stream.periodic(
     const Duration(seconds: 30),
@@ -21,16 +23,16 @@ final timelineViewModeProvider = StateProvider<TimelineViewMode>(
 );
 
 final datesWithTasksProvider = Provider<Set<DateTime>>((ref) {
-  final notesAsync = ref.watch(notesProvider);
-  final notes = notesAsync.value ?? [];
+  final tasksAsync = ref.watch(tasksProvider);
+  final tasks = tasksAsync.value ?? [];
 
-  return notes
-      .where((n) => n.isTask && n.scheduledTime != null)
+  return tasks
+      .where((t) => t.scheduledTime != null)
       .map(
-        (n) => DateTime(
-          n.scheduledTime!.year,
-          n.scheduledTime!.month,
-          n.scheduledTime!.day,
+        (t) => DateTime(
+          t.scheduledTime!.year,
+          t.scheduledTime!.month,
+          t.scheduledTime!.day,
         ),
       )
       .toSet();
@@ -47,42 +49,66 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     // 0. Tick for real-time updates
     ref.watch(minuteProvider);
 
-    // 1. Fetch real data sources (using the SQL optimized provider)
+    // 1. Fetch real data sources
     final selectedDate = ref.watch(selectedDateProvider);
-    final notesAsync = ref.watch(timelineTasksProvider(selectedDate));
+    final tasksAsync = ref.watch(timelineTasksProvider(selectedDate));
+    final tasks = tasksAsync.value ?? [];
+
+    final notesAsync = ref.watch(notesProvider);
     final notes = notesAsync.value ?? [];
+
+    final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    final todaysNotes = notes.where((n) {
+      if (n.scheduledTime == null) return false;
+      return n.scheduledTime!.isAfter(startOfDay) && n.scheduledTime!.isBefore(endOfDay);
+    }).toList();
 
     final allEvents = <TimelineEvent>[];
 
-    // 2. Process scheduled timeline entries (tasks + events)
-    final scheduledEntries = notes
-        .where((n) => !n.isAllDay) // Exclude all-day tasks from hourly blocks
-        .toList();
-
-    for (final item in scheduledEntries) {
-      // Format time from scheduledTime or default
-      final date = item.scheduledTime ?? DateTime.now();
+    // 2. Process tasks
+    final scheduledTasks = tasks.where((t) => !t.isAllDay).toList();
+    for (final t in scheduledTasks) {
+      final date = t.scheduledTime ?? DateTime.now();
       final startFormat = DateFormat('h:mm a');
       final endFormat = DateFormat('h:mm a');
 
-      // Force tasks to 0 duration so the layout engine shrinks them to the minimum height (e.g. 15 mins visually)
-      final endTime = item.isTask 
-          ? date // Same as start time
-          : (item.endTime ?? date.add(const Duration(hours: 1)));
-      final prefix = item.isTask ? 'task' : 'event';
+      allEvents.add(
+        TimelineEvent(
+          id: 'task_${t.id}',
+          title: t.title,
+          subtitle: t.category.name.toUpperCase(),
+          startTime: startFormat.format(date),
+          endTime: endFormat.format(date), // tasks shrink to 0 duration
+          type: _mapCategoryToType(t.category.name),
+          kind: EventKind.task,
+          tag: t.category.name.toUpperCase(),
+          isCompleted: t.isCompleted,
+          color: t.color,
+        ),
+      );
+    }
+
+    // 3. Process notes (events)
+    final scheduledNotes = todaysNotes.where((n) => !n.isAllDay).toList();
+    for (final n in scheduledNotes) {
+      final date = n.scheduledTime ?? DateTime.now();
+      final startFormat = DateFormat('h:mm a');
+      final endFormat = DateFormat('h:mm a');
+      final endTime = n.endTime ?? date.add(const Duration(hours: 1));
 
       allEvents.add(
         TimelineEvent(
-          id: '${prefix}_${item.id}',
-          title: item.title,
-          subtitle: item.isTask ? item.category.name.toUpperCase() : 'EVENT',
+          id: 'event_${n.id}',
+          title: n.title,
+          subtitle: 'EVENT',
           startTime: startFormat.format(date),
           endTime: endFormat.format(endTime),
-          type: _mapCategoryToType(item.category.name),
-          kind: item.isTask ? EventKind.task : EventKind.event,
-          tag: item.isTask ? item.category.name.toUpperCase() : 'EVENT',
-          isCompleted: item.isCompleted,
-          color: item.color,
+          type: _mapCategoryToType(n.category.name),
+          kind: EventKind.event,
+          tag: 'EVENT',
+          isCompleted: n.isCompleted,
+          color: n.color,
         ),
       );
     }
@@ -129,6 +155,19 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     required String newStartTime,
     required String newEndTime,
   }) async {
+    final task = ref.read(tasksProvider).value?.where((t) => 'task_${t.id}' == eventId).firstOrNull;
+    if (task != null) {
+      final newStart = _combineDateAndTime(date, newStartTime);
+      var newEnd = _combineDateAndTime(date, newEndTime);
+      if (!newEnd.isAfter(newStart)) {
+        newEnd = newStart.add(const Duration(minutes: 15));
+      }
+      await ref.read(tasksProvider.notifier).updateTask(
+        task.copyWith(scheduledTime: newStart, endTime: newEnd, updatedAt: DateTime.now()),
+      );
+      return;
+    }
+
     final note = _findTimelineNote(eventId);
     if (note == null) return;
 
@@ -154,6 +193,19 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     required DateTime date,
     required String newEndTime,
   }) async {
+    final task = ref.read(tasksProvider).value?.where((t) => 'task_${t.id}' == eventId).firstOrNull;
+    if (task != null) {
+      final baseStart = task.scheduledTime ?? DateTime(date.year, date.month, date.day, 0, 0);
+      var newEnd = _combineDateAndTime(date, newEndTime);
+      if (!newEnd.isAfter(baseStart)) {
+        newEnd = baseStart.add(const Duration(minutes: 15));
+      }
+      await ref.read(tasksProvider.notifier).updateTask(
+        task.copyWith(scheduledTime: baseStart, endTime: newEnd, updatedAt: DateTime.now()),
+      );
+      return;
+    }
+
     final note = _findTimelineNote(eventId);
     if (note == null) return;
 
@@ -238,74 +290,103 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
   final notesAsync = ref.watch(notesProvider);
   final notes = notesAsync.value ?? [];
 
-  // Include ALL items (tasks and events)
-  final items = notes.toList();
-
-  items.sort((a, b) {
-    final dateA = a.scheduledTime ?? a.createdAt;
-    final dateB = b.scheduledTime ?? b.createdAt;
-    return dateA.compareTo(dateB);
-  });
+  final tasksAsync = ref.watch(tasksProvider);
+  final tasks = tasksAsync.value ?? [];
 
   final grouped = <DateTime, List<TimelineEvent>>{};
 
-  for (final item in items) {
-    final dateToUse = item.scheduledTime ?? item.createdAt;
+  // Group notes (events)
+  for (final n in notes) {
+    final dateToUse = n.scheduledTime ?? n.createdAt;
     final dateKey = DateTime(dateToUse.year, dateToUse.month, dateToUse.day);
 
     final startFormat = DateFormat('h:mm a');
     final endFormat = DateFormat('h:mm a');
 
     String startTimeString = 'TODO';
-    if (!item.isTask && item.scheduledTime != null) {
-      startTimeString = startFormat.format(item.scheduledTime!);
-    } else if (item.isAllDay) {
+    if (n.scheduledTime != null) {
+      startTimeString = startFormat.format(n.scheduledTime!);
+    } else if (n.isAllDay) {
       startTimeString = 'All Day';
-    } else if (item.scheduledTime != null) {
-      startTimeString = startFormat.format(item.scheduledTime!);
     }
 
-    String endTimeString = item.endTime != null
-        ? endFormat.format(item.endTime!)
+    String endTimeString = n.endTime != null
+        ? endFormat.format(n.endTime!)
         : startTimeString;
 
-    TimelineEventType type = TimelineEventType.standard;
-    switch (item.category.name.toLowerCase()) {
-      case 'work':
-        type = TimelineEventType.active;
-        break;
-      case 'personal':
-        type = TimelineEventType.rest;
-        break;
-      case 'idea':
-        type = TimelineEventType.strategy;
-        break;
+    final event = TimelineEvent(
+      id: 'event_${n.id}',
+      title: n.title,
+      subtitle: 'EVENT',
+      startTime: startTimeString,
+      endTime: endTimeString,
+      type: _mapCategoryToTypeForDict(n.category.name),
+      tag: 'EVENT',
+      isCompleted: n.isCompleted,
+      color: n.color,
+    );
+    grouped.putIfAbsent(dateKey, () => []).add(event);
+  }
+
+  // Group tasks
+  for (final t in tasks) {
+    final dateToUse = t.scheduledTime ?? t.createdAt;
+    final dateKey = DateTime(dateToUse.year, dateToUse.month, dateToUse.day);
+
+    final startFormat = DateFormat('h:mm a');
+
+    String startTimeString = 'TODO';
+    if (t.scheduledTime != null) {
+      startTimeString = startFormat.format(t.scheduledTime!);
+    } else if (t.isAllDay) {
+      startTimeString = 'All Day';
     }
 
-    String displayTitle = item.title;
-    if (item.isTask &&
-        item.scheduledTime == null &&
-        !displayTitle.toLowerCase().startsWith('todo')) {
+    String displayTitle = t.title;
+    if (t.scheduledTime == null && !displayTitle.toLowerCase().startsWith('todo')) {
       displayTitle = 'TODO - $displayTitle';
     }
 
-    final prefix = item.isTask ? 'task' : 'event';
-    final subTag = item.isTask ? item.category.name.toUpperCase() : 'EVENT';
-
     final event = TimelineEvent(
-      id: '${prefix}_${item.id}',
+      id: 'task_${t.id}',
       title: displayTitle,
-      subtitle: subTag,
+      subtitle: t.category.name.toUpperCase(),
       startTime: startTimeString,
-      endTime: endTimeString,
-      type: type,
-      tag: subTag,
-      isCompleted: item.isCompleted,
-      color: item.color,
+      endTime: startTimeString,
+      type: _mapCategoryToTypeForDict(t.category.name),
+      tag: t.category.name.toUpperCase(),
+      isCompleted: t.isCompleted,
+      color: t.color,
     );
-
     grouped.putIfAbsent(dateKey, () => []).add(event);
+  }
+
+  // Sort each day's events
+  for (final key in grouped.keys) {
+    grouped[key]!.sort((a, b) => _parseToMinutesDict(a.startTime).compareTo(_parseToMinutesDict(b.startTime)));
   }
 
   return grouped;
 });
+
+TimelineEventType _mapCategoryToTypeForDict(String category) {
+  switch (category.toLowerCase()) {
+    case 'work': return TimelineEventType.active;
+    case 'personal': return TimelineEventType.rest;
+    case 'idea': return TimelineEventType.strategy;
+    default: return TimelineEventType.standard;
+  }
+}
+
+int _parseToMinutesDict(String timeStr) {
+  try {
+    if (timeStr == 'TODO' || timeStr == 'All Day') return -1;
+    timeStr = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase();
+    final format = DateFormat("h:mm a");
+    final date = format.parse(timeStr);
+    return date.hour * 60 + date.minute;
+  } catch (e) {
+    return 0;
+  }
+}
+

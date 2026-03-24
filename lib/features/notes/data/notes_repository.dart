@@ -4,7 +4,6 @@ abstract class NotesRepository {
   Stream<List<Note>> watchNotes();
   Stream<List<Note>> watchFilteredNotes({
     bool? isCompleted,
-    bool? isTask,
     int? scheduledBeforeMs,
     int? scheduledAfterMs,
     String? folderId,

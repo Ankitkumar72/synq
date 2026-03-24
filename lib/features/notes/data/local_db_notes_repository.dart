@@ -1,5 +1,5 @@
 import '../domain/models/note.dart';
-import 'local_database.dart';
+import '../../../../core/database/local_database.dart';
 import 'notes_repository.dart';
 
 class LocalDbNotesRepository implements NotesRepository {
@@ -8,19 +8,18 @@ class LocalDbNotesRepository implements NotesRepository {
   final LocalDatabase _localDb;
 
   @override
-  Stream<List<Note>> watchNotes() => _localDb.watchNotes();
+  Stream<List<Note>> watchNotes() => _localDb.watchFilteredNotes(isTask: false);
 
   @override
   Stream<List<Note>> watchFilteredNotes({
     bool? isCompleted,
-    bool? isTask,
     int? scheduledBeforeMs,
     int? scheduledAfterMs,
     String? folderId,
   }) {
     return _localDb.watchFilteredNotes(
       isCompleted: isCompleted,
-      isTask: isTask,
+      isTask: false,
       scheduledBeforeMs: scheduledBeforeMs,
       scheduledAfterMs: scheduledAfterMs,
       folderId: folderId,
@@ -28,7 +27,9 @@ class LocalDbNotesRepository implements NotesRepository {
   }
 
   @override
-  Stream<Note?> watchNote(String id) => _localDb.watchNote(id);
+  Stream<Note?> watchNote(String id) {
+    return _localDb.watchNote(id).map((n) => n != null && !n.isTask ? n : null);
+  }
 
   @override
   Future<void> addNote(Note note) async {

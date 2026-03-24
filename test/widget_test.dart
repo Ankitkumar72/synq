@@ -8,7 +8,7 @@ import 'package:synq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:synq/core/providers/firebase_provider.dart';
 
 import 'package:synq/features/auth/data/auth_repository.dart';
-import 'package:synq/features/notes/data/sync_access_provider.dart';
+import 'package:synq/features/sync/data/sync_access_provider.dart';
 import 'package:synq/features/notes/data/notes_provider.dart';
 import 'package:synq/features/notes/domain/models/note.dart';
 import 'package:synq/features/timeline/data/timeline_provider.dart';

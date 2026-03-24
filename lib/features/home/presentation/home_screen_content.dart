@@ -11,9 +11,11 @@ import '../../focus/presentation/focus_screen.dart';
 
 import '../../notes/presentation/note_detail_screen.dart';
 import '../../notes/data/notes_provider.dart';
-import '../../notes/data/image_storage_service.dart';
+import '../../attachments/data/image_storage_service.dart';
+import '../../tasks/domain/models/task.dart';
+import '../../tasks/data/tasks_provider.dart';
 import 'dart:io';
-import '../../notes/presentation/task_detail_screen.dart';
+import '../../tasks/presentation/pages/task_detail_screen.dart';
 import '../../notes/utils/markdown_bridge.dart';
 
 /// HomeScreen content without the bottom navigation bar (for use in MainShell)
@@ -121,11 +123,15 @@ class HomeScreenContent extends ConsumerWidget {
   Widget _buildYourTasksSection(BuildContext context, WidgetRef ref) {
     final notesAsync = ref.watch(notesProvider);
     final notes = notesAsync.value ?? [];
+    
+    final tasksAsync = ref.watch(tasksProvider);
+    final tasks = tasksAsync.value ?? [];
+    
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     // Separate tasks into scheduled (today) and unscheduled
-    final allTasks = notes.where((n) => n.isTask).toList();
+    final allTasks = tasks;
 
     final scheduledTasks =
         allTasks.where((n) {
@@ -147,9 +153,9 @@ class HomeScreenContent extends ConsumerWidget {
         allTasks.where((n) => n.scheduledTime == null).toList()
           ..sort((a, b) => a.order.compareTo(b.order));
 
-    final notesOnly = notes.where((n) => !n.isTask && n.scheduledTime == null).toList();
+    final notesOnly = notes.where((n) => n.scheduledTime == null).toList();
 
-    if (notes.isEmpty) {
+    if (notes.isEmpty && tasks.isEmpty) {
       return _buildEmptyState(context);
     }
 
@@ -228,7 +234,7 @@ class HomeScreenContent extends ConsumerWidget {
   Widget _buildReorderableUnscheduledSection(
     BuildContext context,
     WidgetRef ref,
-    List<Note> unscheduledTasks,
+    List<Task> unscheduledTasks,
   ) {
     return ReorderableListView.builder(
       shrinkWrap: true,
@@ -246,11 +252,11 @@ class HomeScreenContent extends ConsumerWidget {
       },
       onReorder: (oldIndex, newIndex) {
         if (newIndex > oldIndex) newIndex--;
-        final reordered = List<Note>.from(unscheduledTasks);
+        final reordered = List<Task>.from(unscheduledTasks);
         final item = reordered.removeAt(oldIndex);
         reordered.insert(newIndex, item);
         final orderedIds = reordered.map((t) => t.id).toList();
-        ref.read(notesProvider.notifier).reorderTasks(orderedIds);
+        ref.read(tasksProvider.notifier).reorderTasks(orderedIds);
       },
       itemBuilder: (context, index) {
         final task = unscheduledTasks[index];
@@ -291,7 +297,7 @@ class HomeScreenContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildTaskItem(BuildContext context, WidgetRef ref, Note task) {
+  Widget _buildTaskItem(BuildContext context, WidgetRef ref, Task task) {
     final priorityColors = {
       TaskPriority.none: Colors.orange, // Restoring default look
       TaskPriority.low: Colors.green,
@@ -328,7 +334,7 @@ class HomeScreenContent extends ConsumerWidget {
                   onPressed: () {
                     // Future
                     ref
-                        .read(notesProvider.notifier)
+                        .read(tasksProvider.notifier)
                         .deleteFutureInstances(task);
                     Navigator.pop(dialogContext, false); // Manual update
                   },
@@ -340,7 +346,7 @@ class HomeScreenContent extends ConsumerWidget {
                 SimpleDialogOption(
                   onPressed: () {
                     // All
-                    ref.read(notesProvider.notifier).deleteAllInstances(task);
+                    ref.read(tasksProvider.notifier).deleteAllInstances(task);
                     Navigator.pop(dialogContext, false); // Manual update
                   },
                   child: const Padding(
@@ -362,7 +368,7 @@ class HomeScreenContent extends ConsumerWidget {
       },
       onDismissed: (_) {
         // This is only called if confirmDismiss returns true (Delete This Only or Normal Task)
-        ref.read(notesProvider.notifier).removeNote(task.id);
+        ref.read(tasksProvider.notifier).deleteTask(task.id);
       },
       background: Container(
         alignment: Alignment.centerRight,
@@ -398,7 +404,7 @@ class HomeScreenContent extends ConsumerWidget {
                 children: [
                   GestureDetector(
                     onTap: () => ref
-                        .read(notesProvider.notifier)
+                        .read(tasksProvider.notifier)
                         .toggleCompleted(task.id),
                     child: Container(
                       width: 24,

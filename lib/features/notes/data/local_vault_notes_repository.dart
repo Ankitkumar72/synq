@@ -28,15 +28,14 @@ class LocalVaultNotesRepository implements NotesRepository {
   @override
   Stream<List<Note>> watchNotes() {
     _ensureInitialized().then((_) {
-      _controller.add(List<Note>.unmodifiable(_cache));
+      _controller.add(List<Note>.unmodifiable(_cache.where((n) => !n.isTask)));
     });
-    return _controller.stream;
+    return _controller.stream.map((notes) => notes.where((n) => !n.isTask).toList());
   }
 
   @override
   Stream<List<Note>> watchFilteredNotes({
     bool? isCompleted,
-    bool? isTask,
     int? scheduledBeforeMs,
     int? scheduledAfterMs,
     String? folderId,
@@ -44,7 +43,6 @@ class LocalVaultNotesRepository implements NotesRepository {
     return watchNotes().map((notes) {
       return notes.where((note) {
         if (isCompleted != null && note.isCompleted != isCompleted) return false;
-        if (isTask != null && note.isTask != isTask) return false;
         if (folderId != null && note.folderId != folderId) return false;
         
         final schedMs = note.scheduledTime?.millisecondsSinceEpoch;
@@ -59,7 +57,7 @@ class LocalVaultNotesRepository implements NotesRepository {
   @override
   Stream<Note?> watchNote(String id) {
     return watchNotes().map(
-      (notes) => notes.firstWhereOrNull((note) => note.id == id),
+      (notes) => notes.firstWhereOrNull((note) => note.id == id && !note.isTask),
     );
   }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../notes/domain/models/recurrence_rule.dart';
+import '../../../../core/domain/models/recurrence_rule.dart';
 import '../../../notes/domain/models/note.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../timeline/presentation/pages/create_event_page.dart';

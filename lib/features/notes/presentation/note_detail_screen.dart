@@ -13,21 +13,21 @@ import 'package:synq/core/theme/app_theme.dart';
 import 'dart:io';
 import 'package:synq/core/services/media_service.dart';
 import 'package:synq/features/notes/domain/models/note.dart';
-import 'package:synq/features/notes/domain/models/folder.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
 import 'package:synq/features/notes/data/notes_provider.dart';
-import 'package:synq/features/notes/data/image_storage_service.dart';
-import 'package:synq/features/notes/presentation/widgets/attachment_bubble.dart';
-import 'package:synq/features/notes/data/folder_provider.dart';
+import 'package:synq/features/attachments/data/image_storage_service.dart';
+import 'package:synq/features/attachments/presentation/widgets/attachment_bubble.dart';
+import 'package:synq/features/folders/data/folder_provider.dart';
 import 'package:synq/features/notes/data/note_editor_draft_store.dart';
 import 'package:synq/features/notes/presentation/widgets/tag_manage_dialog.dart';
 import 'package:synq/core/navigation/fade_page_route.dart';
 import 'package:synq/core/utils/icon_utils.dart';
-import 'package:synq/features/notes/presentation/folders_screen.dart';
+import 'package:synq/features/folders/presentation/folders_screen.dart';
 import 'package:synq/features/notes/presentation/widgets/note_options_sheet.dart';
 import 'package:synq/core/services/device_service.dart';
 import 'package:synq/features/auth/presentation/providers/user_provider.dart';
 import 'package:synq/features/auth/domain/models/synq_user.dart';
-import 'package:synq/features/notes/data/repository_provider.dart';
+import 'package:synq/core/providers/repository_provider.dart';
 
 class NoteDetailScreen extends ConsumerStatefulWidget {
   final Note? noteToEdit;

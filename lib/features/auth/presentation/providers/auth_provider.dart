@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';
-import '../../../notes/data/local_database.dart';
+import '../../../../core/database/local_database.dart';
 import '../../../notes/data/note_editor_draft_store.dart';
 import '../../../notes/data/seed_notes.dart';
 

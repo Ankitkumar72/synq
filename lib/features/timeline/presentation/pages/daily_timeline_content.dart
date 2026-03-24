@@ -10,8 +10,8 @@ import '../widgets/daily_timeline_view.dart';
 import '../widgets/synq_drawer.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
 import '../../../notes/data/notes_provider.dart';
-import '../../../notes/domain/models/note.dart';
-import '../../../notes/presentation/task_detail_screen.dart';
+import '../../../tasks/data/tasks_provider.dart';
+import '../../../tasks/presentation/pages/task_detail_screen.dart';
 import '../../../shell/presentation/main_shell.dart';
 import '../pages/create_event_page.dart';
 import '../pages/view_event_page.dart';
@@ -200,50 +200,36 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
   }
 
   void _openTaskDetails(BuildContext context, TimelineEvent event) {
-    final task = _findTaskForEvent(event);
-    if (task == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Event details not found'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-      return;
-    }
-
-    if (task.isTask) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)),
-      );
+    if (event.id.startsWith('task_')) {
+      final taskId = event.id.substring(5);
+      final tasks = ref.read(tasksProvider).value ?? [];
+      try {
+        final task = tasks.firstWhere((t) => t.id == taskId);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)));
+      } catch (_) {
+        _showNotFound(context);
+      }
+    } else if (event.id.startsWith('event_')) {
+      final noteId = event.id.substring(6);
+      final notes = ref.read(notesProvider).value ?? [];
+      try {
+        final note = notes.firstWhere((n) => n.id == noteId);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => ViewEventPage(event: note)));
+      } catch (_) {
+        _showNotFound(context);
+      }
     } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ViewEventPage(event: task)),
-      );
+      _showNotFound(context);
     }
   }
 
-  Note? _findTaskForEvent(TimelineEvent event) {
-    final tasks = ref.read(notesProvider).value ?? const <Note>[];
-    final separatorIndex = event.id.indexOf('_');
-    final noteId = separatorIndex > 0 && separatorIndex < event.id.length - 1
-        ? event.id.substring(separatorIndex + 1)
-        : event.id;
-
-    for (final task in tasks) {
-      if (task.id == noteId) {
-        return task;
-      }
-    }
-
-    for (final task in tasks) {
-      if (task.isTask && task.title == event.title) {
-        return task;
-      }
-    }
-
-    return null;
+  void _showNotFound(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Event details not found'),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
 }

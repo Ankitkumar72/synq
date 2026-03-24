@@ -7,15 +7,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../../core/theme/app_theme.dart';
-import '../domain/models/note.dart';
-import '../data/notes_provider.dart';
-import '../data/image_storage_service.dart';
-import '../utils/markdown_controller.dart';
-import '../presentation/widgets/attachment_bubble.dart';
-import '../../home/presentation/providers/schedule_conflict_provider.dart';
+import '../../../notes/domain/models/note.dart' show SubTask;
+import '../../domain/models/task.dart';
+import '../../data/tasks_provider.dart';
+import '../../../attachments/data/image_storage_service.dart';
+import '../../../notes/utils/markdown_controller.dart';
+import '../../../attachments/presentation/widgets/attachment_bubble.dart';
+import '../../../home/presentation/providers/schedule_conflict_provider.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
-  final Note task;
+  final Task task;
 
   const TaskDetailScreen({super.key, required this.task});
 
@@ -33,10 +34,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   bool _isDeleting = false;
   bool _isSubTasksExpanded = false;
 
-  Note get _currentTask {
-    final notes = ref.read(notesProvider).value;
-    return notes?.firstWhere(
-          (n) => n.id == widget.task.id,
+  Task get _currentTask {
+    final tasks = ref.read(tasksProvider).value;
+    return tasks?.firstWhere(
+          (t) => t.id == widget.task.id,
           orElse: () => widget.task,
         ) ??
         widget.task;
@@ -78,7 +79,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         attachments: [...currentTask.attachments, savedFilename],
       );
       
-      ref.read(notesProvider.notifier).updateNote(updatedTask);
+      ref.read(tasksProvider.notifier).updateTask(updatedTask);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -98,7 +99,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     final newAttachments = currentTask.attachments.where((f) => f != filename).toList();
     final updatedTask = currentTask.copyWith(attachments: newAttachments);
     
-    ref.read(notesProvider.notifier).updateNote(updatedTask);
+    ref.read(tasksProvider.notifier).updateTask(updatedTask);
   }
 
   void _onDescriptionChanged() {
@@ -108,7 +109,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       final currentTask = _currentTask;
       if (newBody != (currentTask.body ?? '')) {
         final updatedTask = currentTask.copyWith(body: newBody);
-        ref.read(notesProvider.notifier).updateNote(updatedTask);
+        ref.read(tasksProvider.notifier).updateTask(updatedTask);
       }
     });
   }
@@ -124,7 +125,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   void _toggleTaskCompletion() {
-    ref.read(notesProvider.notifier).toggleCompleted(_currentTask.id);
+    ref.read(tasksProvider.notifier).toggleCompleted(_currentTask.id);
     Navigator.pop(context);
   }
 
@@ -141,7 +142,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       subtasks: [..._currentTask.subtasks, newSubTask],
     );
 
-    ref.read(notesProvider.notifier).updateNote(updatedTask);
+    ref.read(tasksProvider.notifier).updateTask(updatedTask);
 
     // Clear the controller to prepare for the next item
     _subTaskController.clear();
@@ -174,7 +175,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     }).toList();
 
     final updatedTask = _currentTask.copyWith(subtasks: updatedSubtasks);
-    ref.read(notesProvider.notifier).updateNote(updatedTask);
+    ref.read(tasksProvider.notifier).updateTask(updatedTask);
   }
 
   void _editSubTask(SubTask subtask) {
@@ -220,7 +221,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 final updatedTask = _currentTask.copyWith(
                   subtasks: updatedSubtasks,
                 );
-                ref.read(notesProvider.notifier).updateNote(updatedTask);
+                ref.read(tasksProvider.notifier).updateTask(updatedTask);
               }
               Navigator.pop(context);
             },
@@ -236,7 +237,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         .where((st) => st.id != subTaskId)
         .toList();
     final updatedTask = _currentTask.copyWith(subtasks: updatedSubtasks);
-    ref.read(notesProvider.notifier).updateNote(updatedTask);
+    ref.read(tasksProvider.notifier).updateTask(updatedTask);
   }
 
   void _editTitle() {
@@ -275,7 +276,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               final newTitle = controller.text.trim();
               if (newTitle.isNotEmpty) {
                 final updatedTask = currentTask.copyWith(title: newTitle);
-                ref.read(notesProvider.notifier).updateNote(updatedTask);
+                ref.read(tasksProvider.notifier).updateTask(updatedTask);
               }
               Navigator.pop(context);
             },
@@ -307,7 +308,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       );
 
       final updatedTask = currentTask.copyWith(scheduledTime: newScheduled);
-      ref.read(notesProvider.notifier).updateNote(updatedTask);
+      ref.read(tasksProvider.notifier).updateTask(updatedTask);
     }
   }
 
@@ -404,7 +405,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       }
 
       final updatedTask = currentTask.copyWith(scheduledTime: newScheduled);
-      ref.read(notesProvider.notifier).updateNote(updatedTask);
+      ref.read(tasksProvider.notifier).updateTask(updatedTask);
     }
   }
 
@@ -500,8 +501,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           if (mounted) {
                             navigator.popUntil((route) => route.isFirst);
                             ref
-                                .read(notesProvider.notifier)
-                                .deleteNote(taskId)
+                                .read(tasksProvider.notifier)
+                                .deleteTask(taskId)
                                 .catchError((e) {
                                   debugPrint('Error deleting task: $e');
                                 });
@@ -537,12 +538,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   @override
   Widget build(BuildContext context) {
     // Listen to changes to the specific task
-    final notesAsync = ref.watch(notesProvider);
+    final tasksAsync = ref.watch(tasksProvider);
 
     // Only consider the task "deleted" if notes have loaded successfully and it's missing
     final bool isTaskMissing =
-        notesAsync.hasValue &&
-        notesAsync.value?.any((n) => n.id == widget.task.id) == false;
+        tasksAsync.hasValue &&
+        tasksAsync.value?.any((t) => t.id == widget.task.id) == false;
 
     if (isTaskMissing) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -622,7 +623,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
     // Use data from provider if available, otherwise fallback to widget data
     final task =
-        notesAsync.value?.firstWhere(
+        tasksAsync.value?.firstWhere(
           (n) => n.id == widget.task.id,
           orElse: () => widget.task,
         ) ??

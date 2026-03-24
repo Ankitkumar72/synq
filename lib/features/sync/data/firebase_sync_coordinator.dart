@@ -5,9 +5,9 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-import '../domain/models/folder.dart';
-import '../domain/models/note.dart';
-import 'local_database.dart';
+import '../../folders/domain/models/folder.dart';
+import '../../notes/domain/models/note.dart';
+import '../../../core/database/local_database.dart';
 import '../../../core/services/notification_service.dart';
 
 class FirebaseSyncCoordinator {

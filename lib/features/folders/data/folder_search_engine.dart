@@ -1,5 +1,5 @@
 import '../domain/models/folder.dart';
-import '../domain/models/note.dart';
+import '../../notes/domain/models/note.dart';
 
 class FolderSearchEngine {
   FolderSearchEngine({required List<Folder> folders, required List<Note> notes})

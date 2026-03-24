@@ -8,16 +8,16 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../data/folder_search_engine.dart';
 import '../data/folder_provider.dart';
-import '../data/notes_provider.dart';
-import '../data/notes_settings_provider.dart'; // Added
+import '../../notes/data/notes_provider.dart';
+import '../../notes/data/notes_settings_provider.dart'; // Added
 import '../domain/models/folder.dart';
-import '../domain/models/note.dart';
+import '../../notes/domain/models/note.dart';
 import 'widgets/folder_card.dart';
 import 'widgets/add_folder_sheet.dart';
 import 'widgets/folder_options_sheet.dart';
-import 'widgets/delete_confirmation_sheet.dart'; // Added
+import '../../notes/presentation/widgets/delete_confirmation_sheet.dart'; // Added
 import 'folder_detail_screen.dart';
-import 'note_detail_screen.dart';
+import '../../notes/presentation/note_detail_screen.dart';
 import '../../../../core/navigation/fade_page_route.dart';
 
 final folderSearchEngineProvider = Provider<FolderSearchEngine>((ref) {

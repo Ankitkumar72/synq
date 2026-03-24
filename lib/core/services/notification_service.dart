@@ -5,6 +5,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
 import 'dart:ui';
 import '../../features/notes/domain/models/note.dart';
+import '../../features/tasks/domain/models/task.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -278,6 +279,69 @@ class NotificationService {
         body: bodyText,
         scheduledDate: notifyTime,
         noteId: note.id,
+      );
+    } else if (notifyTime != null) {
+      if (kDebugMode) {
+        debugPrint(
+          '[NotificationService] Notify time is in the past, skipping.',
+        );
+      }
+    } else {
+      if (kDebugMode) {
+        debugPrint(
+          '[NotificationService] Task has no specific notification time.',
+        );
+      }
+    }
+  }
+
+  /// Centralized logic to schedule or cancel notifications for a Task
+  Future<void> scheduleTask(Task task) async {
+    final notifId = task.id.hashCode;
+
+    // Always cancel first to avoid duplicates
+    await cancelNotification(notifId);
+
+    // Don't schedule for completed tasks
+    if (task.isCompleted) return;
+
+    final now = DateTime.now();
+    DateTime? notifyTime;
+    String bodyText = task.body ?? 'Task reminder';
+    if (task.reminderTime != null) {
+      notifyTime = task.reminderTime;
+      bodyText =
+          '${task.body ?? "Reminder"} · Due ${_formatTime(task.scheduledTime)}';
+    } else if (task.scheduledTime != null) {
+      if (task.isAllDay) {
+        // Default to 9:00 AM on the scheduled date for all-day tasks
+        notifyTime = DateTime(
+          task.scheduledTime!.year,
+          task.scheduledTime!.month,
+          task.scheduledTime!.day,
+          9,
+          0,
+        );
+        bodyText = task.body ?? 'All day task';
+      } else {
+        notifyTime = task.scheduledTime;
+        bodyText =
+            '${task.body ?? "Task starting now"} · ${_formatTime(task.scheduledTime)}';
+      }
+    }
+
+    if (notifyTime != null && notifyTime.isAfter(now)) {
+      if (kDebugMode) {
+        debugPrint(
+          '[NotificationService] Scheduling notification for task id ${task.id}',
+        );
+      }
+      await scheduleNotification(
+        id: notifId,
+        title: task.title,
+        body: bodyText,
+        scheduledDate: notifyTime,
+        noteId: task.id,
       );
     } else if (notifyTime != null) {
       if (kDebugMode) {

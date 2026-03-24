@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+package-lock.json
+
+# environment
+.env
+.env.*
+
+# Firebase service account key
+*firebase-adminsdk*.json
+*.pem
+*.key
+
+# logs
+npm-debug.log*

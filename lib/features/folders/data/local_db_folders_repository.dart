@@ -1,6 +1,6 @@
 import '../domain/models/folder.dart';
 import 'folders_repository.dart';
-import 'local_database.dart';
+import '../../../../core/database/local_database.dart';
 
 class LocalDbFoldersRepository implements FoldersRepository {
   LocalDbFoldersRepository(this._database);

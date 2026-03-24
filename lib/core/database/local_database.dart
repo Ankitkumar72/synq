@@ -6,8 +6,8 @@ import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
-import '../domain/models/folder.dart';
-import '../domain/models/note.dart';
+import '../../features/folders/domain/models/folder.dart';
+import '../../features/notes/domain/models/note.dart';
 
 enum SyncWriteSource { local, remote }
 

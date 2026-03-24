@@ -5,9 +5,11 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
 import '../../domain/models/timeline_event.dart';
-import 'timeline_task_card.dart';
-import '../../../notes/presentation/task_detail_screen.dart';
+import '../../../tasks/presentation/widgets/timeline_task_card.dart';
+import '../../../tasks/presentation/pages/task_detail_screen.dart';
+import '../../../tasks/data/tasks_provider.dart';
 import '../../../notes/data/notes_provider.dart';
+import '../pages/view_event_page.dart';
 
 class TimelineHourRow extends ConsumerWidget {
   final int hour;
@@ -145,27 +147,26 @@ class TimelineHourRow extends ConsumerWidget {
               isSelectedDateToday &&
               _isTaskCurrentlyActive(event.startTime, event.endTime),
           onTap: () {
-            final tasks = ref.read(notesProvider).value;
-            // First try matching exact event ID, fallback to title matching due to some timeline_events being dummy items
-            var task = tasks?.where((n) => n.id == event.id).firstOrNull;
-            task ??= tasks
-                ?.where((n) => n.isTask && n.title == event.title)
-                .firstOrNull;
-
-            if (task != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TaskDetailScreen(task: task!),
-                ),
-              );
+            if (event.id.startsWith('task_')) {
+              final taskId = event.id.substring(5);
+              final tasks = ref.read(tasksProvider).value ?? [];
+              try {
+                final task = tasks.firstWhere((t) => t.id == taskId);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)));
+              } catch (_) {
+                _showNotFound(context);
+              }
+            } else if (event.id.startsWith('event_')) {
+              final noteId = event.id.substring(6);
+              final notes = ref.read(notesProvider).value ?? [];
+              try {
+                final note = notes.firstWhere((n) => n.id == noteId);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ViewEventPage(event: note)));
+              } catch (_) {
+                _showNotFound(context);
+              }
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Task details not found'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
+              _showNotFound(context);
             }
           },
           onToggleCompletion: (_) {
@@ -204,5 +205,14 @@ class TimelineHourRow extends ConsumerWidget {
     } catch (e) {
       return 0;
     }
+  }
+
+  void _showNotFound(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Event details not found'),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 }
