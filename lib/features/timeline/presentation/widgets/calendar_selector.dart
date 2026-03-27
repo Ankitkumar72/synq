@@ -4,10 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../notes/domain/models/note.dart';
+import '../../domain/models/timeline_event.dart';
+
+
 
 class CalendarSelector extends ConsumerStatefulWidget {
+
   const CalendarSelector({super.key});
 
   @override
@@ -15,17 +17,18 @@ class CalendarSelector extends ConsumerStatefulWidget {
 }
 
 class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
-  late DateTime _visibleMonth;
+  static const int _initialPage = 1200; // Offset for infinite scrolling (100 years)
   late PageController _monthPageController;
   late ScrollController _weekScrollController;
-  bool _hasInitialWeekScroll = false;
+  late DateTime _visibleMonth;
   final DateTime _today = DateTime.now();
+  bool _hasInitialWeekScroll = false;
 
   @override
   void initState() {
     super.initState();
     _visibleMonth = DateTime(_today.year, _today.month);
-    _monthPageController = PageController(initialPage: 0);
+    _monthPageController = PageController(initialPage: _initialPage);
     _weekScrollController = ScrollController();
   }
 
@@ -44,13 +47,13 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     final index = weekDays.indexWhere((d) => _isSameDay(d, selectedDate));
 
     if (index >= 0) {
-      final itemWidth = 70.0; // 60 width + 5*2 margin
+      const itemWidth = 70.0;
       final screenWidth = MediaQuery.of(context).size.width;
       final targetOffset =
           (index * itemWidth) + 16.0 - (screenWidth / 2) + (itemWidth / 2);
 
-      double maxScroll = _weekScrollController.position.maxScrollExtent;
-      double offset = targetOffset.clamp(0.0, maxScroll);
+      final maxScroll = _weekScrollController.position.maxScrollExtent;
+      final offset = targetOffset.clamp(0.0, maxScroll);
 
       if (animate) {
         _weekScrollController.animateTo(
@@ -77,7 +80,11 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
       final selectedDate = ref.read(selectedDateProvider);
       setState(() {
         _visibleMonth = DateTime(selectedDate.year, selectedDate.month);
-        _monthPageController = PageController(initialPage: 0);
+        // Calculate page index with offset
+        final monthsDiff =
+            (selectedDate.year - _today.year) * 12 +
+            (selectedDate.month - _today.month);
+        _monthPageController.jumpToPage(_initialPage + monthsDiff);
       });
     }
   }
@@ -85,12 +92,10 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
   @override
   Widget build(BuildContext context) {
     final selectedDate = ref.watch(selectedDateProvider);
-    final datesWithTasks = ref.watch(datesWithTasksProvider);
     final viewMode = ref.watch(timelineViewModeProvider);
     final isMonthly = viewMode == TimelineViewMode.monthly;
-    final notesAsync = ref.watch(notesProvider);
-    final allNotes = notesAsync.value ?? [];
 
+    // Listen for date changes to keep week scroll in sync
     ref.listen(selectedDateProvider, (previous, next) {
       if (previous != next && !isMonthly) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -99,38 +104,25 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
       }
     });
 
-    ref.listen(timelineViewModeProvider, (previous, next) {
-      if (previous == TimelineViewMode.monthly &&
-          next != TimelineViewMode.monthly) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToSelectedDate(animate: false);
-        });
-      }
-    });
-
-    // Group tasks by date for monthly view
-    final tasksByDate = <DateTime, List<Note>>{};
-    for (final note in allNotes) {
-      if (note.isTask && note.scheduledTime != null) {
-        final date = DateTime(
-          note.scheduledTime!.year,
-          note.scheduledTime!.month,
-          note.scheduledTime!.day,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 400),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.0, 0.05),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
         );
-        tasksByDate.putIfAbsent(date, () => []).add(note);
-      }
-    }
-
-    // Sort tasks chronologically
-    for (final date in tasksByDate.keys) {
-      tasksByDate[date]!.sort(
-        (a, b) => a.scheduledTime!.compareTo(b.scheduledTime!),
-      );
-    }
-
-    return isMonthly
-        ? _buildMonthlyView(context, selectedDate, datesWithTasks, tasksByDate)
-        : _buildWeeklyView(context, selectedDate, datesWithTasks);
+      },
+      child:
+          isMonthly
+              ? _buildMonthlyView(context, selectedDate)
+              : _buildWeeklyView(context, selectedDate),
+    );
   }
 
   Widget _buildHeader({
@@ -163,6 +155,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
                 const SizedBox(height: 4),
                 GestureDetector(
                   onTap: onDropdownTap ?? onToggle,
+                  behavior: HitTestBehavior.opaque,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -200,39 +193,38 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
               ],
             ),
           ),
-          Builder(
-            builder: (context) {
-              return GestureDetector(
-                onTap: () {
-                  Scaffold.of(context).openEndDrawer();
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF6F8FA),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.menu,
-                    color: AppColors.textPrimary,
-                    size: 24,
-                  ),
-                ),
-              );
-            },
-          ),
+          _buildMenuButton(context),
         ],
       ),
     );
   }
 
-  Widget _buildWeeklyView(
-    BuildContext context,
-    DateTime selectedDate,
-    Set<DateTime> datesWithTasks,
-  ) {
+  Widget _buildMenuButton(BuildContext context) {
+    return Builder(
+      builder: (context) {
+        return GestureDetector(
+          onTap: () => Scaffold.of(context).openEndDrawer(),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF6F8FA),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.menu,
+              color: AppColors.textPrimary,
+              size: 24,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWeeklyView(BuildContext context, DateTime selectedDate) {
     final weekDays = _getWeekDays(selectedDate);
     final weekNumber = _getWeekNumber(selectedDate);
+    final datesWithTasks = ref.watch(datesWithTasksProvider);
 
     if (!_hasInitialWeekScroll) {
       _hasInitialWeekScroll = true;
@@ -261,10 +253,12 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
             itemCount: weekDays.length,
             itemBuilder: (context, index) {
               final date = weekDays[index];
-              final isSelected = _isSameDay(date, selectedDate);
-              final hasTasks = datesWithTasks.any((d) => _isSameDay(d, date));
-
-              return _buildDayItem(context, date, isSelected, hasTasks);
+              return _DayItem(
+                date: date,
+                isSelected: _isSameDay(date, selectedDate),
+                hasTasks: datesWithTasks.any((d) => _isSameDay(d, date)),
+                onTap: () => ref.read(selectedDateProvider.notifier).state = date,
+              );
             },
           ),
         ),
@@ -272,12 +266,10 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     );
   }
 
-  Widget _buildMonthlyView(
-    BuildContext context,
-    DateTime selectedDate,
-    Set<DateTime> datesWithTasks,
-    Map<DateTime, List<Note>> tasksByDate,
-  ) {
+  Widget _buildMonthlyView(BuildContext context, DateTime selectedDate) {
+    final tasksByDate = ref.watch(scheduleEventsProvider);
+    final datesWithTasks = ref.watch(datesWithTasksProvider);
+
     return Column(
       key: const ValueKey('monthly'),
       children: [
@@ -288,48 +280,37 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
           isMonthly: true,
         ),
         Expanded(
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (ScrollNotification notification) {
-              if (notification is ScrollUpdateNotification) {
-                // Update visible month title faster during scroll
-                final page = _monthPageController.page ?? 0;
-                final index = page.round();
-                final newVisibleMonth = DateTime(
-                  _today.year,
-                  _today.month + index,
-                );
-                if (newVisibleMonth.month != _visibleMonth.month ||
-                    newVisibleMonth.year != _visibleMonth.year) {
-                  setState(() {
-                    _visibleMonth = newVisibleMonth;
-                  });
-                }
-              }
-              return false;
-            },
-            child: PageView.builder(
-              controller: _monthPageController,
-              scrollDirection: Axis.vertical,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              onPageChanged: (index) {
-                // final fallback if notification missed it
-                setState(() {
-                  _visibleMonth = DateTime(_today.year, _today.month + index);
-                });
-              },
-              itemBuilder: (context, index) {
-                final monthDate = DateTime(_today.year, _today.month + index);
-                return _buildMonthGrid(
-                  context,
-                  monthDate,
-                  selectedDate,
-                  datesWithTasks,
-                  tasksByDate,
-                );
-              },
+          child: PageView.builder(
+            controller: _monthPageController,
+            scrollDirection: Axis.vertical,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
             ),
+            onPageChanged: (index) {
+              setState(() {
+                _visibleMonth = DateTime(
+                  _today.year,
+                  _today.month + (index - _initialPage),
+                );
+              });
+            },
+            itemBuilder: (context, index) {
+              final monthDate = DateTime(
+                _today.year,
+                _today.month + (index - _initialPage),
+              );
+              return _MonthGrid(
+                monthDate: monthDate,
+                selectedDate: selectedDate,
+                datesWithTasks: datesWithTasks,
+                tasksByDate: tasksByDate,
+                onDateSelected: (date) {
+                  ref.read(selectedDateProvider.notifier).state = date;
+                  ref.read(timelineViewModeProvider.notifier).state =
+                      TimelineViewMode.daily;
+                },
+              );
+            },
           ),
         ),
       ],
@@ -362,98 +343,53 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
       });
 
       _monthPageController.animateToPage(
-        monthsDiff,
+        _initialPage + monthsDiff,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
     }
   }
 
-
-  Widget _buildMonthGrid(
-    BuildContext context,
-    DateTime monthDate,
-    DateTime selectedDate,
-    Set<DateTime> datesWithTasks,
-    Map<DateTime, List<Note>> tasksByDate,
-  ) {
-    final monthDays = _getMonthDays(monthDate);
-    final weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: weekdays
-                .map(
-                  (d) => Text(
-                    d,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-          Expanded(
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                mainAxisSpacing: 4,
-                crossAxisSpacing: 4,
-                childAspectRatio:
-                    0.5, // Adjusted from 0.45 for better stability
-              ),
-              itemCount: 42, // Always show 6 rows
-              itemBuilder: (context, index) {
-                final date = monthDays[index];
-                final isPadding = date.month != monthDate.month;
-                final isSelected = _isSameDay(date, selectedDate);
-                final dayTasks =
-                    tasksByDate[DateTime(date.year, date.month, date.day)] ??
-                    [];
-
-                return _buildGridDayItem(
-                  context,
-                  date,
-                  isSelected,
-                  dayTasks,
-                  isPadding,
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+  List<DateTime> _getWeekDays(DateTime center) {
+    final startOfWeek = center.subtract(Duration(days: center.weekday - 1));
+    return List.generate(14, (index) => startOfWeek.add(Duration(days: index - 3)));
   }
 
-  Widget _buildDayItem(
-    BuildContext context,
-    DateTime date,
-    bool isSelected,
-    bool hasTasks,
-  ) {
-    final isToday = _isSameDay(date, DateTime.now());
+  int _getWeekNumber(DateTime date) {
+    final dayOfYear = int.parse(DateFormat('D').format(date));
+    return ((dayOfYear - date.weekday + 10) / 7).floor();
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  bool _isSameMonth(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month;
+  }
+}
+
+class _DayItem extends StatelessWidget {
+  final DateTime date;
+  final bool isSelected;
+  final bool hasTasks;
+  final VoidCallback onTap;
+
+  const _DayItem({
+    required this.date,
+    required this.isSelected,
+    required this.hasTasks,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isToday = DateUtils.isSameDay(date, DateTime.now());
+    
     return GestureDetector(
-      onTap: () => ref.read(selectedDateProvider.notifier).state = date,
-      child: Container(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         width: 60,
         margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
         decoration: BoxDecoration(
@@ -479,29 +415,30 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              DateFormat('E').format(date).substring(0, 3),
+              DateFormat('E').format(date).substring(0, 3).toUpperCase(),
               style: GoogleFonts.roboto(
                 color: isSelected
                     ? Colors.white.withValues(alpha: 0.8)
                     : Colors.grey.shade500,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               date.day.toString(),
               style: GoogleFonts.roboto(
-                color: isSelected ? Colors.white : Colors.black87,
+                color: isSelected ? Colors.white : AppColors.textPrimary,
                 fontWeight: FontWeight.bold,
-                fontSize: 20,
+                fontSize: 18,
               ),
             ),
             if (hasTasks) ...[
               const SizedBox(height: 6),
               Container(
-                width: 5,
-                height: 5,
+                width: 4,
+                height: 4,
                 decoration: BoxDecoration(
                   color: isSelected ? Colors.white : const Color(0xFF5473F7),
                   shape: BoxShape.circle,
@@ -513,27 +450,151 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
       ),
     );
   }
+}
 
-  Widget _buildGridDayItem(
-    BuildContext context,
-    DateTime date,
-    bool isSelected,
-    List<Note> tasks,
-    bool isPadding,
-  ) {
-    final isToday = _isSameDay(date, DateTime.now());
-    return GestureDetector(
-      onTap: () {
-        ref.read(selectedDateProvider.notifier).state = date;
-        // Redirect to daily timeline
-        ref.read(timelineViewModeProvider.notifier).state =
-            TimelineViewMode.daily;
-      },
+class _MonthGrid extends StatelessWidget {
+  final DateTime monthDate;
+  final DateTime selectedDate;
+  final Set<DateTime> datesWithTasks;
+  final Map<DateTime, List<TimelineEvent>> tasksByDate;
+  final Function(DateTime) onDateSelected;
+
+  const _MonthGrid({
+    required this.monthDate,
+    required this.selectedDate,
+    required this.datesWithTasks,
+    required this.tasksByDate,
+    required this.onDateSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final monthDays = _getMonthDays(monthDate);
+    final weekdays = DateFormat.E().dateSymbols.NARROWWEEKDAYS;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            alignment: Alignment.center,
+          _buildWeekdayHeader(weekdays),
+          Expanded(
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisSpacing: 2,
+                crossAxisSpacing: 2,
+                childAspectRatio: 0.55,
+              ),
+              itemCount: 42,
+              itemBuilder: (context, index) {
+                final date = monthDays[index];
+                final isPadding = date.month != monthDate.month;
+                final isSelected = DateUtils.isSameDay(date, selectedDate);
+                final dayEvents = tasksByDate[DateTime(date.year, date.month, date.day)] ?? [];
+
+                return _MonthlyDayCell(
+                  date: date,
+                  isSelected: isSelected,
+                  isPadding: isPadding,
+                  events: dayEvents,
+                  onTap: () => onDateSelected(date),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeekdayHeader(List<String> weekdays) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: weekdays.map((d) => Text(
+          d,
+          style: GoogleFonts.roboto(
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  List<DateTime> _getMonthDays(DateTime source) {
+    final firstDayOfMonth = DateTime(source.year, source.month, 1);
+    final lastDayOfMonth = DateTime(source.year, source.month + 1, 0);
+
+    final daysInMonth = lastDayOfMonth.day;
+    final firstWeekday = (firstDayOfMonth.weekday - 1);
+
+    final days = <DateTime>[];
+
+    // Previous month padding
+    for (var i = firstWeekday; i > 0; i--) {
+      days.add(firstDayOfMonth.subtract(Duration(days: i)));
+    }
+
+    // Current month
+    for (var i = 0; i < daysInMonth; i++) {
+      days.add(firstDayOfMonth.add(Duration(days: i)));
+    }
+
+    // Next month padding
+    final remaining = 42 - days.length;
+    for (var i = 1; i <= remaining; i++) {
+      days.add(lastDayOfMonth.add(Duration(days: i)));
+    }
+
+    return days;
+  }
+}
+
+class _MonthlyDayCell extends StatelessWidget {
+  final DateTime date;
+  final bool isSelected;
+  final bool isPadding;
+  final List<TimelineEvent> events;
+  final VoidCallback onTap;
+
+  const _MonthlyDayCell({
+    required this.date,
+    required this.isSelected,
+    required this.isPadding,
+    required this.events,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isToday = DateUtils.isSameDay(date, DateTime.now());
+    final visibleEvents = events.take(2).toList();
+    final hasMore = events.length > 2;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
             decoration: BoxDecoration(
               color: isSelected ? const Color(0xFF1E1E1E) : Colors.transparent,
               shape: BoxShape.circle,
@@ -549,75 +610,50 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
               style: GoogleFonts.roboto(
                 color: isSelected
                     ? Colors.white
-                    : (isPadding ? Colors.grey.shade400 : Colors.black87),
-                fontSize: 14,
+                    : (isPadding ? Colors.grey.shade300 : AppColors.textPrimary),
+                fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
+          ...visibleEvents.map((e) => _buildEventIndicator(e)),
+          if (hasMore) _buildMoreIndicator(events.length - 2),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEventIndicator(TimelineEvent event) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 2, left: 2, right: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: event.color != null 
+            ? Color(event.color!).withValues(alpha: 0.15)
+            : const Color(0xFFE8EEFF),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            event.isCompleted ? Icons.check_circle : Icons.circle,
+            size: 6,
+            color: event.isCompleted 
+                ? const Color(0xFF5473F7) 
+                : (event.color != null ? Color(event.color!) : Colors.grey.shade400),
+          ),
+          const SizedBox(width: 2),
           Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: tasks.length > 6 ? 7 : tasks.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 2),
-              itemBuilder: (context, index) {
-                if (index == 6 && tasks.length > 7) {
-                  return Center(
-                    child: Text(
-                      '···',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey.shade400,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                }
-                final task = tasks[index];
-                return Opacity(
-                  opacity: isPadding ? 0.7 : 1.0,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: (task.category.name.toLowerCase() == 'work'
-                          ? const Color(0xFFE8EEFF)
-                          : const Color(0xFFF0FDF4)),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          task.isCompleted
-                              ? Icons.check_circle
-                              : Icons.circle_outlined,
-                          size: 8,
-                          color: task.isCompleted
-                              ? const Color(0xFF5473F7)
-                              : Colors.grey.shade400,
-                        ),
-                        const SizedBox(width: 2),
-                        Expanded(
-                          child: Text(
-                            task.title,
-                            style: GoogleFonts.roboto(
-                              fontSize: 7.5,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+            child: Text(
+              event.title,
+              style: GoogleFonts.roboto(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -625,55 +661,23 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     );
   }
 
-  List<DateTime> _getWeekDays(DateTime center) {
-    final startOfWeek = center.subtract(Duration(days: center.weekday - 1));
-    return List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
-  }
-
-  List<DateTime> _getMonthDays(DateTime source) {
-    final firstDayOfMonth = DateTime(source.year, source.month, 1);
-    final lastDayOfMonth = DateTime(source.year, source.month + 1, 0);
-
-    final daysInMonth = lastDayOfMonth.day;
-    final firstWeekday = (firstDayOfMonth.weekday - 1);
-
-    final days = <DateTime>[];
-
-    // Padding previous month
-    for (var i = firstWeekday; i > 0; i--) {
-      days.add(firstDayOfMonth.subtract(Duration(days: i)));
-    }
-
-    // Current month
-    for (var i = 0; i < daysInMonth; i++) {
-      days.add(firstDayOfMonth.add(Duration(days: i)));
-    }
-
-    // Padding next month to exactly 42 days (6 rows)
-    final totalDaysSoFar = days.length;
-    final remaining = 42 - totalDaysSoFar;
-    for (var i = 1; i <= remaining; i++) {
-      days.add(lastDayOfMonth.add(Duration(days: i)));
-    }
-
-    return days;
-  }
-
-  int _getWeekNumber(DateTime date) {
-    final dayOfYear = int.parse(DateFormat('D').format(date));
-    return ((dayOfYear - date.weekday + 10) / 7).floor();
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  bool _isSameMonth(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month;
+  Widget _buildMoreIndicator(int remaining) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 1),
+      child: Text(
+        '+$remaining more',
+        style: GoogleFonts.roboto(
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey.shade500,
+        ),
+      ),
+    );
   }
 }
 
 class _MonthYearPickerContent extends StatefulWidget {
+
   final DateTime initialDate;
 
   const _MonthYearPickerContent({required this.initialDate});
@@ -770,20 +774,7 @@ class _MonthYearPickerContentState extends State<_MonthYearPickerContent> {
   }
 
   Widget _buildMonthGrid() {
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
+    final months = DateFormat.MMM().dateSymbols.STANDALONESHORTMONTHS;
 
     return GridView.builder(
       shrinkWrap: true,
