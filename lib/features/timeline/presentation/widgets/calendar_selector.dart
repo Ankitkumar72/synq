@@ -340,83 +340,20 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     BuildContext context,
     DateTime selectedDate,
   ) async {
-    DateTime tempDate = _isSameMonth(selectedDate, _visibleMonth)
-        ? selectedDate
-        : _visibleMonth;
     final DateTime? picked = await showDialog<DateTime>(
       context: context,
+      barrierDismissible: true,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Text(
-            'Select Month & Year',
-            style: GoogleFonts.roboto(
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          content: SizedBox(
-            width: 300,
-            height: 300,
-            child: Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: Theme.of(context).colorScheme.copyWith(
-                  onSurface: Colors.black,
-                  onSurfaceVariant: Colors.black,
-                  onPrimary: Colors.white,
-                  primary: const Color(
-                    0xFF5473F7,
-                  ), // Match app theme blue for highlights
-                ),
-                textTheme: Theme.of(context).textTheme.apply(
-                  bodyColor: Colors.black,
-                  displayColor: Colors.black,
-                ),
-                textButtonTheme: TextButtonThemeData(
-                  style: TextButton.styleFrom(foregroundColor: Colors.black),
-                ),
-              ),
-              child: CalendarDatePicker(
-                initialDate: tempDate,
-                firstDate: DateTime(_today.year - 5),
-                lastDate: DateTime(_today.year + 5),
-                onDateChanged: (DateTime date) {
-                  tempDate = DateTime(date.year, date.month);
-                },
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.roboto(color: Colors.grey),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(tempDate),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E1E1E),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'Confirm',
-                style: GoogleFonts.roboto(color: Colors.white),
-              ),
-            ),
-          ],
+        return _MonthYearPickerContent(
+          initialDate:
+              _isSameMonth(selectedDate, _visibleMonth)
+                  ? selectedDate
+                  : _visibleMonth,
         );
       },
     );
 
     if (picked != null) {
-      // Calculate index relative to _today.month
       final monthsDiff =
           (picked.year - _today.year) * 12 + (picked.month - _today.month);
 
@@ -431,6 +368,7 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
       );
     }
   }
+
 
   Widget _buildMonthGrid(
     BuildContext context,
@@ -734,3 +672,281 @@ class _CalendarSelectorState extends ConsumerState<CalendarSelector> {
     return a.year == b.year && a.month == b.month;
   }
 }
+
+class _MonthYearPickerContent extends StatefulWidget {
+  final DateTime initialDate;
+
+  const _MonthYearPickerContent({required this.initialDate});
+
+  @override
+  State<_MonthYearPickerContent> createState() => _MonthYearPickerContentState();
+}
+
+class _MonthYearPickerContentState extends State<_MonthYearPickerContent> {
+  late DateTime _selectedDate;
+  bool _isYearView = false;
+  late int _currentYearPage;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.initialDate;
+    _currentYearPage = (_selectedDate.year ~/ 9) * 9;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
+      elevation: 20,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        width: 340,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 24),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: _isYearView ? _buildYearGrid() : _buildMonthGrid(),
+            ),
+            const SizedBox(height: 24),
+            _buildActions(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select Month & Year',
+              style: GoogleFonts.roboto(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            GestureDetector(
+              onTap: () => setState(() => _isYearView = !_isYearView),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  Text(
+                    _isYearView
+                        ? 'Back to months'
+                        : DateFormat('MMMM yyyy').format(_selectedDate),
+                    style: GoogleFonts.roboto(
+                      fontSize: 14,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    _isYearView ? Icons.chevron_left : Icons.keyboard_arrow_down,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonthGrid() {
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 2.2,
+      ),
+      itemCount: 12,
+      itemBuilder: (context, index) {
+        final isSelected = _selectedDate.month == index + 1;
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedDate = DateTime(_selectedDate.year, index + 1);
+            });
+          },
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary : const Color(0xFFF5F7FF),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow:
+                  isSelected
+                      ? [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                      : [],
+            ),
+            child: Text(
+              months[index],
+              style: GoogleFonts.roboto(
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildYearGrid() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left, size: 20),
+              onPressed: () => setState(() => _currentYearPage -= 9),
+            ),
+            Text(
+              '$_currentYearPage - ${_currentYearPage + 8}',
+              style: GoogleFonts.roboto(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.chevron_right, size: 20),
+              onPressed: () => setState(() => _currentYearPage += 9),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 2.2,
+          ),
+          itemCount: 9,
+          itemBuilder: (context, index) {
+            final year = _currentYearPage + index;
+            final isSelected = _selectedDate.year == year;
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedDate = DateTime(year, _selectedDate.month);
+                  _isYearView = false;
+                });
+              },
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color:
+                      isSelected ? AppColors.primary : const Color(0xFFF5F7FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  year.toString(),
+                  style: GoogleFonts.roboto(
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              foregroundColor: AppColors.textSecondary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.roboto(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () => Navigator.pop(context, _selectedDate),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1E1E1E),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Text(
+              'Confirm',
+              style: GoogleFonts.roboto(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
