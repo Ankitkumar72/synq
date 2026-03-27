@@ -39,11 +39,17 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     {'name': 'Neon Blush', 'color': 0xFFf42272},
     {'name': 'Arctic Breeze', 'color': 0xFF9fffcb},
     {'name': 'Solar Ember', 'color': 0xFFc44900},
-    {'name': 'Electric Zest', 'color': 0xFFffff3f},
     {'name': 'Candy Aura', 'color': 0xFFFFBBE1},
     {'name': 'Sunset Coral', 'color': 0xFFFF8C9E},
     {'name': 'Cosmic Orchid', 'color': 0xFF7E30E1},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize start date from the selected date in the timeline
+    _startDate = ref.read(selectedDateProvider);
+  }
 
   @override
   void dispose() {
