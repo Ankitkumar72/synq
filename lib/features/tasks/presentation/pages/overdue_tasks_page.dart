@@ -21,41 +21,35 @@ class OverdueTasksPage extends ConsumerStatefulWidget {
 class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
   static const Color bgColor = AppColors.background;
   static const Color accentRed = AppColors.primary;
-  static const Color accentOrange = AppColors.primary;
   static const Color textDark = AppColors.textPrimary;
   static const Color textGray = AppColors.textSecondary;
 
   @override
   Widget build(BuildContext context) {
     final overdueAsync = ref.watch(overdueTasksProvider);
+    
+    if (overdueAsync.isLoading) {
+      return const Scaffold(backgroundColor: bgColor, body: Center(child: CircularProgressIndicator()));
+    }
+    
+    if (overdueAsync.hasError) {
+      return Scaffold(backgroundColor: bgColor, body: Center(child: Text('Error loading tasks: ${overdueAsync.error}')));
+    }
+
     final overdueTasks = overdueAsync.value ?? [];
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // Group already-filtered overdue tasks
-    final Map<DateTime, List<Task>> groupedTasks = {};
-    int totalOverdue = 0;
-
-    for (final task in overdueTasks) {
-      final scheduledTime = task.scheduledTime;
-      if (scheduledTime != null) {
-        final date = DateTime(
-          scheduledTime.year,
-          scheduledTime.month,
-          scheduledTime.day,
-        );
-        groupedTasks.putIfAbsent(date, () => []).add(task);
-        totalOverdue++;
-      }
-    }
+    final groupedTasks = _groupTasks(overdueTasks);
+    final totalOverdue = groupedTasks.values.fold<int>(0, (sum, tasks) => sum + tasks.length);
 
     final sortedDates = groupedTasks.keys.toList()
       ..sort((a, b) => b.compareTo(a)); // Newest overdue dates first
 
     return Scaffold(
       backgroundColor: bgColor,
-      endDrawer: SynqDrawer(),
+      endDrawer: const SynqDrawer(isOverdueTasksPage: true),
       body: SafeArea(
         bottom: false,
         child: Stack(
@@ -98,6 +92,22 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
         ),
       ),
     );
+  }
+
+  Map<DateTime, List<Task>> _groupTasks(List<Task> tasks) {
+    final Map<DateTime, List<Task>> grouped = {};
+    for (final task in tasks) {
+      final scheduledTime = task.scheduledTime;
+      if (scheduledTime != null) {
+        final date = DateTime(
+          scheduledTime.year,
+          scheduledTime.month,
+          scheduledTime.day,
+        );
+        grouped.putIfAbsent(date, () => []).add(task);
+      }
+    }
+    return grouped;
   }
 
   Widget _buildHeader(BuildContext context, int totalOverdue) {
@@ -222,13 +232,13 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
             ],
           ),
           const SizedBox(height: 16),
-          ...tasks.map((task) => _buildTaskCard(task)),
+          ...tasks.map((task) => _buildTaskCard(task, ref)),
         ],
       ),
     );
   }
 
-  Widget _buildTaskCard(Task task) {
+  Widget _buildTaskCard(Task task, WidgetRef ref) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -259,8 +269,16 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
             children: [
               // Checkbox empty circle
               GestureDetector(
-                onTap: () {
-                  ref.read(tasksProvider.notifier).toggleCompleted(task.id);
+                onTap: () async {
+                  try {
+                    await ref.read(tasksProvider.notifier).toggleCompleted(task.id);
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to complete task: $e')),
+                      );
+                    }
+                  }
                 },
                 child: Container(
                   width: 24,
@@ -315,7 +333,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
                             width: 8,
                             height: 8,
                             decoration: const BoxDecoration(
-                              color: accentOrange,
+                              color: accentRed,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -338,7 +356,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () async {
-                  await _showCustomRescheduleDialog(context, task, ref);
+                  await _showCustomRescheduleDialog(task, ref);
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -367,7 +385,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
   );
 }
 
-  Future<void> _showCustomRescheduleDialog(BuildContext context, Task task, WidgetRef ref) async {
+  Future<void> _showCustomRescheduleDialog(Task task, WidgetRef ref) async {
     DateTime selectedDate = task.scheduledTime ?? DateTime.now();
     TimeOfDay? selectedTime = task.scheduledTime != null
         ? TimeOfDay.fromDateTime(task.scheduledTime!)
@@ -541,7 +559,7 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
       },
     );
 
-    if (applied == true && context.mounted) {
+    if (applied == true && mounted) {
       final updatedTask = task.copyWith(
         scheduledTime: DateTime(
           selectedDate.year,
@@ -552,19 +570,30 @@ class _OverdueTasksPageState extends ConsumerState<OverdueTasksPage> {
         ),
       );
       
-      await ref.read(tasksProvider.notifier).updateTask(updatedTask);
-      
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Rescheduled to ${DateFormat('MMM d').format(selectedDate)}'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+      try {
+        await ref.read(tasksProvider.notifier).updateTask(updatedTask);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Rescheduled to ${DateFormat('MMM d').format(selectedDate)}'),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 20, 
+                left: 20, 
+                right: 20,
+              ),
             ),
-            margin: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
-          ),
-        );
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to reschedule task: $e')),
+          );
+        }
       }
     }
   }

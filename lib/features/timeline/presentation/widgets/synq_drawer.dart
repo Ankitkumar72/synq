@@ -6,7 +6,9 @@ import '../../data/timeline_provider.dart';
 import '../../../tasks/presentation/pages/overdue_tasks_page.dart';
 
 class SynqDrawer extends ConsumerWidget {
-  const SynqDrawer({super.key});
+  final bool isOverdueTasksPage;
+
+  const SynqDrawer({super.key, this.isOverdueTasksPage = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,59 +32,57 @@ class SynqDrawer extends ConsumerWidget {
                 ),
               ),
             ),
-            _buildDrawerItem(
-              context,
+            SynqDrawerItem(
               icon: Icons.view_agenda_outlined,
               title: 'Schedule',
-              isSelected: currentMode == TimelineViewMode.schedule,
+              isSelected: !isOverdueTasksPage && currentMode == TimelineViewMode.schedule,
               onTap: () {
                 ref.read(timelineViewModeProvider.notifier).state =
                     TimelineViewMode.schedule;
-                _closeDrawer(context);
+                Navigator.of(context).pop();
+                if (isOverdueTasksPage) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
               },
             ),
-            _buildDrawerItem(
-              context,
+            SynqDrawerItem(
               icon: Icons.calendar_view_day,
               title: 'Day',
-              isSelected: currentMode == TimelineViewMode.daily,
+              isSelected: !isOverdueTasksPage && currentMode == TimelineViewMode.daily,
               onTap: () {
                 ref.read(timelineViewModeProvider.notifier).state =
                     TimelineViewMode.daily;
-                _closeDrawer(context);
+                Navigator.of(context).pop();
+                if (isOverdueTasksPage) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
               },
             ),
-            _buildDrawerItem(
-              context,
+            SynqDrawerItem(
               icon: Icons.view_week_outlined,
               title: 'Week',
               isSelected:
-                  currentMode ==
-                  TimelineViewMode.weekly, // Currently sharing view
+                  !isOverdueTasksPage && currentMode == TimelineViewMode.weekly, // Currently sharing view
               onTap: () {
                 ref.read(timelineViewModeProvider.notifier).state =
                     TimelineViewMode.weekly;
-                _closeDrawer(context);
+                Navigator.of(context).pop();
+                if (isOverdueTasksPage) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
               },
             ),
-            _buildDrawerItem(
-              context,
+            SynqDrawerItem(
               icon: Icons.calendar_month_outlined,
               title: 'Month',
-              isSelected: currentMode == TimelineViewMode.monthly,
+              isSelected: !isOverdueTasksPage && currentMode == TimelineViewMode.monthly,
               onTap: () {
                 ref.read(timelineViewModeProvider.notifier).state =
                     TimelineViewMode.monthly;
-                _closeDrawer(context);
-              },
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.refresh,
-              title: 'Refresh',
-              isSelected: false,
-              onTap: () {
-                _closeDrawer(context);
+                Navigator.of(context).pop();
+                if (isOverdueTasksPage) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
               },
             ),
             Padding(
@@ -112,44 +112,20 @@ class SynqDrawer extends ConsumerWidget {
                 ],
               ),
             ),
-            _buildDrawerItem(
-              context,
+            SynqDrawerItem(
               icon: Icons.assignment_late_outlined,
               title: 'Overdue Tasks',
-              isSelected: false,
+              isSelected: isOverdueTasksPage,
               onTap: () {
-                _closeDrawer(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const OverdueTasksPage(),
-                  ),
-                );
+                Navigator.of(context).pop(); // close drawer only
+                if (!isOverdueTasksPage) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const OverdueTasksPage()),
+                  );
+                }
               },
             ),
-            _buildCheckboxItem(
-              context,
-              color: Colors.blue,
-              title: 'Tasks',
-              isChecked: true,
-              onTap: () {},
-            ),
-            _buildCheckboxItem(
-              context,
-              color: Colors.purple,
-              title: 'Todo',
-              isChecked: true,
-              onTap: () {},
-            ),
-            _buildCheckboxItem(
-              context,
-              color: Colors.orange,
-              title: 'Events',
-              isChecked: true,
-              onTap: () {},
-            ),
-            _buildDrawerItem(
-              context,
+            SynqDrawerItem(
               icon: Icons.settings_outlined,
               title: 'Settings',
               isSelected: false,
@@ -157,8 +133,7 @@ class SynqDrawer extends ConsumerWidget {
                 _closeDrawer(context);
               },
             ),
-            _buildDrawerItem(
-              context,
+            SynqDrawerItem(
               icon: Icons.help_outline,
               title: 'Help and feedback',
               isSelected: false,
@@ -173,28 +148,33 @@ class SynqDrawer extends ConsumerWidget {
   }
 
   void _closeDrawer(BuildContext context) {
-    if (Scaffold.maybeOf(context)?.isEndDrawerOpen ?? false) {
+    final scaffold = Scaffold.maybeOf(context);
+    if (scaffold?.isEndDrawerOpen == true || scaffold?.isDrawerOpen == true) {
       Navigator.pop(context);
-    } else if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
-      Navigator.pop(context);
-    } else {
-      Navigator.pop(context); // Fallback
     }
   }
+}
 
-  Widget _buildDrawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
+class SynqDrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const SynqDrawerItem({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
       child: Material(
-        color: isSelected
-            ? const Color(0xFFE8EFFF)
-            : Colors.transparent, // Highlight color
+        color: isSelected ? const Color(0xFFE8EFFF) : Colors.transparent,
         borderRadius: BorderRadius.circular(24),
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
@@ -208,63 +188,15 @@ class SynqDrawer extends ConsumerWidget {
               children: [
                 Icon(
                   icon,
-                  color: isSelected
-                      ? const Color(0xFF1E3A8A)
-                      : Colors.black54, // Icon color
+                  color: isSelected ? const Color(0xFF1E3A8A) : Colors.black54,
                   size: 24,
                 ),
                 const SizedBox(width: 16),
                 Text(
                   title,
                   style: GoogleFonts.roboto(
-                    color: isSelected
-                        ? const Color(0xFF1E3A8A)
-                        : Colors.black87, // Text color
+                    color: isSelected ? const Color(0xFF1E3A8A) : Colors.black87,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCheckboxItem(
-    BuildContext context, {
-    required Color color,
-    required String title,
-    required bool isChecked,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 10.0,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  isChecked ? Icons.check_box : Icons.check_box_outline_blank,
-                  color: color,
-                  size: 24,
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  title,
-                  style: GoogleFonts.roboto(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
                     fontSize: 15,
                   ),
                 ),
