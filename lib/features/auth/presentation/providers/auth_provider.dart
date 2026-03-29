@@ -43,6 +43,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       (user) {
         if (user != null) {
           state = state.copyWith(isAuthenticated: true, isLoading: false);
+          
+          // Self-healing: Ensure user document exists for existing sessions
+          // (fixes "phantom user" issue for users who skip login/signup)
+          _repository.createUserIfNeeded(
+            uid: user.uid,
+            email: user.email ?? '',
+            name: user.displayName ?? 'User',
+          ).catchError((e) {
+            debugPrint('USER_INITIALIZATION_ERROR: $e');
+          });
+
           // Clean up stale DB files from other accounts (fire-and-forget)
           () async {
             try {

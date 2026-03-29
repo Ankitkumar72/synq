@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import 'package:firebase_storage/firebase_storage.dart' hide Task;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,8 +12,10 @@ import '../../../notes/domain/models/note.dart' show SubTask;
 import '../../domain/models/task.dart';
 import '../../data/tasks_provider.dart';
 import '../../../attachments/data/image_storage_service.dart';
+import '../../../auth/domain/models/synq_user.dart';
 import '../../../notes/utils/markdown_controller.dart';
 import '../../../attachments/presentation/widgets/attachment_bubble.dart';
+import '../../../auth/presentation/providers/user_provider.dart';
 import '../../../home/presentation/providers/schedule_conflict_provider.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
@@ -70,20 +73,47 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       if (image == null) return;
       
-      final savedFilename = await ImageStorageService.saveImage(
-        File(image.path), 
-        currentTask.attachments.length,
-      );
+      setState(() => _isSubTasksExpanded = true); // Expand for progress
+
+      final user = ref.read(userProvider).valueOrNull;
+      if (user == null) return;
+      
+      final taskUniqueId = currentTask.id;
+      String imageUri;
+
+      if (user.planTier == PlanTier.pro) {
+        // 1. PRO: Upload to Cloud Sync
+        final UploadTask uploadTask = ImageStorageService.uploadImage(
+          File(image.path), 
+          user.id, 
+          taskUniqueId,
+        );
+
+        // We'll wait for the download URL
+        final snapshot = await uploadTask;
+        imageUri = await snapshot.ref.getDownloadURL();
+      } else {
+        // 2. FREE: Save to Local Sandbox (No Cloud Sync)
+        imageUri = await ImageStorageService.saveImage(File(image.path), currentTask.attachments.length);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Saved locally. Upgrade to Pro for cloud sync!'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
 
       final updatedTask = currentTask.copyWith(
-        attachments: [...currentTask.attachments, savedFilename],
+        attachments: [...currentTask.attachments, imageUri],
       );
       
       ref.read(tasksProvider.notifier).updateTask(updatedTask);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text('Attachment failed: $e')),
         );
       }
     }
@@ -829,8 +859,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       separatorBuilder: (context, index) => const SizedBox(width: 12),
                       itemBuilder: (context, index) {
                         final filename = task.attachments[index];
+                        final userId = ref.read(userProvider).valueOrNull?.id ?? '';
                         return AttachmentBubble(
                           filename: filename,
+                          userId: userId,
                           onDelete: () => _removeAttachment(filename),
                         );
                       },

@@ -15,21 +15,17 @@ class UserRepository {
     required String name,
   }) async {
     final docRef = _usersCollection.doc(uid);
-    final snapshot = await docRef.get();
-
-    if (!snapshot.exists) {
-      final newUser = SynqUser(
-        id: uid,
-        email: email,
-        name: name,
-        planTier: PlanTier.free,
-        createdAt: DateTime.now(),
-        activeDevices: [],
-        storageUsedBytes: 0,
-      );
-
-      await docRef.set(newUser.toJson(), SetOptions(merge: true));
-    }
+    // Explicitly set the core fields required by security rules with merge: true
+    // This handles both new users and "phantom" users with missing fields.
+    await docRef.set({
+      'id': uid,
+      'email': email,
+      'name': name,
+      'plan_tier': 'free',
+      'storage_used_bytes': 0,
+      'active_device_ids': FieldValue.arrayUnion([]), // Ensure it's an array if missing
+      'created_at': DateTime.now().toIso8601String(),
+    }, SetOptions(merge: true));
   }
 
   /// Adds a device to the user's active devices list if it doesn't exist.
@@ -52,13 +48,14 @@ class UserRepository {
         updatedDevices.add({
           'id': deviceId,
           'name': deviceName,
-          'last_seen': FieldValue.serverTimestamp(),
+          'last_seen': DateTime.now().toIso8601String(),
         });
 
         await docRef.update({
           'active_devices': updatedDevices,
           'active_device_ids': FieldValue.arrayUnion([deviceId]),
         });
+
       } else {
         // Update last_seen for existing device
         final updatedDevices = user.activeDevices.map((d) {

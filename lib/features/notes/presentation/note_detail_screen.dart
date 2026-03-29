@@ -1,7 +1,7 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,7 +16,6 @@ import 'package:synq/features/notes/domain/models/note.dart';
 import 'package:synq/features/folders/domain/models/folder.dart';
 import 'package:synq/features/notes/data/notes_provider.dart';
 import 'package:synq/features/attachments/data/image_storage_service.dart';
-import 'package:synq/features/attachments/presentation/widgets/attachment_bubble.dart';
 import 'package:synq/features/folders/data/folder_provider.dart';
 import 'package:synq/features/notes/data/note_editor_draft_store.dart';
 import 'package:synq/features/notes/presentation/widgets/tag_manage_dialog.dart';
@@ -28,6 +27,12 @@ import 'package:synq/core/services/device_service.dart';
 import 'package:synq/features/auth/presentation/providers/user_provider.dart';
 import 'package:synq/features/auth/domain/models/synq_user.dart';
 import 'package:synq/core/providers/repository_provider.dart';
+import 'package:synq/features/notes/presentation/widgets/inline_image_embed.dart';
+import 'package:flutter/services.dart';
+
+class _HandleCustomPasteShortcut extends Intent {
+  const _HandleCustomPasteShortcut();
+}
 
 class NoteDetailScreen extends ConsumerStatefulWidget {
   final Note? noteToEdit;
@@ -87,7 +92,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       _quillController = quill.QuillController(
         document: MarkdownBridge.deltaFromMarkdown(note.body),
         selection: const TextSelection.collapsed(offset: 0),
-        readOnly: false,
+        readOnly: _isReadOnly,
       );
       _selectedFolderId = note.folderId;
       _tags.addAll(note.tags);
@@ -99,7 +104,11 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     } else {
       _selectedFolderId = widget.initialFolderId;
       _titleController.text = ''; // Start empty
-      _quillController = quill.QuillController.basic();
+      _quillController = quill.QuillController(
+        document: quill.Document(),
+        selection: const TextSelection.collapsed(offset: 0),
+        readOnly: _isReadOnly,
+      );
       _editingNote = null;
     }
 
@@ -229,6 +238,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   }
 
   void _onTextChanged() {
+    _syncAttachmentsFromDelta();
     _markUnsaved();
 
     // Auto-save logic
@@ -237,9 +247,51 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     });
 
     _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 2), () {
-      _handleSave();
+    _autoSaveTimer = Timer(const Duration(seconds: 2), () async {
+      if (!_isSaving) {
+        await _handleSave();
+      } else {
+        // If already saving, reschedule once
+        _autoSaveTimer?.cancel();
+        _autoSaveTimer = Timer(const Duration(seconds: 1), _handleSave);
+      }
     });
+  }
+
+  void _syncAttachmentsFromDelta() {
+    final delta = _quillController.document.toDelta();
+    final List<String> currentInlineUrls = [];
+
+    for (final operation in delta.toList()) {
+      if (operation.isInsert && operation.data is Map) {
+        final data = operation.data as Map;
+        if (data.containsKey('image')) {
+          currentInlineUrls.add(data['image'] as String);
+        }
+      }
+    }
+
+    // Update _attachments if it differs from inline URLs (only if it doesn't break legacy)
+    bool changed = false;
+    for (final url in currentInlineUrls) {
+      if (!_attachments.contains(url)) {
+        _attachments.add(url);
+        changed = true;
+      }
+    }
+
+    // Clean up orphaned Cloud URLs that are no longer in the Delta
+    final toRemove = _attachments
+        .where((a) => a.startsWith('http') && !currentInlineUrls.contains(a))
+        .toList();
+    if (toRemove.isNotEmpty) {
+      _attachments.removeWhere((a) => toRemove.contains(a));
+      changed = true;
+    }
+
+    if (changed && mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -262,7 +314,17 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       _quillController.document,
     ).trim();
 
-    if (title.isEmpty && body.isEmpty) return; // Don't save empty
+    final isCurrentlyEmpty = title.isEmpty && body.isEmpty;
+    final wasEmpty = _editingNote == null && _draftNoteId == null;
+
+    if (isCurrentlyEmpty) {
+      if (!wasEmpty && _editingNote != null) {
+        // If it was non-empty and now empty, maybe prompt or just return
+        // For now, let's just return to avoid saving empty notes
+        setState(() => _saveStatus = 'Empty');
+      }
+      return;
+    }
 
     final now = DateTime.now();
     final noteId =
@@ -336,47 +398,141 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     }
   }
 
+  Future<String> _processUploadTask(UploadTask task) async {
+    final subscription = task.snapshotEvents.listen((snapshot) {
+      final progress = snapshot.bytesTransferred / snapshot.totalBytes;
+      final percentage = (progress * 100).toInt();
+      if (mounted) {
+        setState(() {
+          _saveStatus = 'Uploading $percentage%';
+        });
+      }
+    });
+
+    try {
+      final snapshot = await task;
+      final url = await snapshot.ref.getDownloadURL();
+      return url;
+    } finally {
+      subscription.cancel();
+    }
+  }
+
   Future<void> _pickImage() async {
     final user = ref.read(userProvider).valueOrNull;
-    if (user != null && user.planTier == PlanTier.free) {
-      _showToast(context, 'Upgrade to Pro to attach files.');
-      return;
-    }
+    if (user == null) return;
 
     if (_attachments.length >= ImageStorageService.maxAttachmentsPerNote) {
-      _showToast(context, 'Cannot add more than ${ImageStorageService.maxAttachmentsPerNote} images.');
+      _showToast(
+        context,
+        'Max ${ImageStorageService.maxAttachmentsPerNote} images reached.',
+      );
       return;
     }
 
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
-    
+
+    final tempPath = image.path;
+    final noteId =
+        _editingNote?.id ??
+        _draftNoteId ??
+        DateTime.now().millisecondsSinceEpoch.toString();
+
+    // 1. OPTIMISTIC INSERTION (Instant UI)
+    final index = _quillController.selection.extentOffset;
+    _quillController.document.insert(index, quill.BlockEmbed.image(tempPath));
+    _quillController.formatText(
+      index,
+      1,
+      quill.Attribute('width', quill.AttributeScope.inline, 300),
+    );
+    _quillController.updateSelection(
+      TextSelection.collapsed(offset: index + 1),
+      quill.ChangeSource.local,
+    );
+
+    setState(() {
+      _attachments.add(tempPath);
+      _hasUnsavedChanges = true;
+      _saveStatus = 'Optimizing...';
+    });
+
+    // 2. BACKGROUND PROCESSING (No await)
+    _finalizeImageUpload(tempPath, noteId, user);
+  }
+
+  Future<void> _finalizeImageUpload(
+    String tempPath,
+    String noteId,
+    SynqUser user,
+  ) async {
     try {
-      final savedFilename = await ImageStorageService.saveImage(
-        File(image.path), 
-        _attachments.length,
-      );
-      setState(() {
-        _attachments.add(savedFilename);
-        _hasUnsavedChanges = true;
-      });
-      _persistDraft();
-      _handleSave();
+      String finalUri;
+      if (user.planTier == PlanTier.pro) {
+        final task = ImageStorageService.uploadImage(
+          File(tempPath),
+          user.id,
+          noteId,
+        );
+        finalUri = await _processUploadTask(task);
+      } else {
+        finalUri = await ImageStorageService.saveImage(
+          File(tempPath),
+          _attachments.length,
+        );
+      }
+
+      // 3. SILENT SWAP in Editor Delta
+      if (!mounted) return;
+
+      final delta = _quillController.document.toDelta();
+      int currentOffset = 0;
+      int? foundOffset;
+
+      for (final op in delta.toList()) {
+        if (op.isInsert) {
+          if (op.data is Map && (op.data as Map)['image'] == tempPath) {
+            foundOffset = currentOffset;
+            break;
+          }
+          currentOffset += op.length ?? 0;
+        } else if (op.isRetain) {
+          currentOffset += op.length ?? 0;
+        }
+      }
+
+      if (foundOffset != null) {
+        // Replace the temp path with the final URI
+        _quillController.replaceText(
+          foundOffset,
+          1,
+          quill.BlockEmbed.image(finalUri),
+          null,
+        );
+        // Re-apply width
+        _quillController.formatText(
+          foundOffset,
+          1,
+          quill.Attribute('width', quill.AttributeScope.inline, 300),
+        );
+
+        setState(() {
+          _attachments.remove(tempPath);
+          _attachments.add(finalUri);
+          _saveStatus = 'Saved';
+        });
+        _handleSave();
+      }
     } catch (e) {
-      if (mounted) _showToast(context, e.toString());
+      if (mounted) {
+        _showToast(context, 'Media optimization failed: $e');
+        setState(() => _saveStatus = 'Sync Error');
+      }
     }
   }
 
-  Future<void> _removeAttachment(String filename) async {
-    await ImageStorageService.deleteFile(filename);
-    setState(() {
-      _attachments.remove(filename);
-      _hasUnsavedChanges = true;
-    });
-    _persistDraft();
-    _handleSave();
-  }
 
   Future<void> _openFolderPicker() async {
     final foldersState = ref.read(foldersProvider);
@@ -594,6 +750,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           onToggleReadingView: () {
             setState(() {
               _isReadOnly = !_isReadOnly;
+              _quillController.readOnly = _isReadOnly;
             });
           },
           onRename: () {
@@ -884,6 +1041,26 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                             focusNode: _bodyFocusNode,
                             config: quill.QuillEditorConfig(
                               placeholder: 'Start writing...',
+                              embedBuilders: [InlineImageEmbedBuilder()],
+                              customShortcuts: {
+                                LogicalKeySet(
+                                  LogicalKeyboardKey.meta,
+                                  LogicalKeyboardKey.keyV,
+                                ): const _HandleCustomPasteShortcut(),
+                                LogicalKeySet(
+                                  LogicalKeyboardKey.control,
+                                  LogicalKeyboardKey.keyV,
+                                ): const _HandleCustomPasteShortcut(),
+                              },
+                              customActions: {
+                                _HandleCustomPasteShortcut:
+                                    CallbackAction<_HandleCustomPasteShortcut>(
+                                      onInvoke: (intent) {
+                                        _handleCustomPaste();
+                                        return null;
+                                      },
+                                    ),
+                              },
                               customStyles: quill.DefaultStyles(
                                 paragraph: quill.DefaultTextBlockStyle(
                                   GoogleFonts.roboto(
@@ -900,24 +1077,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-
-                        // Attachments Section
-                        if (_attachments.isNotEmpty) ...[
-                          const SizedBox(height: 24),
-                          ..._attachments.map((filename) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 24),
-                              child: AttachmentBubble(
-                                filename: filename,
-                                onDelete: () => _removeAttachment(filename),
-                                width: double.infinity,
-                                height: null,
-                              ),
-                            );
-                          }),
-                          const SizedBox(height: 24),
-                        ],
+                        const SizedBox(
+                          height: 100,
+                        ), // Extra space for Zen scrolling
                       ],
                     ),
                   ),
@@ -1073,19 +1235,44 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           extension: extension,
         );
         if (path != null) {
+          // Upload the pasted local file bytes to the cloud
+          setState(() => _saveStatus = 'Uploading...');
+          final user = ref.read(userProvider).valueOrNull;
+          if (user == null) return;
+
+          final noteId =
+              _editingNote?.id ??
+              _draftNoteId ??
+              DateTime.now().millisecondsSinceEpoch.toString();
+
+          final task = ImageStorageService.uploadImage(
+            File(path),
+            user.id,
+            noteId,
+          );
+          final cloudUrl = await _processUploadTask(task);
+
           final selection = _quillController.selection;
           _quillController.document.insert(
             selection.end,
-            quill.BlockEmbed.image(path),
+            quill.BlockEmbed.image(cloudUrl),
           );
+          // Apply initial width attribute
+          _quillController.formatText(
+            selection.end,
+            1,
+            quill.Attribute('width', quill.AttributeScope.inline, 300),
+          );
+
           _quillController.updateSelection(
             TextSelection.collapsed(offset: selection.end + 1),
             quill.ChangeSource.local,
           );
 
           setState(() {
-            _attachments.add(path);
+            _attachments.add(cloudUrl);
             _hasUnsavedChanges = true;
+            _saveStatus = 'Saved';
           });
           _persistDraft();
           return;

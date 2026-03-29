@@ -12,9 +12,31 @@ class AuthRepository {
   User? get currentUser => _firebaseAuth.currentUser;
 
   Future<void> signIn(String email, String password) async {
-    await _firebaseAuth.signInWithEmailAndPassword(
+    final credential = await _firebaseAuth.signInWithEmailAndPassword(
       email: email,
       password: password,
+    );
+
+    // Ensure user document exists (fixes "phantom user" problem)
+    if (credential.user != null) {
+      await _userRepository.createUserIfNeeded(
+        uid: credential.user!.uid,
+        email: email,
+        name: credential.user!.displayName ?? 'User',
+      );
+    }
+  }
+
+  /// Exposes user creation to the auth provider for self-healing
+  Future<void> createUserIfNeeded({
+    required String uid,
+    required String email,
+    required String name,
+  }) async {
+    await _userRepository.createUserIfNeeded(
+      uid: uid,
+      email: email,
+      name: name,
     );
   }
 
