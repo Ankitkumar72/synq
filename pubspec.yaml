@@ -50,6 +50,7 @@ dependencies:
   just_audio: ^0.9.43
   device_info_plus: ^11.5.0
   flutter_image_compress: ^2.4.0
+  vector_math: ^2.2.0
 
 dev_dependencies:
   flutter_test:

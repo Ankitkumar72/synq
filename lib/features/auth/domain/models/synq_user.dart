@@ -15,6 +15,11 @@ enum PlanTier {
   String toJson() => name;
 }
 
+extension PlanTierX on PlanTier {
+  bool get isPro => this == PlanTier.pro;
+  bool get isFree => this == PlanTier.free;
+}
+
 class SynqUser {
   final String id;
   final String email;

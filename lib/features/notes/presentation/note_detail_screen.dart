@@ -29,6 +29,7 @@ import 'package:synq/features/auth/domain/models/synq_user.dart';
 import 'package:synq/core/providers/repository_provider.dart';
 import 'package:synq/features/notes/presentation/widgets/inline_image_embed.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show setEquals;
 
 class _HandleCustomPasteShortcut extends Intent {
   const _HandleCustomPasteShortcut();
@@ -69,7 +70,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   String? _draftNoteId;
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
-  String _saveStatus = 'Saved';
+  late final ValueNotifier<String> _saveStatusNotifier;
+  Set<String> _lastKnownAttachments = {};
   Timer? _autoSaveTimer;
   StreamSubscription<Note?>? _noteSubscription;
   String? _deviceId;
@@ -81,6 +83,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   @override
   void initState() {
     super.initState();
+    _saveStatusNotifier = ValueNotifier('Saved');
     _draftKey = widget.noteToEdit != null
         ? 'edit:${widget.noteToEdit!.id}'
         : 'new:${widget.initialFolderId ?? 'none'}';
@@ -113,6 +116,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     }
 
     _restoreDraftIfAvailable();
+    _lastKnownAttachments = _attachments.toSet();
 
     _titleController.addListener(_onTextChanged);
     _quillController.addListener(_onTextChanged);
@@ -178,7 +182,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               _tags.addAll(note.tags);
               _attachments.clear();
               _attachments.addAll(note.attachments);
-              _saveStatus = 'Synced';
+              _saveStatusNotifier.value = 'Synced';
             });
           }
         });
@@ -242,9 +246,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     _markUnsaved();
 
     // Auto-save logic
-    setState(() {
-      _saveStatus = 'Saving...';
-    });
+    _saveStatusNotifier.value = 'Saving...';
 
     _autoSaveTimer?.cancel();
     _autoSaveTimer = Timer(const Duration(seconds: 2), () async {
@@ -271,26 +273,14 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       }
     }
 
-    // Update _attachments if it differs from inline URLs (only if it doesn't break legacy)
-    bool changed = false;
-    for (final url in currentInlineUrls) {
-      if (!_attachments.contains(url)) {
-        _attachments.add(url);
-        changed = true;
-      }
-    }
-
-    // Clean up orphaned Cloud URLs that are no longer in the Delta
-    final toRemove = _attachments
-        .where((a) => a.startsWith('http') && !currentInlineUrls.contains(a))
-        .toList();
-    if (toRemove.isNotEmpty) {
-      _attachments.removeWhere((a) => toRemove.contains(a));
-      changed = true;
-    }
-
-    if (changed && mounted) {
-      setState(() {});
+    // Only trigger a setState if the attachment set actually changed
+    final currentSet = currentInlineUrls.toSet();
+    if (!setEquals(currentSet, _lastKnownAttachments)) {
+      setState(() {
+        _lastKnownAttachments = currentSet;
+        _attachments.clear();
+        _attachments.addAll(currentSet);
+      });
     }
   }
 
@@ -302,6 +292,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     _bodyFocusNode.dispose();
     _autoSaveTimer?.cancel();
     _noteSubscription?.cancel();
+    _saveStatusNotifier.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -321,7 +312,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       if (!wasEmpty && _editingNote != null) {
         // If it was non-empty and now empty, maybe prompt or just return
         // For now, let's just return to avoid saving empty notes
-        setState(() => _saveStatus = 'Empty');
+        _saveStatusNotifier.value = 'Empty';
       }
       return;
     }
@@ -376,7 +367,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         _hasUnsavedChanges = false;
         _editingNote = note;
         _draftNoteId = note.id;
-        _saveStatus = 'Saved';
+        _saveStatusNotifier.value = 'Saved';
       });
       NoteEditorDraftStore.remove(_draftKey);
     } catch (_) {
@@ -403,9 +394,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       final progress = snapshot.bytesTransferred / snapshot.totalBytes;
       final percentage = (progress * 100).toInt();
       if (mounted) {
-        setState(() {
-          _saveStatus = 'Uploading $percentage%';
-        });
+        _saveStatusNotifier.value = 'Uploading $percentage%';
       }
     });
 
@@ -454,9 +443,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     );
 
     setState(() {
-      _attachments.add(tempPath);
       _hasUnsavedChanges = true;
-      _saveStatus = 'Optimizing...';
+      _saveStatusNotifier.value = 'Optimizing...';
     });
 
     // 2. BACKGROUND PROCESSING (No await)
@@ -469,19 +457,24 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     SynqUser user,
   ) async {
     try {
+      // 1. Process via Tiered Storage Service
+      final storageResult = await ImageStorageService.storeImage(
+        sourceFile: File(tempPath),
+        planTier: user.planTier,
+      );
+
       String finalUri;
-      if (user.planTier == PlanTier.pro) {
-        final task = ImageStorageService.uploadImage(
-          File(tempPath),
+      if (user.planTier.isPro && storageResult.hasServerCopy) {
+        // Pro users: Upload the server-optimised copy
+        final task = ImageStorageService.uploadFileToCloud(
+          File(storageResult.serverCopyPath!),
           user.id,
           noteId,
         );
         finalUri = await _processUploadTask(task);
       } else {
-        finalUri = await ImageStorageService.saveImage(
-          File(tempPath),
-          _attachments.length,
-        );
+        // Free users: Internal URI for the lossless local original
+        finalUri = storageResult.localOriginalPath;
       }
 
       // 3. SILENT SWAP in Editor Delta
@@ -519,16 +512,14 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         );
 
         setState(() {
-          _attachments.remove(tempPath);
-          _attachments.add(finalUri);
-          _saveStatus = 'Saved';
+          _saveStatusNotifier.value = 'Saved';
         });
         _handleSave();
       }
     } catch (e) {
       if (mounted) {
         _showToast(context, 'Media optimization failed: $e');
-        setState(() => _saveStatus = 'Sync Error');
+        _saveStatusNotifier.value = 'Sync Error';
       }
     }
   }
@@ -957,14 +948,19 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                   letterSpacing: 1.0,
                 ),
               ),
-              Text(
-                _saveStatus.toUpperCase(),
-                style: GoogleFonts.roboto(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF5473F7),
-                  letterSpacing: 1.5,
-                ),
+              ValueListenableBuilder<String>(
+                valueListenable: _saveStatusNotifier,
+                builder: (context, status, _) {
+                  return Text(
+                    status.toUpperCase(),
+                    style: GoogleFonts.roboto(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF5473F7),
+                      letterSpacing: 1.5,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -1036,42 +1032,44 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                           constraints: BoxConstraints(
                             minHeight: MediaQuery.of(context).size.height * 0.5,
                           ),
-                          child: quill.QuillEditor.basic(
-                            controller: _quillController,
-                            focusNode: _bodyFocusNode,
-                            config: quill.QuillEditorConfig(
-                              placeholder: 'Start writing...',
-                              embedBuilders: [InlineImageEmbedBuilder()],
-                              customShortcuts: {
-                                LogicalKeySet(
-                                  LogicalKeyboardKey.meta,
-                                  LogicalKeyboardKey.keyV,
-                                ): const _HandleCustomPasteShortcut(),
-                                LogicalKeySet(
-                                  LogicalKeyboardKey.control,
-                                  LogicalKeyboardKey.keyV,
-                                ): const _HandleCustomPasteShortcut(),
-                              },
-                              customActions: {
-                                _HandleCustomPasteShortcut:
-                                    CallbackAction<_HandleCustomPasteShortcut>(
-                                      onInvoke: (intent) {
-                                        _handleCustomPaste();
-                                        return null;
-                                      },
+                          child: RepaintBoundary(
+                            child: quill.QuillEditor.basic(
+                              controller: _quillController,
+                              focusNode: _bodyFocusNode,
+                              config: quill.QuillEditorConfig(
+                                placeholder: 'Start writing...',
+                                embedBuilders: [InlineImageEmbedBuilder()],
+                                customShortcuts: {
+                                  LogicalKeySet(
+                                    LogicalKeyboardKey.meta,
+                                    LogicalKeyboardKey.keyV,
+                                  ): const _HandleCustomPasteShortcut(),
+                                  LogicalKeySet(
+                                    LogicalKeyboardKey.control,
+                                    LogicalKeyboardKey.keyV,
+                                  ): const _HandleCustomPasteShortcut(),
+                                },
+                                customActions: {
+                                  _HandleCustomPasteShortcut:
+                                      CallbackAction<_HandleCustomPasteShortcut>(
+                                        onInvoke: (intent) {
+                                          _handleCustomPaste();
+                                          return null;
+                                        },
+                                      ),
+                                },
+                                customStyles: quill.DefaultStyles(
+                                  paragraph: quill.DefaultTextBlockStyle(
+                                    GoogleFonts.roboto(
+                                      fontSize: 18,
+                                      color: AppColors.textPrimary,
+                                      height: 1.6,
                                     ),
-                              },
-                              customStyles: quill.DefaultStyles(
-                                paragraph: quill.DefaultTextBlockStyle(
-                                  GoogleFonts.roboto(
-                                    fontSize: 18,
-                                    color: AppColors.textPrimary,
-                                    height: 1.6,
+                                    const quill.HorizontalSpacing(0, 0),
+                                    const quill.VerticalSpacing(0, 0),
+                                    const quill.VerticalSpacing(0, 0),
+                                    null,
                                   ),
-                                  const quill.HorizontalSpacing(0, 0),
-                                  const quill.VerticalSpacing(0, 0),
-                                  const quill.VerticalSpacing(0, 0),
-                                  null,
                                 ),
                               ),
                             ),
@@ -1235,8 +1233,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           extension: extension,
         );
         if (path != null) {
-          // Upload the pasted local file bytes to the cloud
-          setState(() => _saveStatus = 'Uploading...');
           final user = ref.read(userProvider).valueOrNull;
           if (user == null) return;
 
@@ -1245,17 +1241,30 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               _draftNoteId ??
               DateTime.now().millisecondsSinceEpoch.toString();
 
-          final task = ImageStorageService.uploadImage(
-            File(path),
-            user.id,
-            noteId,
+          _saveStatusNotifier.value = 'Optimizing...';
+          
+          final storageResult = await ImageStorageService.storeImage(
+            sourceFile: File(path),
+            planTier: user.planTier,
           );
-          final cloudUrl = await _processUploadTask(task);
+
+          String finalUri;
+          if (user.planTier.isPro && storageResult.hasServerCopy) {
+            _saveStatusNotifier.value = 'Uploading...';
+            final task = ImageStorageService.uploadFileToCloud(
+              File(storageResult.serverCopyPath!),
+              user.id,
+              noteId,
+            );
+            finalUri = await _processUploadTask(task);
+          } else {
+            finalUri = storageResult.localOriginalPath;
+          }
 
           final selection = _quillController.selection;
           _quillController.document.insert(
             selection.end,
-            quill.BlockEmbed.image(cloudUrl),
+            quill.BlockEmbed.image(finalUri),
           );
           // Apply initial width attribute
           _quillController.formatText(
@@ -1270,11 +1279,10 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           );
 
           setState(() {
-            _attachments.add(cloudUrl);
             _hasUnsavedChanges = true;
-            _saveStatus = 'Saved';
+            _saveStatusNotifier.value = 'Saved';
           });
-          _persistDraft();
+          _handleSave();
           return;
         }
       }
