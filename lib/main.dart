@@ -9,11 +9,15 @@ import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/firebase_provider.dart';
 import 'features/shell/presentation/main_shell.dart';
+import 'features/splash/presentation/screens/splash_screen.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import 'package:synq/core/widgets/responsive_wrapper.dart';
 import 'package:synq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:synq/features/auth/presentation/screens/login_screen.dart';
 import 'package:synq/features/sync/data/sync_access_provider.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
 import 'package:synq/features/auth/presentation/widgets/device_enforcement_guard.dart';
 import 'package:synq/features/auth/presentation/widgets/downgrade_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -21,7 +25,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 void main() async {
   String? firebaseError;
   try {
-    WidgetsFlutterBinding.ensureInitialized();
+    WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
     await FirebaseService.initialize();
 
     // Enable offline persistence
@@ -72,6 +77,7 @@ class SynqApp extends ConsumerStatefulWidget {
 
 class _SynqAppState extends ConsumerState<SynqApp> {
   bool _didRequestNotificationPermission = false;
+  bool _isSplashAnimationComplete = false;
 
   @override
   void initState() {
@@ -90,10 +96,15 @@ class _SynqAppState extends ConsumerState<SynqApp> {
     final authState = ref.watch(authProvider);
     final firebaseError = ref.watch(firebaseErrorProvider);
     final syncAccess = ref.watch(syncAccessProvider);
+    final notesAsync = ref.watch(notesProvider);
+    final tasksAsync = ref.watch(tasksProvider);
     final requiresCloudAuth = syncAccess.cloudSyncEnabled;
     final canEnterApp = !requiresCloudAuth || authState.isAuthenticated;
     final shouldShowLoading =
-        syncAccess.isLoading || (requiresCloudAuth && authState.isLoading);
+        syncAccess.isLoading ||
+        (requiresCloudAuth && authState.isLoading) ||
+        notesAsync.isLoading ||
+        tasksAsync.isLoading;
 
     return MaterialApp(
       title: 'Synq',
@@ -110,48 +121,57 @@ class _SynqAppState extends ConsumerState<SynqApp> {
       builder: (context, child) {
         return ResponsiveWrapper(child: child ?? const SizedBox());
       },
-      home: firebaseError != null
-          ? Scaffold(
-              backgroundColor: AppColors.background,
-              body: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.red,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Initialization Failed',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        firebaseError,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+      home: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        child: firebaseError != null
+            ? Scaffold(
+                key: const ValueKey('error'),
+                backgroundColor: AppColors.background,
+                body: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(
+                          'Initialization Failed',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          firebaseError,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            )
-          : shouldShowLoading
-          ? Scaffold(
-              backgroundColor: AppColors.background,
-              body: const Center(child: CircularProgressIndicator()),
-            )
-          : canEnterApp
-          ? const DeviceEnforcementGuard(
-              child: DowngradeHandler(child: MainShell()),
-            )
-          : const LoginScreen(),
+              )
+            : (!_isSplashAnimationComplete || shouldShowLoading)
+            ? SplashScreen(
+                key: const ValueKey('splash'),
+                onAnimationComplete: () {
+                  if (mounted) {
+                    setState(() => _isSplashAnimationComplete = true);
+                  }
+                },
+              )
+            : canEnterApp
+            ? const DeviceEnforcementGuard(
+                key: ValueKey('shell'),
+                child: DowngradeHandler(child: MainShell()),
+              )
+            : const LoginScreen(key: ValueKey('login')),
+      ),
     );
   }
 }

@@ -52,6 +52,7 @@ dependencies:
   flutter_image_compress: ^2.4.0
   vector_math: ^2.2.0
   flutter_cache_manager: ^3.4.1
+  flutter_native_splash: ^2.4.0
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +70,12 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: false
   image_path: "assets/images/logo.png"
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  android: true
+  ios: true
+  fullscreen: true
 
 
 flutter:
