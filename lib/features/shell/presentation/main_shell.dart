@@ -69,44 +69,46 @@ class _MainShellState extends ConsumerState<MainShell> {
         ),
         bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
             ? null
-            : Container(
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(30),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.shadow.withAlpha(13),
-                      blurRadius: 20,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavButton(
-                      ref,
-                      currentIndex,
-                      0,
-                      Icons.grid_view_rounded,
-                    ),
-                    _buildNavButton(ref, currentIndex, 1, Icons.calendar_month),
-                    IconButton(
-                      onPressed: () {
-                        _openNoteEditor(currentIndex);
-                      },
-                      icon: Icon(
-                        Icons.note_add_outlined,
-                        size: _navIconSize,
-                        color: _isNoteEditorOpen ? Colors.black : Colors.grey,
+            : SafeArea(
+                top: false,
+                child: Container(
+                  height: 64, // Reduced base height, SafeArea will add padding
+                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadow.withAlpha(13),
+                        blurRadius: 20,
+                        offset: const Offset(0, -5),
                       ),
-                      tooltip: 'Add Note',
-                    ),
-
-                    _buildNavButton(ref, currentIndex, 2, Icons.person_outline),
-                  ],
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildNavButton(
+                        ref,
+                        currentIndex,
+                        0,
+                        Icons.grid_view_rounded,
+                      ),
+                      _buildNavButton(ref, currentIndex, 1, Icons.calendar_month),
+                      IconButton(
+                        onPressed: () {
+                          _openNoteEditor(currentIndex);
+                        },
+                        icon: Icon(
+                          Icons.note_add_outlined,
+                          size: _navIconSize,
+                          color: _isNoteEditorOpen ? Colors.black : Colors.grey,
+                        ),
+                        tooltip: 'Add Note',
+                      ),
+                      _buildNavButton(ref, currentIndex, 2, Icons.person_outline),
+                    ],
+                  ),
                 ),
               ),
       ),

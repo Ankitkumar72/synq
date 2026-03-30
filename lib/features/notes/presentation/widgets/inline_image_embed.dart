@@ -2,16 +2,22 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:synq/core/domain/models/image_source.dart';
+import 'package:synq/core/services/cache_manager.dart';
+import 'package:synq/core/navigation/fade_page_route.dart';
+import 'package:synq/core/widgets/image_viewer.dart';
+import 'package:synq/core/widgets/image_error_widget.dart';
 import '../../../attachments/data/image_storage_service.dart';
-import '../../../../core/widgets/image_viewer.dart';
 
 class ResizableInlineImage extends StatefulWidget {
   final String path;
+  final int index; // Stable index for Hero tags (offset in document)
   final double initialWidth;
   final Function(double)? onWidthChanged;
 
   const ResizableInlineImage({
     required this.path,
+    required this.index,
     this.initialWidth = 300,
     this.onWidthChanged,
     super.key,
@@ -46,31 +52,21 @@ class _ResizableInlineImageState extends State<ResizableInlineImage> {
     if (_lastPath == currentPath) return;
     _lastPath = currentPath;
 
-    final isUrl = currentPath.startsWith('http');
-    if (isUrl) return;
+    if (currentPath.startsWith('http')) return;
 
-    // Stage 1: Load thumbnail immediately (fast & sharp at 1024px)
+    // Stage 1: Load thumbnail immediately
     try {
-      final thumb = await ImageStorageService.getFile(
-        currentPath,
-        useThumbnail: true,
-      );
+      final thumb = await ImageStorageService.getFile(currentPath, useThumbnail: true);
       if (mounted && currentPath == widget.path) {
-        setState(() {
-          _thumbnail = thumb;
-          // Don't reset _fullResLoaded yet if we are just updating
-        });
+        setState(() => _thumbnail = thumb);
       }
     } catch (e) {
       debugPrint('Error loading thumbnail: $e');
     }
 
-    // Stage 2: Load full-res in background, swap when ready
+    // Stage 2: Load full-res in background
     try {
-      final full = await ImageStorageService.getFile(
-        currentPath,
-        useThumbnail: false,
-      );
+      final full = await ImageStorageService.getFile(currentPath, useThumbnail: false);
       if (mounted && currentPath == widget.path) {
         setState(() {
           _fullRes = full;
@@ -82,9 +78,19 @@ class _ResizableInlineImageState extends State<ResizableInlineImage> {
     }
   }
 
+  ImageSource _resolveSource() {
+    if (widget.path.startsWith('http')) {
+      return NetworkImageSource(widget.path);
+    }
+    final displayFile = _fullResLoaded ? _fullRes : _thumbnail;
+    return FileImageSource(displayFile?.path ?? widget.path);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isUrl = widget.path.startsWith('http');
+    final source = _resolveSource();
+    final heroTag = imageHeroTag(source, widget.index);
     
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -92,43 +98,43 @@ class _ResizableInlineImageState extends State<ResizableInlineImage> {
       alignment: Alignment.center,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: isUrl
-            ? GestureDetector(
-                onTap: () => _openFullscreen(context),
-                child: Hero(
-                  tag: 'image_viewer_${widget.path.hashCode}_${widget.key}',
-                  child: CachedNetworkImage(
-                    imageUrl: widget.path,
-                    fit: BoxFit.contain,
-                    placeholder: (context, url) => const SizedBox(
-                      height: 200,
-                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                    ),
-                    errorWidget: (context, url, error) => const SizedBox(
-                      height: 200,
-                      child: Icon(Icons.broken_image, color: Colors.grey, size: 48),
-                    ),
-                  ),
-                ),
-              )
-            : GestureDetector(
-                onTap: () => _openFullscreen(context),
-                child: Hero(
-                  tag: 'image_viewer_${widget.path.hashCode}_${widget.key}',
-                  child: _buildLocalImage(),
-                ),
-              ),
+        child: GestureDetector(
+          onTap: () => _openFullscreen(context, source, heroTag),
+          child: Hero(
+            tag: heroTag,
+            child: isUrl ? _buildNetworkImage() : _buildLocalImage(),
+          ),
+        ),
       ),
     );
   }
 
-  void _openFullscreen(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
+  void _openFullscreen(BuildContext context, ImageSource source, String heroTag) {
+    // Aggressively dismiss keyboard before pushing.
+    FocusManager.instance.primaryFocus?.unfocus();
+    
+    Navigator.of(context, rootNavigator: true).push(
+      FadePageRoute(
         builder: (context) => ImageViewerPage(
-          imageUrl: widget.path,
-          heroTag: 'image_viewer_${widget.path.hashCode}_${widget.key}',
+          source: source,
+          heroTag: heroTag,
         ),
+      ),
+    );
+  }
+
+  Widget _buildNetworkImage() {
+    return CachedNetworkImage(
+      imageUrl: widget.path,
+      cacheManager: synqCacheManager,
+      fit: BoxFit.contain,
+      placeholder: (context, url) => const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      errorWidget: (context, url, error) => const SizedBox(
+        height: 200,
+        child: ImageErrorWidget(iconSize: 32),
       ),
     );
   }
@@ -143,13 +149,6 @@ class _ResizableInlineImageState extends State<ResizableInlineImage> {
       );
     }
 
-    if (!displayFile.existsSync()) {
-      return const SizedBox(
-        height: 200,
-        child: Icon(Icons.broken_image, color: Colors.grey, size: 48),
-      );
-    }
-
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       transitionBuilder: (Widget child, Animation<double> animation) {
@@ -161,7 +160,7 @@ class _ResizableInlineImageState extends State<ResizableInlineImage> {
         fit: BoxFit.contain,
         errorBuilder: (_, __, ___) => const SizedBox(
           height: 200,
-          child: Icon(Icons.broken_image, color: Colors.grey, size: 48),
+          child: ImageErrorWidget(iconSize: 32),
         ),
       ),
     );
@@ -180,9 +179,13 @@ class InlineImageEmbedBuilder extends EmbedBuilder {
     final path = embedContext.node.value.data as String;
     final widthAttr = embedContext.node.style.attributes['width'];
     final initialWidth = widthAttr?.value?.toDouble() ?? 300.0;
+    
+    // Use document offset as a stable index for this specific image instance.
+    final index = embedContext.node.offset;
 
     return ResizableInlineImage(
       path: path,
+      index: index,
       initialWidth: initialWidth,
       onWidthChanged: (newWidth) {
         final controller = embedContext.controller;

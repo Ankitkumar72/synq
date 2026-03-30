@@ -2,14 +2,26 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:vector_math/vector_math_64.dart' show Vector4;
+import 'package:synq/core/domain/models/image_source.dart';
+import 'package:synq/core/services/cache_manager.dart';
+import 'package:synq/core/widgets/image_error_widget.dart';
+
+/// Pure function to determine if the viewer can be dismissed via swipe.
+/// We allow dismissal only when the image is not significantly zoomed.
+bool getCanDismiss(TransformationController controller) {
+  final Matrix4 matrix = controller.value;
+  // Get the maximum scale on any axis (usually X/Y are same).
+  // If the scale is very close to 1.0 (identity), we allow dismissal.
+  final double scale = matrix.getMaxScaleOnAxis();
+  return (scale - 1.0).abs() < 0.01;
+}
 
 class ImageViewerPage extends StatefulWidget {
-  final String imageUrl;
+  final ImageSource source;
   final String heroTag;
 
   const ImageViewerPage({
-    required this.imageUrl,
+    required this.source,
     required this.heroTag,
     super.key,
   });
@@ -38,16 +50,36 @@ class _ImageViewerPageState extends State<ImageViewerPage> with SingleTickerProv
         }
       });
 
-    // Enter immersive mode
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+    // Aggressive System UI hiding for immersive media viewing.
+    _enterImmersiveMode();
+  }
+
+  void _enterImmersiveMode() {
+    // 1. Force the app to draw under the system navigation bar and status bar.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    // 2. Hide the bars immediately but allow them to "stick" into view with a swipe.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    // 3. Ensure the bar backgrounds are transparent so they don't cover part of the image.
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+      systemNavigationBarContrastEnforced: false, // Essential for some Android skins like MIUI
+    ));
   }
 
   @override
   void dispose() {
-    // Restore system UI mode
-    if (mounted) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    }
+    // Restore system UI mode to "edge-to-edge" with standard theme colors (dark icons for light notes).
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ));
+    
     _transformationController.dispose();
     _animationController.dispose();
     super.dispose();
@@ -61,13 +93,11 @@ class _ImageViewerPageState extends State<ImageViewerPage> with SingleTickerProv
     final Matrix4 begin = _transformationController.value;
     final Matrix4 end;
 
-    if (_transformationController.value != Matrix4.identity()) {
+    // Use the same precision threshold for double-tap toggle
+    if (!getCanDismiss(_transformationController)) {
       end = Matrix4.identity();
     } else {
-      // Zoom 2.5x
-      final double zoom = 2.5;
-      
-      // We want to zoom into the center of the screen
+      const double zoom = 2.5;
       final double x = MediaQuery.of(context).size.width / 2;
       final double y = MediaQuery.of(context).size.height / 2;
       
@@ -83,131 +113,138 @@ class _ImageViewerPageState extends State<ImageViewerPage> with SingleTickerProv
     _animationController.forward(from: 0);
   }
 
-  // Helper for better curve selection syntax
   Animation<double> _curveSelection(Curve curve) => 
       _animationController.drive(CurveTween(curve: curve));
 
   @override
   Widget build(BuildContext context) {
-    final bool isNetwork = widget.imageUrl.startsWith('http');
     final double opacity = (1.0 - (_dragOffset.abs() / 600)).clamp(0.0, 1.0);
     final double scale = (1.0 - (_dragOffset.abs() / 1500)).clamp(0.8, 1.0);
 
     return Scaffold(
       backgroundColor: Colors.black.withValues(alpha: opacity),
-      body: GestureDetector(
-        onVerticalDragUpdate: (details) {
-          setState(() => _dragOffset += details.primaryDelta!);
-        },
-        onVerticalDragEnd: (details) {
-          if (_dragOffset.abs() > 150 || details.primaryVelocity!.abs() > 300) {
-            Navigator.of(context).pop();
-          } else {
-            setState(() {
-              _dragOffset = 0;
-            });
-          }
-        },
-        child: Stack(
-          children: [
-            Center(
-              child: Transform.translate(
-                offset: Offset(0, _dragOffset),
-                child: Transform.scale(
-                  scale: scale,
-                  child: Hero(
-                    tag: widget.heroTag,
-                    child: InteractiveViewer(
-                      transformationController: _transformationController,
-                      minScale: 1.0,
-                      maxScale: 4.0,
-                      child: GestureDetector(
-                        onDoubleTapDown: _onDoubleTapDown,
-                        onDoubleTap: _onDoubleTap,
-                        child: isNetwork
-                            ? CachedNetworkImage(
-                                imageUrl: widget.imageUrl,
-                                fit: BoxFit.contain,
-                                placeholder: (context, url) => const Center(
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                ),
-                                errorWidget: (context, url, error) => const Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.broken_image, color: Colors.white, size: 64),
-                                    SizedBox(height: 16),
-                                    Text('Media load failed', style: TextStyle(color: Colors.white)),
-                                  ],
-                                ),
-                              )
-                            : Image.file(
-                                File(widget.imageUrl),
-                                fit: BoxFit.contain,
-                              ),
+      resizeToAvoidBottomInset: false,
+      extendBody: true,
+      extendBodyBehindAppBar: true,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        // Re-enforce overlay style in build to handle some platform EdgeCases
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarIconBrightness: Brightness.light,
+          systemNavigationBarContrastEnforced: false,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: GestureDetector(
+            onVerticalDragUpdate: (details) {
+              // Only allow drag-to-dismiss if the image is not zoomed.
+              if (getCanDismiss(_transformationController)) {
+                setState(() => _dragOffset += details.primaryDelta!);
+              }
+            },
+            onVerticalDragEnd: (details) {
+              if (_dragOffset.abs() > 150 || (details.primaryVelocity?.abs() ?? 0) > 300) {
+                Navigator.of(context).pop();
+              } else {
+                setState(() => _dragOffset = 0);
+              }
+            },
+            child: Stack(
+              children: [
+                Center(
+                  child: Transform.translate(
+                    offset: Offset(0, _dragOffset),
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Hero(
+                        tag: widget.heroTag,
+                        child: InteractiveViewer(
+                          transformationController: _transformationController,
+                          minScale: 1.0,
+                          maxScale: 4.0,
+                          child: GestureDetector(
+                            onDoubleTapDown: _onDoubleTapDown,
+                            onDoubleTap: _onDoubleTap,
+                            child: _buildImageSource(),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            // Close Button
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () => Navigator.of(context).pop(),
+                // Close Button
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  Widget _buildImageSource() {
+    final source = widget.source;
+    if (source is NetworkImageSource) {
+      return CachedNetworkImage(
+        imageUrl: source.url,
+        cacheManager: synqCacheManager,
+        fit: BoxFit.contain,
+        placeholder: (context, url) => const Center(
+          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+        ),
+        errorWidget: (context, url, error) => ImageErrorWidget(
+          message: 'Failed to load network image',
+          onRetry: () => setState(() {}),
+        ),
+      );
+    } else if (source is FileImageSource) {
+      return Image.file(
+        File(source.filePath),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => const ImageErrorWidget(
+          message: 'Local file is missing or corrupted',
+        ),
+      );
+    } else if (source is MemoryImageSource) {
+      return Image.memory(
+        source.bytes,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => const ImageErrorWidget(
+          message: 'Failed to render memory image',
+        ),
+      );
+    }
+    return const ImageErrorWidget(message: 'Unknown image source type');
+  }
 }
 
-// Custom Tween for Matrix4 integration
 class Matrix4Tween extends Tween<Matrix4> {
   Matrix4Tween({super.begin, super.end});
 
   @override
   Matrix4 lerp(double t) {
-    // Custom Matrix4 interpolation logic could go here for rotations etc.
-    // For simple scale/translate, a basic lerp is often enough if well-constructed.
-    // However, Matrix4.identity() vs scale is tricky if not component-wise.
-    // For now, we use a basic lerp which works well for these simple transforms.
     final Matrix4 beginValue = begin ?? Matrix4.identity();
     final Matrix4 endValue = end ?? Matrix4.identity();
-
-    final Vector4 beginCol0 = beginValue.getRow(0);
-    final Vector4 endCol0 = endValue.getRow(0);
-    final Vector4 beginCol1 = beginValue.getRow(1);
-    final Vector4 endCol1 = endValue.getRow(1);
-    final Vector4 beginCol2 = beginValue.getRow(2);
-    final Vector4 endCol2 = endValue.getRow(2);
-    final Vector4 beginCol3 = beginValue.getRow(3);
-    final Vector4 endCol3 = endValue.getRow(3);
-
-    final Vector4 v0 = _lerpVector(beginCol0, endCol0, t);
-    final Vector4 v1 = _lerpVector(beginCol1, endCol1, t);
-    final Vector4 v2 = _lerpVector(beginCol2, endCol2, t);
-    final Vector4 v3 = _lerpVector(beginCol3, endCol3, t);
-
-    return Matrix4.fromList([
-      v0.x, v0.y, v0.z, v0.w,
-      v1.x, v1.y, v1.z, v1.w,
-      v2.x, v2.y, v2.z, v2.w,
-      v3.x, v3.y, v3.z, v3.w,
-    ]);
-  }
-
-  Vector4 _lerpVector(Vector4 b, Vector4 e, double t) {
-    return Vector4(
-      b.x + (e.x - b.x) * t,
-      b.y + (e.y - b.y) * t,
-      b.z + (e.z - b.z) * t,
-      b.w + (e.w - b.w) * t,
-    );
+    
+    // Simplistic interpolation for components. 
+    // Works well for scale/translate combinations in this viewer.
+    final List<double> beginList = beginValue.storage;
+    final List<double> endList = endValue.storage;
+    final List<double> resultList = List<double>.filled(16, 0.0);
+    
+    for (int i = 0; i < 16; i++) {
+      resultList[i] = beginList[i] + (endList[i] - beginList[i]) * t;
+    }
+    
+    return Matrix4.fromList(resultList);
   }
 }

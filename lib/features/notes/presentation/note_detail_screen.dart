@@ -918,10 +918,21 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         }
         if (context.mounted) Navigator.pop(context);
       },
-      child: Scaffold(
-        // Let Scaffold keep the body pinned to keyboard top.
-        resizeToAvoidBottomInset: true,
-        backgroundColor: Colors.white, // As per design
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Theme.of(context).brightness == Brightness.dark 
+              ? Brightness.light 
+              : Brightness.dark,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarIconBrightness: Theme.of(context).brightness == Brightness.dark 
+              ? Brightness.light 
+              : Brightness.dark,
+        ),
+        child: Scaffold(
+          // Let Scaffold keep the body pinned to keyboard top.
+          resizeToAvoidBottomInset: true,
+          backgroundColor: Colors.white, // As per design
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
@@ -987,10 +998,10 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                       24,
                       0,
                       24,
-                      // Reserve space for the floating toolbar when visible.
+                      // Reserve space for the floating toolbar OR system navigation bar.
                       showKeyboardToolbar
                           ? (toolbarHeight + toolbarGap + 28)
-                          : 24,
+                          : (24 + MediaQuery.paddingOf(context).bottom),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1090,7 +1101,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               curve: Curves.easeOut,
               left: 12,
               right: 12,
-              bottom: showKeyboardToolbar ? toolbarGap : -80,
+              bottom: showKeyboardToolbar ? toolbarGap : -120,
               child: Container(
                 height: toolbarHeight,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -1173,6 +1184,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           ],
         ),
       ),
+    ),
     );
   }
 
