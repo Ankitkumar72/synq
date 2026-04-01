@@ -74,14 +74,16 @@ class _MainShellState extends ConsumerState<MainShell> {
                 child: Container(
                   height: 64, // Reduced base height, SafeArea will add padding
                   margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                  decoration: BoxDecoration(
+                  decoration: ShapeDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
+                    shape: ContinuousRectangleBorder(
+                      borderRadius: BorderRadius.circular(60),
+                    ),
+                    shadows: [
                       BoxShadow(
-                        color: AppColors.shadow.withAlpha(13),
-                        blurRadius: 20,
-                        offset: const Offset(0, -5),
+                        color: AppColors.shadow.withAlpha(25),
+                        blurRadius: 25,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/synq_ui_toolkit.dart';
 import '../../data/timeline_provider.dart';
 import '../../domain/models/timeline_event.dart';
 import '../widgets/calendar_selector.dart';
@@ -50,15 +51,12 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
     return Scaffold(
       backgroundColor: AppColors.background,
       endDrawer: const SynqDrawer(),
-      floatingActionButton: GestureDetector(
+      floatingActionButton: SynqFab(
         onLongPress: () =>
             showCreateTaskSheet(context, initialDate: selectedDate),
-        child: FloatingActionButton(
-          onPressed: () => showCreateEventSheet(context),
-          backgroundColor: AppColors.primary,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
+        onPressed: () => showCreateEventSheet(context),
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
       body: SafeArea(
         child: Padding(
@@ -258,30 +256,50 @@ class _ChoiceTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        decoration: ShapeDecoration(
           color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
+          shape: ContinuousRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
+            side: BorderSide(color: color.withValues(alpha: 0.2), width: 1.5),
+          ),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: color, size: 28),
+            ),
+            const SizedBox(height: 12),
             Text(
               label,
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
                 color: color,
+                letterSpacing: -0.2,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
-              subtitle,
+              subtitle.toUpperCase(),
               style: TextStyle(
-                fontSize: 11,
-                color: color.withValues(alpha: 0.7),
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: color.withValues(alpha: 0.6),
+                letterSpacing: 0.5,
               ),
             ),
           ],

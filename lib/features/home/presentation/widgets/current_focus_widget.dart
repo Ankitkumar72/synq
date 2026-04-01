@@ -16,14 +16,16 @@ class CurrentFocusWidget extends ConsumerWidget {
     return focusAsync.when(
       data: (focus) => Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: Colors.black,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
+          shape: ContinuousRectangleBorder(
+            borderRadius: BorderRadius.circular(48),
+          ),
+          shadows: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -141,9 +143,11 @@ class CurrentFocusWidget extends ConsumerWidget {
   Widget _buildShimmer() {
     return Container(
       height: 180,
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.circular(24),
+        shape: ContinuousRectangleBorder(
+          borderRadius: BorderRadius.circular(48),
+        ),
       ),
       child: const Center(
         child: CircularProgressIndicator(color: Colors.white24),

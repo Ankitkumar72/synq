@@ -30,6 +30,7 @@ import 'package:synq/core/providers/repository_provider.dart';
 import 'package:synq/features/notes/presentation/widgets/inline_image_embed.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show setEquals;
+import 'package:synq/core/widgets/synq_ui_toolkit.dart';
 
 class _HandleCustomPasteShortcut extends Intent {
   const _HandleCustomPasteShortcut();
@@ -1105,11 +1106,13 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               child: Container(
                 height: toolbarHeight,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Color(0xFF1F1F1F),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFF333333), width: 1),
-                  boxShadow: const [
+                decoration: ShapeDecoration(
+                  color: const Color(0xFF1F1F1F),
+                  shape: ContinuousRectangleBorder(
+                    borderRadius: BorderRadius.circular(44),
+                    side: const BorderSide(color: Color(0xFF333333), width: 1),
+                  ),
+                  shadows: const [
                     BoxShadow(
                       color: Color(0x22000000),
                       blurRadius: 12,
@@ -1189,17 +1192,10 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   }
 
   Widget _buildToolbarButton(IconData icon, VoidCallback onTap) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(6),
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, size: 20, color: const Color(0xFFAAAAAA)),
-        ),
-      ),
+    return SynqIconButton(
+      icon: icon,
+      onTap: onTap,
+      iconColor: const Color(0xFFAAAAAA),
     );
   }
 

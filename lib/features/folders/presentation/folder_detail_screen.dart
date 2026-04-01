@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/core/widgets/synq_ui_toolkit.dart';
 import 'package:synq/features/notes/data/notes_provider.dart';
 import 'package:synq/features/folders/data/folder_provider.dart';
 import 'package:synq/features/folders/domain/models/folder.dart';
@@ -211,9 +212,7 @@ class FolderDetailScreen extends ConsumerWidget {
                       final note = folderNotes[index];
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        // Theme now provides ContinuousRectangleBorder
                         elevation: 0,
                         color: AppColors.surface,
                         child: ListTile(
@@ -280,7 +279,7 @@ class FolderDetailScreen extends ConsumerWidget {
                 ), // Space for FAB
               ],
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: SynqFab(
         onPressed: () {
           Navigator.push(
             context,
@@ -290,7 +289,7 @@ class FolderDetailScreen extends ConsumerWidget {
           );
         },
         backgroundColor: Color(folder.colorValue),
-        child: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
