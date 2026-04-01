@@ -7,6 +7,7 @@ import '../../auth/domain/models/synq_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'subscription_screen.dart';
 import 'device_management_screen.dart';
+import '../../analytics/presentation/screens/monthly_streaks_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -135,7 +136,19 @@ class ProfileScreen extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: _buildStatCard('124h', 'FOCUS\nHOURS'),
+                            child: _buildStatCard(
+                              '124h',
+                              'FOCUS\nHOURS',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const MonthlyStreaksPage(),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -248,8 +261,16 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String value, String label, {bool isPurple = false}) {
-    return Container(
+  Widget _buildStatCard(
+    String value,
+    String label, {
+    bool isPurple = false,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -278,8 +299,9 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSettingItem(String title, {VoidCallback? onTap}) {
     return InkWell(
