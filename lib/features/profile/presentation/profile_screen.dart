@@ -9,11 +9,14 @@ import 'subscription_screen.dart';
 import 'device_management_screen.dart';
 import '../../analytics/presentation/screens/monthly_streaks_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+import '../../analytics/data/performance_providers.dart';
+
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(performanceProvider);
     final canPop = Navigator.canPop(context);
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -137,8 +140,8 @@ class ProfileScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _buildStatCard(
-                              '124h',
-                              'FOCUS\nHOURS',
+                              stats.valueOrNull?.currentStreak.toString() ?? '0',
+                              'CURRENT\nSTREAK',
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -152,7 +155,10 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: _buildStatCard('18', 'COMPLETED\nPROJECTS'),
+                            child: _buildStatCard(
+                              stats.valueOrNull?.totalTasks.toString() ?? '0',
+                              'TASKS THIS\nMONTH',
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(

@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/analytics/data/performance_providers.dart';
+import 'package:synq/core/utils/productivity_utils.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
-class MonthlyStreaksPage extends StatelessWidget {
+class MonthlyStreaksPage extends ConsumerWidget {
   const MonthlyStreaksPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(performanceProvider);
+    final selectedMonth = ref.watch(selectedMonthProvider);
+    final monthLabel = DateFormat('MMM yyyy').format(selectedMonth);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -29,68 +37,102 @@ class MonthlyStreaksPage extends StatelessWidget {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "Oct 2023",
-                  style: GoogleFonts.inter(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
+            child: InkWell(
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: selectedMonth,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2101),
+                  helpText: 'Select Month',
+                );
+                if (date != null) {
+                  ref.read(selectedMonthProvider.notifier).state =
+                      DateTime(date.year, date.month, 1);
+                }
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    monthLabel,
+                    style: GoogleFonts.inter(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
                   ),
-                ),
-                const Icon(Icons.keyboard_arrow_down, color: AppColors.primary, size: 20),
-              ],
+                  const Icon(Icons.keyboard_arrow_down,
+                      color: AppColors.primary, size: 20),
+                ],
+              ),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Column(
-          children: [
-            _buildConsistencyCard(),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    title: "Tasks",
-                    value: "142",
-                    metric: "+12%",
-                    icon: Icons.check_circle,
-                    iconColor: AppColors.primary,
-                    showArrow: true,
+      body: statsAsync.when(
+        data: (stats) => SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Column(
+            children: [
+              _buildConsistencyCard(context, stats, selectedMonth),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      title: "Tasks",
+                      value: stats.totalTasks.toString(),
+                      metric:
+                          "${stats.improvementPercentage >= 0 ? '+' : ''}${stats.improvementPercentage.toStringAsFixed(0)}% vs last month",
+                      icon: Icons.check_circle,
+                      iconColor: AppColors.primary,
+                      showArrow: stats.improvementPercentage > 0,
+                      trendColor: stats.improvementPercentage >= 0
+                          ? AppColors.success
+                          : Colors.red,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatCard(
-                    title: "Streak",
-                    value: "18",
-                    metric: "Consecutive Days",
-                    icon: Icons.local_fire_department,
-                    iconColor: Colors.orange,
-                    showArrow: false,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildStatCard(
+                      title: "Streak",
+                      value: stats.currentStreak.toString(),
+                      metric: "Consecutive Days",
+                      icon: Icons.local_fire_department,
+                      iconColor: Colors.orange,
+                      showArrow: false,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildReflectionCard(),
-            const SizedBox(height: 16),
-            _buildFocusCard(),
-            const SizedBox(height: 32),
-            _buildShareButton(),
-            const SizedBox(height: 32),
-          ],
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildReflectionCard(stats),
+              const SizedBox(height: 16),
+              _buildFocusCard(stats),
+              const SizedBox(height: 32),
+              _buildShareButton(),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+        error: (err, stack) => Center(
+          child: Text(
+            "Error loading stats: $err",
+            style: GoogleFonts.inter(color: Colors.red),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildConsistencyCard() {
+  Widget _buildConsistencyCard(BuildContext context, PerformanceStats stats, DateTime selectedMonth) {
+    final daysInMonth = DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
+    final maxCompletions = stats.heatmapData.values.isEmpty ? 1 : stats.heatmapData.values.fold(0, (prev, element) => element > prev ? element : prev);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -131,19 +173,19 @@ class MonthlyStreaksPage extends StatelessWidget {
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
             ),
-            itemCount: 28,
+            itemCount: daysInMonth,
             itemBuilder: (context, index) {
-              // Simulating heatmap intensity from the image
-              final intensities = [
-                0.1, 0.1, 0.2, 0.2, 0.6, 0.5, 0.5,
-                0.2, 0.5, 0.4, 0.2, 0.1, 0.5, 0.3,
-                0.6, 0.5, 0.1, 0.1, 0.6, 0.3, 0.1,
-                0.3, 0.1, 0.7, 0.7, 0.3, 0.1, 0.1
-              ];
-              return Container(
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: intensities[index]),
-                  borderRadius: BorderRadius.circular(8),
+              final day = index + 1;
+              final count = stats.heatmapData[day] ?? 0;
+              final intensity = count == 0 ? 0.05 : (count / maxCompletions * 0.8).clamp(0.2, 0.9);
+              
+              return Tooltip(
+                message: "$count tasks on $day ${DateFormat('MMM').format(selectedMonth)}",
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: intensity),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               );
             },
@@ -182,6 +224,7 @@ class MonthlyStreaksPage extends StatelessWidget {
     required IconData icon,
     required Color iconColor,
     required bool showArrow,
+    Color? trendColor,
   }) {
     return Container(
       height: 160,
@@ -197,74 +240,68 @@ class MonthlyStreaksPage extends StatelessWidget {
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          // Decorative background circle
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.04),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Icon(icon, color: iconColor, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
+                Icon(icon, color: iconColor, size: 20),
+                const SizedBox(width: 8),
                 Text(
-                  value,
+                  title,
                   style: GoogleFonts.inter(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    if (showArrow)
-                      const Icon(Icons.trending_up, color: AppColors.success, size: 14),
-                    if (showArrow) const SizedBox(width: 4),
-                    Text(
-                      metric,
-                      style: GoogleFonts.inter(
-                        color: showArrow ? AppColors.success : AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
-          ),
-        ],
+            const Spacer(),
+            Text(
+              value,
+              style: GoogleFonts.inter(
+                fontSize: 36,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                if (showArrow)
+                  Icon(Icons.trending_up, color: trendColor ?? AppColors.success, size: 14),
+                if (showArrow) const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    metric,
+                    style: GoogleFonts.inter(
+                      color: trendColor ?? AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildReflectionCard() {
+  Widget _buildReflectionCard(PerformanceStats stats) {
+    final improvementFlavor = stats.improvementPercentage >= 10 
+        ? "Your consistency improved by " 
+        : (stats.improvementPercentage > 0 ? "You're showing a steady growth of " : "Keep going! You've tracked ");
+    
+    final peakFlavor = stats.peakBucket != ProductivityBucket.varied 
+        ? "Great job maintaining deep work sessions in the ${ProductivityAnalyzer.getDescription(stats.peakBucket)}, which seems to be your peak productivity window."
+        : "Your productivity is spread across the day, showing high adaptability in your work schedule.";
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -312,15 +349,15 @@ class MonthlyStreaksPage extends StatelessWidget {
                 height: 1.6,
               ),
               children: [
-                const TextSpan(text: "You maintained high focus during the second week of October. Your consistency improved by "),
+                TextSpan(text: "$improvementFlavor "),
                 TextSpan(
-                  text: "15%",
+                  text: "${stats.improvementPercentage.abs().toStringAsFixed(0)}%",
                   style: GoogleFonts.inter(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const TextSpan(text: " compared to September. Great job maintaining deep work sessions in the mornings, which seems to be your peak productivity window."),
+                TextSpan(text: " compared to last month. $peakFlavor"),
               ],
             ),
           ),
@@ -348,7 +385,10 @@ class MonthlyStreaksPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFocusCard() {
+  Widget _buildFocusCard(PerformanceStats stats) {
+    final focusTitle = stats.currentStreak >= 5 ? "Increase Deep Work" : "Build Daily Habit";
+    final focusSubtitle = stats.currentStreak >= 5 ? "Target: 4 hours daily average" : "Goal: Complete 1 task every day";
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -391,7 +431,7 @@ class MonthlyStreaksPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Increase Deep Work",
+                    focusTitle,
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
@@ -400,7 +440,7 @@ class MonthlyStreaksPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "Target: 4 hours daily average",
+                    focusSubtitle,
                     style: GoogleFonts.inter(
                       color: AppColors.textSecondary,
                       fontSize: 14,

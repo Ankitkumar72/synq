@@ -37,7 +37,7 @@ class SeedNotesService {
 
       for (final note in sampleNotes) {
         final noteData = note.toJson();
-        noteData['server_updated_at'] = FieldValue.serverTimestamp();
+        noteData['server_updated_at'] = DateTime.now().toIso8601String();
         noteData['is_deleted'] = false;
 
         await FirebaseFirestore.instance

@@ -3,22 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../notes/domain/models/note.dart';
 
-final currentFocusProvider = StreamProvider<Note?>((ref) async* {
-  // Emit every 1 second to keep progress bar and timer updated
-  await for (final _ in Stream.periodic(const Duration(seconds: 1))) {
-    final notes = await ref.watch(notesProvider.future);
-
+final currentFocusProvider = Provider<AsyncValue<Note?>>((ref) {
+  final notesAsync = ref.watch(notesProvider);
+  return notesAsync.whenData((notes) {
     // Only look for an active task (within its scheduled time)
-    Note? activeTask = notes.firstWhereOrNull(
+    return notes.firstWhereOrNull(
       (n) => n.isActive && !n.isCompleted,
     );
+  });
+});
 
-    yield activeTask;
-  }
+/// Emits the current time every second to drive UI tickers like progress bars
+final currentTimeProvider = StreamProvider<DateTime>((ref) {
+  return Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now());
 });
 
 final currentFocusProgressProvider = Provider<double>((ref) {
   final focusAsync = ref.watch(currentFocusProvider);
+  final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
 
   return focusAsync.when(
     data: (focus) {
@@ -28,7 +30,6 @@ final currentFocusProgressProvider = Provider<double>((ref) {
         return 0.0;
       }
 
-      final now = DateTime.now();
       final total = focus.endTime!.difference(focus.scheduledTime!).inSeconds;
       final remaining = focus.endTime!.difference(now).inSeconds;
 
@@ -42,12 +43,13 @@ final currentFocusProgressProvider = Provider<double>((ref) {
 
 final currentFocusTimeRemainingProvider = Provider<String>((ref) {
   final focusAsync = ref.watch(currentFocusProvider);
+  final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
 
   return focusAsync.when(
     data: (focus) {
       if (focus == null || focus.endTime == null) return '';
 
-      final remaining = focus.endTime!.difference(DateTime.now());
+      final remaining = focus.endTime!.difference(now);
 
       if (remaining.isNegative) return 'Time\'s Up';
 

@@ -13,6 +13,8 @@ import '../../features/notes/data/local_db_notes_repository.dart';
 import '../../features/tasks/data/local_db_tasks_repository.dart';
 import '../../features/notes/data/notes_repository.dart';
 import '../../features/tasks/data/tasks_repository.dart';
+import '../../features/analytics/data/activity_repository.dart';
+import '../../features/analytics/data/local_db_activity_repository.dart';
 import '../../features/sync/data/sync_access_provider.dart';
 
 final _currentUserIdProvider = Provider<String>((ref) {
@@ -39,6 +41,11 @@ final localDbNotesRepositoryProvider = Provider<LocalDbNotesRepository>((ref) {
 final localDbTasksRepositoryProvider = Provider<LocalDbTasksRepository>((ref) {
   final database = ref.watch(localDatabaseProvider);
   return LocalDbTasksRepository(database);
+});
+
+final localDbActivityRepositoryProvider = Provider<LocalDbActivityRepository>((ref) {
+  final database = ref.watch(localDatabaseProvider);
+  return LocalDbActivityRepository(database);
 });
 
 final localDbFoldersRepositoryProvider = Provider<LocalDbFoldersRepository>((
@@ -89,4 +96,8 @@ final tasksRepositoryProvider = Provider<TasksRepository>((ref) {
 
 final foldersRepositoryProvider = Provider<FoldersRepository>((ref) {
   return ref.watch(localDbFoldersRepositoryProvider);
+});
+
+final activityRepositoryProvider = Provider<ActivityRepository>((ref) {
+  return ref.watch(localDbActivityRepositoryProvider);
 });

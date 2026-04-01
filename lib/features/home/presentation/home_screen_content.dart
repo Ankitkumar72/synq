@@ -155,13 +155,21 @@ class HomeScreenContent extends ConsumerWidget {
 
     final notesOnly = notes.where((n) => n.scheduledTime == null).toList();
 
-    if (notes.isEmpty && tasks.isEmpty) {
+    final tasksExist = scheduledTasks.isNotEmpty || unscheduledTasks.isNotEmpty;
+
+    if (notes.isEmpty && !tasksExist) {
       return _buildEmptyState(context);
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Tasks Header / Empty Placeholder
+        if (!tasksExist) ...[
+          _buildEmptyTasksPlaceholder(context),
+          const SizedBox(height: 32),
+        ],
+
         // Scheduled Tasks Section
         if (scheduledTasks.isNotEmpty) ...[
           Row(
@@ -266,6 +274,34 @@ class HomeScreenContent extends ConsumerWidget {
           child: _buildTaskItem(context, ref, task),
         );
       },
+    );
+  }
+
+  Widget _buildEmptyTasksPlaceholder(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.textSecondary.withAlpha(20)),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.task_alt,
+            size: 32,
+            color: AppColors.textSecondary.withAlpha(100),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No tasks yet',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
     );
   }
 

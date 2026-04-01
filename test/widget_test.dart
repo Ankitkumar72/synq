@@ -59,7 +59,12 @@ void main() {
           ), // Mock empty notes
           // Override periodic-stream providers to prevent never-ending timers
           minuteProvider.overrideWith((ref) => Stream.value(0)),
-          currentFocusProvider.overrideWith((ref) => Stream.value(null)),
+          currentFocusProvider.overrideWith(
+            (ref) => const AsyncValue.data(null),
+          ),
+          currentTimeProvider.overrideWith(
+            (ref) => Stream.value(DateTime.now()),
+          ),
         ],
         child: const SynqApp(),
       ),

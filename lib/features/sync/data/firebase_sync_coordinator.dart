@@ -114,11 +114,15 @@ class FirebaseSyncCoordinator {
     final document = collection.doc(operation.entityId);
 
     if (operation.opType == LocalDatabase.opTypeDelete) {
-      await document.set(<String, Object?>{
+      final payload = withServerTimestamp({
         'id': operation.entityId,
         'is_deleted': true,
-        'server_updated_at': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      });
+      assert(() {
+        _assertNoSentinelsInArrays(payload);
+        return true;
+      }());
+      await document.set(payload, SetOptions(merge: true));
       return;
     }
 
@@ -130,9 +134,14 @@ class FirebaseSyncCoordinator {
     final payload = jsonDecode(operation.payload!) as Map<String, dynamic>;
     payload['id'] = operation.entityId;
     payload['is_deleted'] = false;
-    payload['server_updated_at'] = FieldValue.serverTimestamp();
+    
+    final finalPayload = withServerTimestamp(payload);
+    assert(() {
+      _assertNoSentinelsInArrays(finalPayload);
+      return true;
+    }());
 
-    await document.set(payload, SetOptions(merge: true));
+    await document.set(finalPayload, SetOptions(merge: true));
   }
 
   Future<void> _pullEntity(String entityType) async {
@@ -254,6 +263,43 @@ class FirebaseSyncCoordinator {
       timestampMs: maxTimestampMs,
       lastId: maxId,
     );
+  }
+
+  // --- Firestore Safety Helpers ---
+
+  /// Adds a server-side timestamp to the top level of a payload.
+  /// Never use FieldValue.serverTimestamp() inside arrays or nested maps.
+  static Map<String, dynamic> withServerTimestamp(Map<String, dynamic> base) {
+    return {
+      ...base,
+      'server_updated_at': FieldValue.serverTimestamp(),
+    };
+  }
+
+  /// Adds a client-side ISO8601 timestamp. Use this for nested structures.
+  static Map<String, dynamic> withClientTimestamp(Map<String, dynamic> base) {
+    return {
+      ...base,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+  }
+
+  /// Recursively validates that no FieldValue sentinels are hidden in arrays,
+  /// which Firestore explicitly forbids.
+  static void _assertNoSentinelsInArrays(dynamic value, {String path = 'root'}) {
+    if (value is List) {
+      for (int i = 0; i < value.length; i++) {
+        final item = value[i];
+        if (item is FieldValue) {
+          throw StateError(
+              'SECURITY_VIOLATION: FieldValue sentinel found in array at $path[$i]. '
+              'Firestore only supports sentinels at the top level of a document.');
+        }
+        _assertNoSentinelsInArrays(item, path: '$path[$i]');
+      }
+    } else if (value is Map) {
+      value.forEach((k, v) => _assertNoSentinelsInArrays(v, path: '$path.$k'));
+    }
   }
 
   Future<void> _applyRemoteDocument({

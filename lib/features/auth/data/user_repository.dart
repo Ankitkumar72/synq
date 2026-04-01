@@ -60,7 +60,7 @@ class UserRepository {
         // Update last_seen for existing device
         final updatedDevices = user.activeDevices.map((d) {
           if (d['id'] == deviceId) {
-            return {...d, 'last_seen': FieldValue.serverTimestamp()};
+            return {...d, 'last_seen': DateTime.now().toIso8601String()};
           }
           return d;
         }).toList();

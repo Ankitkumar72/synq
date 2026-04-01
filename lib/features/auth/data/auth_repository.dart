@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../core/database/local_database.dart';
 import 'user_repository.dart';
 
 class AuthRepository {
@@ -98,10 +99,15 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
+    final uid = currentUser?.uid;
     await Future.wait([
       _firebaseAuth.signOut(),
       GoogleSignIn.instance.disconnect(),
     ]);
+
+    if (uid != null) {
+      await LocalDatabase.releaseDatabase(uid);
+    }
   }
 
   /// Sends a password reset email to the specified email address

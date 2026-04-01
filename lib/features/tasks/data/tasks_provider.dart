@@ -3,9 +3,10 @@ import '../../../core/services/notification_service.dart';
 import '../../attachments/data/image_storage_service.dart';
 import '../../../core/providers/repository_provider.dart'; // contains tasksRepositoryProvider and syncCoordinatorProvider
 import '../domain/models/task.dart';
-import '../../notes/domain/models/note.dart' show TaskPriority;
 import '../../../core/domain/models/recurrence_rule.dart';
+import '../../analytics/domain/models/activity_event.dart';
 import 'tasks_repository.dart';
+import 'package:uuid/uuid.dart';
 
 final tasksProvider = StreamNotifierProvider<TasksNotifier, List<Task>>(() {
   return TasksNotifier();
@@ -42,17 +43,6 @@ class TasksNotifier extends StreamNotifier<List<Task>> {
     ref.watch(syncCoordinatorProvider);
     _repository = ref.watch(tasksRepositoryProvider);
     
-    bool hasMigrated = false;
-    listenSelf((previous, next) {
-      if (hasMigrated || next.value == null) return;
-      hasMigrated = true;
-      for (final task in next.value!) {
-        if (task.priority == TaskPriority.medium) {
-          updateTask(task.copyWith(priority: TaskPriority.none));
-        }
-      }
-    });
-
     return _repository.watchTasks();
   }
 
@@ -106,6 +96,16 @@ class TasksNotifier extends StreamNotifier<List<Task>> {
     );
 
     await updateTask(updatedTask);
+
+    // Activity Logging
+    final activityRepo = ref.read(activityRepositoryProvider);
+    await activityRepo.logEvent(ActivityEvent(
+      id: const Uuid().v4(),
+      taskId: id,
+      type: isNowCompleted ? ActivityEventType.completed : ActivityEventType.uncompleted,
+      timestamp: DateTime.now(),
+      category: task.category,
+    ));
   }
 
   Future<void> deleteFutureInstances(Task task) async {
@@ -331,6 +331,17 @@ class TasksNotifier extends StreamNotifier<List<Task>> {
         completedAt: DateTime.now(),
       );
       await repo.updateTask(updated);
+
+      // Activity Logging for Notification Action
+      final activityRepo = ref.read(activityRepositoryProvider);
+      await activityRepo.logEvent(ActivityEvent(
+        id: const Uuid().v4(),
+        taskId: taskId,
+        type: ActivityEventType.completed,
+        timestamp: DateTime.now(),
+        category: task.category,
+      ));
+
       state = AsyncValue.data([
         for (final t in tasks) if (t.id == taskId) updated else t,
       ]);

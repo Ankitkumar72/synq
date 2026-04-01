@@ -21,17 +21,6 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
     ref.watch(syncCoordinatorProvider);
     _repository = ref.watch(notesRepositoryProvider);
     
-    bool hasMigrated = false;
-    listenSelf((previous, next) {
-      if (hasMigrated || next.value == null) return;
-      hasMigrated = true;
-      for (final note in next.value!) {
-        if (note.priority == TaskPriority.medium) {
-          updateNote(note.copyWith(priority: TaskPriority.none));
-        }
-      }
-    });
-
     return _repository.watchNotes();
   }
 
