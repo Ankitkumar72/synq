@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'subscription_screen.dart';
 import 'device_management_screen.dart';
 import '../../analytics/presentation/screens/monthly_streaks_screen.dart';
+import '../../../../core/widgets/synq_ui_toolkit.dart';
 
 import '../../analytics/data/performance_providers.dart';
 
@@ -61,9 +62,9 @@ class ProfileScreen extends ConsumerWidget {
                             Stack(
                               alignment: Alignment.bottomRight,
                               children: [
-                                const CircleAvatar(
-                                  radius: 35,
-                                  backgroundColor: Colors.grey,
+                                const SynqCircle(
+                                  size: 70,
+                                  color: Colors.grey,
                                   child: Icon(
                                     Icons.person,
                                     size: 35,

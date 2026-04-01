@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
 import '../../../tasks/presentation/pages/overdue_tasks_page.dart';
+import '../../../../core/widgets/synq_ui_toolkit.dart';
 
 class SynqDrawer extends ConsumerWidget {
   final bool isOverdueTasksPage;
@@ -89,9 +90,9 @@ class SynqDrawer extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: AppColors.primary,
+                  SynqCircle(
+                    size: 28,
+                    color: AppColors.primary,
                     child: Text(
                       'U',
                       style: GoogleFonts.roboto(

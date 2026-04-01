@@ -71,26 +71,16 @@ class SynqIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Tooltip(
-        message: tooltip ?? '',
-        child: Material(
-          color: color ?? Colors.transparent,
-          shape: const CircleBorder(),
-          clipBehavior: Clip.none,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: const CircleBorder(),
-            child: Center(
-              child: Icon(
-                icon,
-                size: iconSize,
-                color: iconColor ?? AppColors.textPrimary,
-              ),
-            ),
-          ),
+    return Tooltip(
+      message: tooltip ?? '',
+      child: SynqCircle(
+        size: size,
+        color: color ?? Colors.transparent,
+        onTap: onTap,
+        child: Icon(
+          icon,
+          size: iconSize,
+          color: iconColor ?? AppColors.textPrimary,
         ),
       ),
     );
@@ -117,34 +107,87 @@ class SynqFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor = backgroundColor ?? Theme.of(context).primaryColor;
-    return GestureDetector(
-      onLongPress: onLongPress,
-      child: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          color: bgColor,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: bgColor.withValues(alpha: 0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final snappedSize = (60 * dpr).roundToDouble() / dpr;
+
+    return RepaintBoundary(
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: SizedBox.square(
+          dimension: snappedSize,
+          child: Container(
+            clipBehavior: Clip.antiAliasWithSaveLayer,
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: bgColor.withValues(alpha: 0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+                BoxShadow(
+                  color: bgColor.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            BoxShadow(
-              color: bgColor.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onPressed,
+                child: Center(child: icon),
+              ),
             ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onPressed,
-            child: Center(child: icon),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A perfectly anti-aliased, hardware-accelerated circle widget.
+/// Eliminates jagged sub-pixel artifacts on high-DPI screens and Skia/Impeller.
+class SynqCircle extends StatelessWidget {
+  final double size;
+  final Color color;
+  final Widget? child;
+  final VoidCallback? onTap;
+
+  const SynqCircle({
+    super.key,
+    required this.size,
+    required this.color,
+    this.child,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final snapped = (size * dpr).roundToDouble() / dpr;
+
+    return RepaintBoundary(
+      child: SizedBox.square(
+        dimension: snapped,
+        child: Container(
+          clipBehavior: Clip.antiAliasWithSaveLayer,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+          child: onTap != null
+              ? Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: onTap,
+                    child: Center(child: child),
+                  ),
+                )
+              : Center(child: child),
         ),
       ),
     );
