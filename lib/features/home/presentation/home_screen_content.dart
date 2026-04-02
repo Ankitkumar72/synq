@@ -704,15 +704,25 @@ class HomeScreenContent extends ConsumerWidget {
         },
         child: Row(
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0xFF5372F6).withAlpha(150),
-                  width: 2,
+            GestureDetector(
+              onTap: () => ref.read(notesProvider.notifier).toggleCompleted(event.id),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: event.isCompleted 
+                      ? const Color(0xFF5372F6) 
+                      : Colors.transparent,
+                  border: Border.all(
+                    color: const Color(0xFF5372F6).withAlpha(150),
+                    width: 2,
+                  ),
                 ),
+                child: event.isCompleted
+                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    : null,
               ),
             ),
             const SizedBox(width: 12),
