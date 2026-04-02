@@ -1,21 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:firebase_storage/firebase_storage.dart' hide Task;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import '../../../../core/theme/app_theme.dart';
 import '../../../notes/domain/models/note.dart' show SubTask;
 import '../../domain/models/task.dart';
 import '../../data/tasks_provider.dart';
-import '../../../attachments/data/image_storage_service.dart';
-import '../../../auth/domain/models/synq_user.dart';
 import '../../../notes/utils/markdown_controller.dart';
-import '../../../attachments/presentation/widgets/attachment_bubble.dart';
-import '../../../auth/presentation/providers/user_provider.dart';
 import '../../../home/presentation/providers/schedule_conflict_provider.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
@@ -55,81 +48,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _subTaskFocusNode = FocusNode();
     _scrollController = ScrollController();
     _isSubTasksExpanded = widget.task.subtasks.isNotEmpty;
-  }
-
-  Future<void> _pickImage() async {
-    final currentTask = _currentTask;
-    if (currentTask.attachments.length >= ImageStorageService.maxAttachmentsPerNote) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cannot add more than ${ImageStorageService.maxAttachmentsPerNote} images.')),
-        );
-      }
-      return;
-    }
-
-    try {
-      final picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      if (image == null) return;
-      
-      setState(() => _isSubTasksExpanded = true); // Expand for progress
-
-      final user = ref.read(userProvider).valueOrNull;
-      if (user == null) return;
-      
-      final taskUniqueId = currentTask.id;
-      String imageUri;
-
-      if (user.planTier == PlanTier.pro) {
-        // 1. PRO: Upload to Cloud Sync
-        final UploadTask uploadTask = ImageStorageService.uploadImage(
-          File(image.path), 
-          user.id, 
-          taskUniqueId,
-        );
-
-        // We'll wait for the download URL
-        final snapshot = await uploadTask;
-        imageUri = await snapshot.ref.getDownloadURL();
-      } else {
-        // 2. FREE: Save to Local Sandbox (No Cloud Sync)
-        imageUri = await ImageStorageService.saveImage(File(image.path), currentTask.attachments.length);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Saved locally. Upgrade to Pro for cloud sync!'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-
-      final updatedTask = currentTask.copyWith(
-        attachments: [...currentTask.attachments, imageUri],
-      );
-      
-      ref.read(tasksProvider.notifier).updateTask(updatedTask);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Attachment failed: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _removeAttachment(String filename) async {
-    final currentTask = _currentTask;
-    
-    // 1. Delete physical file
-    await ImageStorageService.deleteFile(filename);
-    
-    // 2. Remove from Task record
-    final newAttachments = currentTask.attachments.where((f) => f != filename).toList();
-    final updatedTask = currentTask.copyWith(attachments: newAttachments);
-    
-    ref.read(tasksProvider.notifier).updateTask(updatedTask);
   }
 
   void _onDescriptionChanged() {
@@ -834,67 +752,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Attachments
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const _SectionTitle(title: 'ATTACHMENTS'),
-                    if (task.attachments.length < ImageStorageService.maxAttachmentsPerNote)
-                      IconButton(
-                        icon: const Icon(Icons.add_photo_alternate_outlined, color: Color(0xFF5372F6)),
-                        onPressed: _pickImage,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (task.attachments.isNotEmpty) ...[
-                  SizedBox(
-                    height: 120,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: task.attachments.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) {
-                        final filename = task.attachments[index];
-                        final userId = ref.read(userProvider).valueOrNull?.id ?? '';
-                        return AttachmentBubble(
-                          filename: filename,
-                          userId: userId,
-                          onDelete: () => _removeAttachment(filename),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-                if (task.attachments.isEmpty) ...[
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(Icons.image_outlined, color: Colors.grey.shade400, size: 32),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Tap to attach images',
-                            style: GoogleFonts.roboto(color: Colors.grey.shade500, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
 
                 // Tags
                 if (task.tags.isNotEmpty) ...[
