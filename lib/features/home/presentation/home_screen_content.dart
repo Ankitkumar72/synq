@@ -17,6 +17,8 @@ import '../../tasks/data/tasks_provider.dart';
 import 'dart:io';
 import '../../tasks/presentation/pages/task_detail_screen.dart';
 import '../../notes/utils/markdown_bridge.dart';
+import 'package:intl/intl.dart';
+import '../../timeline/presentation/pages/view_event_page.dart';
 
 /// HomeScreen content without the bottom navigation bar (for use in MainShell)
 class HomeScreenContent extends ConsumerWidget {
@@ -93,31 +95,7 @@ class HomeScreenContent extends ConsumerWidget {
   }
 
   String _formatDateHeader() {
-    final now = DateTime.now();
-    const weekdays = [
-      'MONDAY',
-      'TUESDAY',
-      'WEDNESDAY',
-      'THURSDAY',
-      'FRIDAY',
-      'SATURDAY',
-      'SUNDAY',
-    ];
-    const months = [
-      'JAN',
-      'FEB',
-      'MAR',
-      'APR',
-      'MAY',
-      'JUN',
-      'JUL',
-      'AUG',
-      'SEP',
-      'OCT',
-      'NOV',
-      'DEC',
-    ];
-    return '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
+    return DateFormat('EEEE, MMM d').format(DateTime.now()).toUpperCase();
   }
 
   Widget _buildYourTasksSection(BuildContext context, WidgetRef ref) {
@@ -130,34 +108,34 @@ class HomeScreenContent extends ConsumerWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // Separate tasks into scheduled (today) and unscheduled
-    final allTasks = tasks;
+    // Separate tasks and notes into categories
+    final scheduledTasks = tasks.where((t) {
+      if (t.scheduledTime == null) return false;
+      final scheduledDate = DateTime(t.scheduledTime!.year, t.scheduledTime!.month, t.scheduledTime!.day);
+      return scheduledDate.isAtSameMomentAs(today);
+    }).toList();
 
-    final scheduledTasks =
-        allTasks.where((n) {
-          if (n.scheduledTime == null) return false;
-          final scheduledDate = DateTime(
-            n.scheduledTime!.year,
-            n.scheduledTime!.month,
-            n.scheduledTime!.day,
-          );
-          return scheduledDate.isAtSameMomentAs(today);
-        }).toList()..sort((a, b) {
-          if (a.scheduledTime == null && b.scheduledTime == null) return 0;
-          if (a.scheduledTime == null) return 1;
-          if (b.scheduledTime == null) return -1;
-          return a.scheduledTime!.compareTo(b.scheduledTime!);
-        });
+    final scheduledEvents = notes.where((n) {
+      if (n.scheduledTime == null) return false;
+      final scheduledDate = DateTime(n.scheduledTime!.year, n.scheduledTime!.month, n.scheduledTime!.day);
+      return scheduledDate.isAtSameMomentAs(today);
+    }).toList();
 
-    final unscheduledTasks =
-        allTasks.where((n) => n.scheduledTime == null).toList()
-          ..sort((a, b) => a.order.compareTo(b.order));
+    // Combine and sort scheduled items
+    final allScheduled = [
+      ...scheduledTasks.map((t) => _HomeItem.task(t)),
+      ...scheduledEvents.map((e) => _HomeItem.event(e)),
+    ]..sort((a, b) => a.time!.compareTo(b.time!));
 
-    final notesOnly = notes;
+    final unscheduledTasks = tasks.where((t) => t.scheduledTime == null).toList()
+      ..sort((a, b) => a.order.compareTo(b.order));
 
-    final tasksExist = scheduledTasks.isNotEmpty || unscheduledTasks.isNotEmpty;
+    // Only notes that ARE NOT events (no scheduled time)
+    final notesOnly = notes.where((n) => n.scheduledTime == null && !n.isTask).toList();
 
-    if (notes.isEmpty && !tasksExist) {
+    final hasWorkForToday = allScheduled.isNotEmpty || unscheduledTasks.isNotEmpty;
+
+    if (!hasWorkForToday && notesOnly.isEmpty) {
       return _buildEmptyState(context);
     }
 
@@ -165,7 +143,7 @@ class HomeScreenContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Tasks Header / Empty Placeholder
-        if (!tasksExist) ...[
+        if (!hasWorkForToday) ...[
           // Only show large placeholder if no notes either, 
           // otherwise show a more compact hint
           if (notesOnly.isEmpty)
@@ -185,8 +163,8 @@ class HomeScreenContent extends ConsumerWidget {
           const SizedBox(height: 16),
         ],
 
-        // Scheduled Tasks Section
-        if (scheduledTasks.isNotEmpty) ...[
+        // Scheduled Items Section (Tasks & Events)
+        if (allScheduled.isNotEmpty) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -199,7 +177,7 @@ class HomeScreenContent extends ConsumerWidget {
                 ),
               ),
               Text(
-                '${scheduledTasks.where((t) => !t.isCompleted).length} remaining',
+                '${allScheduled.where((item) => !item.isCompleted).length} remaining',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -207,12 +185,18 @@ class HomeScreenContent extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...scheduledTasks.map((task) => _buildTaskItem(context, ref, task)),
+          ...allScheduled.map((item) {
+            if (item.isTask) {
+              return _buildTaskItem(context, ref, item.task!);
+            } else {
+              return _buildEventItem(context, ref, item.event!);
+            }
+          }),
         ],
 
-        // Unscheduled Tasks Section (drag-to-reorder)
+        // Unscheduled Tasks Section (To-Do)
         if (unscheduledTasks.isNotEmpty) ...[
-          if (scheduledTasks.isNotEmpty) const SizedBox(height: 24),
+          if (allScheduled.isNotEmpty) const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -696,4 +680,76 @@ class HomeScreenContent extends ConsumerWidget {
       ),
     );
   }
+
+  Widget _buildEventItem(BuildContext context, WidgetRef ref, Note event) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: event.isCompleted
+            ? null
+            : Border.all(
+                color: const Color(0xFF5372F6).withAlpha(50),
+                width: 1,
+              ),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            FadePageRoute(builder: (_) => ViewEventPage(event: event)),
+          );
+        },
+        child: Row(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF5372F6).withAlpha(150),
+                  width: 2,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    event.title,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: event.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+                      decoration: event.isCompleted ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'EVENT · ${event.scheduledTime!.hour > 12 ? event.scheduledTime!.hour - 12 : (event.scheduledTime!.hour == 0 ? 12 : event.scheduledTime!.hour)}:${event.scheduledTime!.minute.toString().padLeft(2, "0")} ${event.scheduledTime!.hour >= 12 ? "PM" : "AM"}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeItem {
+  final Task? task;
+  final Note? event;
+  final bool isTask;
+
+  _HomeItem.task(this.task) : event = null, isTask = true;
+  _HomeItem.event(this.event) : task = null, isTask = false;
+
+  DateTime? get time => isTask ? task?.scheduledTime : event?.scheduledTime;
+  bool get isCompleted => isTask ? task!.isCompleted : event!.isCompleted;
 }

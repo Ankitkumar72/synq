@@ -57,7 +57,7 @@ class NextUpCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "UPCOMING TASK",
+                    task.isTask ? "UPCOMING TASK" : "UPCOMING EVENT",
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.bold,

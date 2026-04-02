@@ -451,8 +451,15 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
       constraints: const BoxConstraints(minHeight: 120),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
         border: Border.all(color: const Color(0xFFF1F5F9), width: 1),
       ),
       child: TextField(
