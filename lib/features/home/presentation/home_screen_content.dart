@@ -153,7 +153,7 @@ class HomeScreenContent extends ConsumerWidget {
         allTasks.where((n) => n.scheduledTime == null).toList()
           ..sort((a, b) => a.order.compareTo(b.order));
 
-    final notesOnly = notes.where((n) => n.scheduledTime == null).toList();
+    final notesOnly = notes;
 
     final tasksExist = scheduledTasks.isNotEmpty || unscheduledTasks.isNotEmpty;
 
@@ -166,8 +166,23 @@ class HomeScreenContent extends ConsumerWidget {
       children: [
         // Tasks Header / Empty Placeholder
         if (!tasksExist) ...[
-          _buildEmptyTasksPlaceholder(context),
-          const SizedBox(height: 32),
+          // Only show large placeholder if no notes either, 
+          // otherwise show a more compact hint
+          if (notesOnly.isEmpty)
+            _buildEmptyTasksPlaceholder(context)
+          else 
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'NO TASKS FOR TODAY',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppColors.textSecondary.withAlpha(150),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
         ],
 
         // Scheduled Tasks Section

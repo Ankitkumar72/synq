@@ -297,6 +297,7 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
 
   // Group notes (events)
   for (final n in notes) {
+    if (n.scheduledTime == null && !n.isAllDay) continue;
     final dateToUse = n.scheduledTime ?? n.createdAt;
     final dateKey = DateTime(dateToUse.year, dateToUse.month, dateToUse.day);
 
@@ -330,6 +331,7 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
 
   // Group tasks
   for (final t in tasks) {
+    if (t.scheduledTime == null && !t.isAllDay) continue;
     final dateToUse = t.scheduledTime ?? t.createdAt;
     final dateKey = DateTime(dateToUse.year, dateToUse.month, dateToUse.day);
 

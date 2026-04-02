@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../data/timeline_provider.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../notes/domain/models/note.dart';
+import '../../../tasks/data/tasks_provider.dart';
 import '../widgets/weekly_focus_card.dart';
 import '../widgets/daily_schedule_card.dart';
 
@@ -81,6 +82,14 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
     final notesAsync = ref.watch(notesProvider);
     final allNotes = notesAsync.value ?? [];
 
+    final tasksAsync = ref.watch(tasksProvider);
+    final allTasks = tasksAsync.value ?? [];
+
+    final combinedItems = [
+      ...allNotes,
+      ...allTasks.map((t) => Note.fromJson(t.toJson())),
+    ];
+
     final weekDays = List.generate(
       8,
       (index) => _currentWeekStart.add(Duration(days: index)),
@@ -90,7 +99,7 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
 
     // Group tasks by date for weekly view
     final tasksByDate = <DateTime, List<Note>>{};
-    for (final note in allNotes) {
+    for (final note in combinedItems) {
       if (note.isTask && note.scheduledTime != null) {
         final date = DateTime(
           note.scheduledTime!.year,

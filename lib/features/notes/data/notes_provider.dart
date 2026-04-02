@@ -25,12 +25,21 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   }
 
   Future<void> addNote(Note note) async {
-    await _repository.addNote(note);
-    await NotificationService().scheduleNote(note);
+    // Optimistic update
+    final currentList = state.value ?? [];
+    state = AsyncValue.data([note, ...currentList]);
 
-    // Generate recurring instances if applicable
-    if (note.recurrenceRule != null && note.scheduledTime != null) {
-      await _generateInstances(note);
+    try {
+      await _repository.addNote(note);
+      await NotificationService().scheduleNote(note);
+
+      // Generate recurring instances if applicable
+      if (note.recurrenceRule != null && note.scheduledTime != null) {
+        await _generateInstances(note);
+      }
+    } catch (e) {
+      // Revert if necessary, or just wait for the next stream update
+      // Since it's a stream, it will eventually sync with the DB state
     }
   }
 
