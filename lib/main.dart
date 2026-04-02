@@ -8,6 +8,7 @@ import 'core/services/firebase_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/firebase_provider.dart';
+import 'core/providers/repository_provider.dart';
 import 'features/shell/presentation/main_shell.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -98,6 +99,7 @@ class _SynqAppState extends ConsumerState<SynqApp> {
     final syncAccess = ref.watch(syncAccessProvider);
     final notesAsync = ref.watch(notesProvider);
     final tasksAsync = ref.watch(tasksProvider);
+    ref.watch(appInitializationProvider); // Trigger background initializations
     final requiresCloudAuth = syncAccess.cloudSyncEnabled;
     final canEnterApp = !requiresCloudAuth || authState.isAuthenticated;
     final shouldShowLoading =

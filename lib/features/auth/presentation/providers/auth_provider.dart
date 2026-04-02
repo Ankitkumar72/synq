@@ -1,11 +1,9 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/auth_repository.dart';
-import '../../../../core/database/local_database.dart';
 import '../../../notes/data/note_editor_draft_store.dart';
-import '../../../notes/data/seed_notes.dart';
 
-// State to hold preventing duplicate loading
 class AuthState {
   final bool isAuthenticated;
   final bool isLoading;
@@ -26,14 +24,12 @@ class AuthState {
   }
 }
 
-// Provider
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(AuthRepository());
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
-
   AuthNotifier(this._repository) : super(const AuthState()) {
     _init();
   }
@@ -42,26 +38,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _repository.authStateChanges.listen(
       (user) {
         if (user != null) {
-          state = state.copyWith(isAuthenticated: true, isLoading: false);
-          
-          // Self-healing: Ensure user document exists for existing sessions
-          // (fixes "phantom user" issue for users who skip login/signup)
-          _repository.createUserIfNeeded(
-            uid: user.uid,
-            email: user.email ?? '',
-            name: user.displayName ?? 'User',
-          ).catchError((e) {
-            debugPrint('USER_INITIALIZATION_ERROR: $e');
-          });
-
-          // Clean up stale DB files from other accounts (fire-and-forget)
-          () async {
-            try {
-              await LocalDatabase.deleteStaleDbFiles(user.uid);
-            } catch (e) {
-              debugPrint('STALE_DB_CLEANUP_ERROR: $e');
-            }
-          }();
+          state = state.copyWith(
+            isAuthenticated: true, 
+            isLoading: false, 
+            error: null,
+          );
+          _handlePostLoginSideEffects(user);
         } else {
           state = state.copyWith(isAuthenticated: false, isLoading: false);
         }
@@ -72,11 +54,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+  void _handlePostLoginSideEffects(dynamic user) {
+    _repository.createUserIfNeeded(
+      uid: user.uid,
+      email: user.email ?? '',
+      name: user.displayName ?? 'User',
+    ).catchError((e) {
+      debugPrint('USER_INITIALIZATION_ERROR: $e');
+    });
+  }
+
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       await _repository.signIn(email, password);
-      // Success is handled by stream listener
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -89,11 +80,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       await _repository.signUp(email, password, name: name);
-      // Success is handled by stream listener (authStateChanges will fire)
-      final user = _repository.currentUser;
-      if (user != null) {
-        await SeedNotesService.seedIfEmpty(user.uid);
-      }
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -107,25 +93,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final userCredential = await _repository.signInWithGoogle();
 
-      if (userCredential != null && userCredential.user != null) {
-        await SeedNotesService.seedIfEmpty(userCredential.user!.uid);
-      }
-
-      // user cancelation returns null but doesn't throw,
-      // success will trigger stream.
-      // If we are still here and loading is true, we might want to unset it
-      // but stream updates happen fast.
-      // If user cancels, we need to reset loading.
-      // However, repository method returns void.
-      // Implementing a small delay/check or just resetting loading if not authed?
-      // Actually, if repository returns without throwing, and stream fires, we are good.
-      // If repository returns without throwing because of cancel, stream won't fire.
-      // So we should reset loading state here.
-      if (!state.isAuthenticated) {
-        state = state.copyWith(isLoading: false);
+      if (userCredential == null || userCredential.user == null) {
+        if (!state.isAuthenticated) {
+          state = state.copyWith(isLoading: false);
+        }
       }
     } catch (e) {
-      debugPrint('GOOGLE_SIGN_IN_ERROR: $e'); // Added logging
+      debugPrint('GOOGLE_SIGN_IN_ERROR: $e');
       state = state.copyWith(
         isLoading: false,
         error: _formatError(e.toString()),
@@ -143,7 +117,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Sends a password reset email. Returns true on success, false on failure.
   Future<bool> resetPassword(String email) async {
     try {
       await _repository.sendPasswordResetEmail(email);
@@ -155,7 +128,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   String _formatError(String error) {
-    // Better error messages
     if (error.contains('user-not-found')) {
       return 'Account not found. Please sign up first.';
     }
@@ -180,11 +152,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return 'Please enter the details correctly.';
     }
 
-    // Fallback: clean up the detailed technical message
-    // e.g. "[firebase_auth/unknown] An unknown error occurred."
     final parts = error.split(']');
     return parts.length > 1
         ? parts[1].trim()
-        : 'Authentication failed. Please try again.'; // Generic fallback
+        : 'Authentication failed. Please try again.';
   }
 }

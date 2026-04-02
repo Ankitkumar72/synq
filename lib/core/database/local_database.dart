@@ -85,6 +85,7 @@ class LocalDatabase {
         if (_isClosed) throw StateError('Database is closed');
         return await op();
       } on DatabaseException catch (e) {
+        if (_isClosed) throw StateError('Database is closed');
         final errStr = e.toString();
         final isTransient = errStr.contains('SQLITE_IOERR') ||
             errStr.contains('SQLITE_BUSY') ||
@@ -95,6 +96,7 @@ class LocalDatabase {
         }
         await Future.delayed(Duration(milliseconds: 100 * (i + 1)));
       } catch (e) {
+        if (_isClosed) throw StateError('Database is closed');
         _reportError(e, name);
         rethrow;
       }
@@ -143,13 +145,19 @@ class LocalDatabase {
   }
 
   Stream<List<Note>> watchNotes() async* {
-    yield await getNotes();
-    yield* _notesChangedController.stream.asyncMap((_) => getNotes());
+    if (!_isClosed) yield await getNotes();
+    yield* _notesChangedController.stream.asyncMap((_) async {
+      if (_isClosed) return <Note>[];
+      return await getNotes();
+    });
   }
 
   Stream<Note?> watchNote(String id) async* {
-    yield await getNote(id);
-    yield* _notesChangedController.stream.asyncMap((_) => getNote(id));
+    if (!_isClosed) yield await getNote(id);
+    yield* _notesChangedController.stream.asyncMap((_) async {
+      if (_isClosed) return null;
+      return await getNote(id);
+    });
   }
 
   Stream<List<Note>> watchFilteredNotes({
@@ -159,20 +167,25 @@ class LocalDatabase {
     int? scheduledAfterMs,
     String? folderId,
   }) async* {
-    yield await getFilteredNotes(
-      isCompleted: isCompleted,
-      isTask: isTask,
-      scheduledBeforeMs: scheduledBeforeMs,
-      scheduledAfterMs: scheduledAfterMs,
-      folderId: folderId,
-    );
-    yield* _notesChangedController.stream.asyncMap((_) => getFilteredNotes(
-          isCompleted: isCompleted,
-          isTask: isTask,
-          scheduledBeforeMs: scheduledBeforeMs,
-          scheduledAfterMs: scheduledAfterMs,
-          folderId: folderId,
-        ));
+    if (!_isClosed) {
+      yield await getFilteredNotes(
+        isCompleted: isCompleted,
+        isTask: isTask,
+        scheduledBeforeMs: scheduledBeforeMs,
+        scheduledAfterMs: scheduledAfterMs,
+        folderId: folderId,
+      );
+    }
+    yield* _notesChangedController.stream.asyncMap((_) async {
+      if (_isClosed) return <Note>[];
+      return await getFilteredNotes(
+        isCompleted: isCompleted,
+        isTask: isTask,
+        scheduledBeforeMs: scheduledBeforeMs,
+        scheduledAfterMs: scheduledAfterMs,
+        folderId: folderId,
+      );
+    });
   }
 
   Future<Note?> getNote(String id) async {
@@ -199,8 +212,11 @@ class LocalDatabase {
   }
 
   Stream<List<Folder>> watchFolders() async* {
-    yield await getFolders();
-    yield* _foldersChangedController.stream.asyncMap((_) => getFolders());
+    if (!_isClosed) yield await getFolders();
+    yield* _foldersChangedController.stream.asyncMap((_) async {
+      if (_isClosed) return <Folder>[];
+      return await getFolders();
+    });
   }
 
   Future<List<Note>> getNotes() async {
@@ -778,11 +794,17 @@ class LocalDatabase {
       if (!name.startsWith('synq_') || !name.endsWith('.db')) continue;
       if (name == currentFileName) continue;
 
+      final userIdRaw = name.substring(5, name.length - 3); // Remove 'synq_' and '.db'
+      
       // Always delete the anonymous DB — it's a throwaway session.
       if (name == anonymousFileName) {
-        await _deleteSidecarAndDb(entity);
+        if (!_cache.containsKey('_anonymous')) {
+          await _deleteSidecarAndDb(entity);
+        }
         continue;
       }
+      
+      if (_cache.containsKey(userIdRaw)) continue;
 
       // Read the .lastopen sidecar to decide staleness.
       final sidecarPath =

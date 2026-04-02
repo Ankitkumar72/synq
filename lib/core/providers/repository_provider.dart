@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/providers/user_provider.dart';
@@ -14,6 +15,7 @@ import '../../features/tasks/data/local_db_tasks_repository.dart';
 import '../../features/notes/data/notes_repository.dart';
 import '../../features/tasks/data/tasks_repository.dart';
 import '../../features/analytics/data/activity_repository.dart';
+import '../../features/notes/data/seed_notes.dart';
 import '../../features/analytics/data/local_db_activity_repository.dart';
 import '../../features/sync/data/sync_access_provider.dart';
 
@@ -24,6 +26,32 @@ final _currentUserIdProvider = Provider<String>((ref) {
     return '_anonymous';
   }
   return user.uid;
+});
+
+final appInitializationProvider = Provider<void>((ref) {
+  final authState = ref.watch(authProvider);
+  if (!authState.isAuthenticated) return;
+
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+
+  // Run initializations without returning a future to avoid blocking
+  () async {
+    try {
+      await LocalDatabase.deleteStaleDbFiles(user.uid);
+    } catch (e) {
+      debugPrint('STALE_DB_CLEANUP_ERROR: $e');
+    }
+  }();
+
+  () async {
+    try {
+      final db = ref.read(localDatabaseProvider);
+      await SeedNotesService.seedIfEmpty(db);
+    } catch (e) {
+      debugPrint('SEED_NOTES_ERROR: $e');
+    }
+  }();
 });
 
 final localDatabaseProvider = Provider<LocalDatabase>((ref) {

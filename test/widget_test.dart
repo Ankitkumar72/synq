@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:synq/main.dart';
 import 'package:synq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:synq/core/providers/firebase_provider.dart';
+import 'package:synq/core/providers/repository_provider.dart';
 
 import 'package:synq/features/auth/data/auth_repository.dart';
 import 'package:synq/features/sync/data/sync_access_provider.dart';
@@ -51,6 +52,7 @@ void main() {
         overrides: [
           authProvider.overrideWith((ref) => MockAuthNotifier()),
           syncAccessProvider.overrideWith((ref) => MockSyncAccessNotifier()),
+          appInitializationProvider.overrideWith((ref) {}),
           firebaseErrorProvider.overrideWith(
             (ref) => null,
           ), // Mock successful initialization
