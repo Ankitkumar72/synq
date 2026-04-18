@@ -34,7 +34,17 @@ class MarkdownBridge {
   static String markdownFromDelta(Document document) {
     try {
       final delta = document.toDelta();
-      return _deltaToMd.convert(delta);
+      final mdString = _deltaToMd.convert(delta);
+      
+      // Fallback: If markdown_quill fails to parse simple text and returns empty, 
+      // but the editor has text, we use plain text so we don't lose data.
+      if (mdString.trim().isEmpty) {
+        final plainText = document.toPlainText().trim();
+        if (plainText.isNotEmpty) {
+          return plainText;
+        }
+      }
+      return mdString;
     } catch (e) {
       debugPrint('Error parsing delta to markdown: $e');
       return document.toPlainText();

@@ -1,35 +1,52 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/auth_repository.dart';
+import '../../data/supabase_auth_repository.dart';
 import '../../../notes/data/note_editor_draft_store.dart';
+
+enum AuthStatus {
+  uninitialized,
+  anonymous,
+  authenticated,
+  transitioning,
+}
 
 class AuthState {
   final bool isAuthenticated;
   final bool isLoading;
   final String? error;
+  final AuthStatus status;
 
   const AuthState({
     this.isAuthenticated = false,
     this.isLoading = true,
     this.error,
+    this.status = AuthStatus.uninitialized,
   });
 
-  AuthState copyWith({bool? isAuthenticated, bool? isLoading, String? error}) {
+  AuthState copyWith({
+    bool? isAuthenticated,
+    bool? isLoading,
+    String? error,
+    AuthStatus? status,
+  }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      status: status ?? this.status,
     );
   }
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(AuthRepository());
+  return AuthNotifier(SupabaseAuthRepository());
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository _repository;
+  final SupabaseAuthRepository _repository;
+  Timer? _debounceTimer;
+
   AuthNotifier(this._repository) : super(const AuthState()) {
     _init();
   }
@@ -37,16 +54,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void _init() {
     _repository.authStateChanges.listen(
       (user) {
-        if (user != null) {
-          state = state.copyWith(
-            isAuthenticated: true, 
-            isLoading: false, 
-            error: null,
-          );
-          _handlePostLoginSideEffects(user);
-        } else {
-          state = state.copyWith(isAuthenticated: false, isLoading: false);
-        }
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+          if (user != null) {
+            state = state.copyWith(
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+              status: AuthStatus.authenticated,
+            );
+            _handlePostLoginSideEffects(user);
+          } else {
+            state = state.copyWith(
+              isAuthenticated: false,
+              isLoading: false,
+              status: AuthStatus.anonymous,
+            );
+          }
+        });
       },
       onError: (e) {
         state = state.copyWith(isLoading: false, error: e.toString());
@@ -54,11 +79,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+
   void _handlePostLoginSideEffects(dynamic user) {
     _repository.createUserIfNeeded(
-      uid: user.uid,
+      uid: user.id,
       email: user.email ?? '',
-      name: user.displayName ?? 'User',
+      name: user.userMetadata?['full_name'] as String? ?? 'User',
     ).catchError((e) {
       debugPrint('USER_INITIALIZATION_ERROR: $e');
     });
@@ -71,7 +97,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: _formatError(e.toString()),
+        error: SupabaseAuthRepository.formatError(e.toString()),
       );
     }
   }
@@ -83,7 +109,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: _formatError(e.toString()),
+        error: SupabaseAuthRepository.formatError(e.toString()),
       );
     }
   }
@@ -91,9 +117,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final userCredential = await _repository.signInWithGoogle();
+      final success = await _repository.signInWithGoogle();
 
-      if (userCredential == null || userCredential.user == null) {
+      if (!success) {
         if (!state.isAuthenticated) {
           state = state.copyWith(isLoading: false);
         }
@@ -102,7 +128,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       debugPrint('GOOGLE_SIGN_IN_ERROR: $e');
       state = state.copyWith(
         isLoading: false,
-        error: _formatError(e.toString()),
+        error: SupabaseAuthRepository.formatError(e.toString()),
       );
     }
   }
@@ -127,34 +153,4 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  String _formatError(String error) {
-    if (error.contains('user-not-found')) {
-      return 'Account not found. Please sign up first.';
-    }
-    if (error.contains('wrong-password') ||
-        error.contains('invalid-credential')) {
-      return 'Incorrect email or password.';
-    }
-    if (error.contains('email-already-in-use')) {
-      return 'This email is already linked to an account.';
-    }
-    if (error.contains('invalid-email')) {
-      return 'Please enter a valid email address.';
-    }
-    if (error.contains('weak-password')) {
-      return 'Password is too weak. Try a longer one.';
-    }
-    if (error.contains('network-request-failed')) {
-      return 'Network error. Check your connection.';
-    }
-    if (error.contains('dev.flutter.pigeon') ||
-        error.contains('channel-error')) {
-      return 'Please enter the details correctly.';
-    }
-
-    final parts = error.split(']');
-    return parts.length > 1
-        ? parts[1].trim()
-        : 'Authentication failed. Please try again.';
-  }
 }

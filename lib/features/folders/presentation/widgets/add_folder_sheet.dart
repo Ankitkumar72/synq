@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/utils/icon_utils.dart';
 import '../../domain/models/folder.dart';
 import '../../data/folder_provider.dart';
@@ -64,7 +65,7 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
     final folder = Folder(
       id:
           widget.folderToEdit?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+          const Uuid().v4(),
       name: name,
       iconCodePoint: _selectedIcon.codePoint,
       iconFontFamily: _selectedIcon.fontFamily,

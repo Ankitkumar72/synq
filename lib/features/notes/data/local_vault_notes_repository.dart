@@ -30,7 +30,7 @@ class LocalVaultNotesRepository implements NotesRepository {
     _ensureInitialized().then((_) {
       _controller.add(List<Note>.unmodifiable(_cache.where((n) => !n.isTask)));
     });
-    return _controller.stream.map((notes) => notes.where((n) => !n.isTask).toList());
+    return _controller.stream.map((notes) => notes.where((n) => !n.isTask && !n.isDeleted).toList());
   }
 
   @override
@@ -80,6 +80,57 @@ class LocalVaultNotesRepository implements NotesRepository {
   @override
   Future<void> deleteNote(String id) async {
     await _ensureInitialized();
+    final index = _cache.indexWhere((n) => n.id == id);
+    if (index != -1) {
+      final updated = _cache[index].copyWith(
+        isDeleted: true,
+        deletedAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      await _writeNote(updated);
+      _cache[index] = updated;
+      _emit();
+    }
+  }
+
+  @override
+  Future<void> deleteNotes(List<String> ids) async {
+    for (final id in ids) {
+      await deleteNote(id);
+    }
+  }
+
+  @override
+  Stream<List<Note>> watchDeletedNotes() {
+    _ensureInitialized().then((_) {
+      _controller.add(List<Note>.unmodifiable(_cache));
+    });
+    return _controller.stream.map((notes) {
+      return notes.where((n) => n.isDeleted).toList()
+        ..sort((a, b) => (b.deletedAt ?? b.createdAt)
+            .compareTo(a.deletedAt ?? a.createdAt));
+    });
+  }
+
+  @override
+  Future<void> restoreNote(String id) async {
+    await _ensureInitialized();
+    final index = _cache.indexWhere((n) => n.id == id);
+    if (index != -1) {
+      final updated = _cache[index].copyWith(
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: DateTime.now(),
+      );
+      await _writeNote(updated);
+      _cache[index] = updated;
+      _emit();
+    }
+  }
+
+  @override
+  Future<void> permanentlyDeleteNote(String id) async {
+    await _ensureInitialized();
 
     final existingFile = _noteFilesById[id];
     if (existingFile != null && await existingFile.exists()) {
@@ -92,9 +143,19 @@ class LocalVaultNotesRepository implements NotesRepository {
   }
 
   @override
-  Future<void> deleteNotes(List<String> ids) async {
-    for (final id in ids) {
-      await deleteNote(id);
+  Future<void> permanentlyDeleteExpiredNotes() async {
+    await _ensureInitialized();
+    final now = DateTime.now();
+    final expiredIds = _cache
+        .where((n) =>
+            n.isDeleted &&
+            n.deletedAt != null &&
+            now.difference(n.deletedAt!).inDays >= 14)
+        .map((n) => n.id)
+        .toList();
+
+    for (final id in expiredIds) {
+      await permanentlyDeleteNote(id);
     }
   }
 

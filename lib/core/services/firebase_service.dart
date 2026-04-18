@@ -1,10 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../../firebase_options.dart';
+
 
 class FirebaseService {
   static Future<void> initialize() async {
@@ -12,12 +13,13 @@ class FirebaseService {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    const recaptchaSiteKey = String.fromEnvironment('RECAPTCHA_V3_SITE_KEY');
+    final recaptchaSiteKey = dotenv.get('RECAPTCHA_V3_SITE_KEY', fallback: '');
     if (kIsWeb && recaptchaSiteKey.isEmpty) {
       throw StateError(
         'Missing RECAPTCHA_V3_SITE_KEY for Firebase App Check on web.',
       );
     }
+
 
     await FirebaseAppCheck.instance.activate(
       providerAndroid: kDebugMode
@@ -32,14 +34,20 @@ class FirebaseService {
     );
 
     if (kDebugMode) {
+      try {
+        final token = await FirebaseAppCheck.instance.getToken();
+        debugPrint('--- APP CHECK DEBUG TOKEN ---');
+        debugPrint(token);
+        debugPrint('-----------------------------');
+      } catch (e) {
+        debugPrint('--- APP CHECK DEBUG TOKEN (ERROR) ---');
+        debugPrint('Failed to get App Check token: $e');
+        debugPrint('--------------------------------------');
+      }
+      
       final projectId = DefaultFirebaseOptions.currentPlatform.projectId;
-      debugPrint('Firebase initialized for project: $projectId');
+      debugPrint('Firebase initialized for vitals (project: $projectId)');
     }
-
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true,
-      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-    );
 
     // Initialize Crashlytics
     if (!kIsWeb) {

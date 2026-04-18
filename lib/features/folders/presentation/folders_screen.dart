@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../data/folder_search_engine.dart';
 import '../data/folder_provider.dart';
@@ -390,7 +391,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
         },
         onNewFolder: () => showAddFolderSheet(context),
         onMakeCopy: () async {
-          final newFolderId = DateTime.now().millisecondsSinceEpoch.toString();
+          final newFolderId = const Uuid().v4();
           final newFolder = folder.copyWith(
             id: newFolderId,
             name: '${folder.name} (Copy)',
@@ -406,9 +407,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
 
           for (final note in notesToCopy) {
             final newNote = note.copyWith(
-              id:
-                  DateTime.now().millisecondsSinceEpoch.toString() +
-                  note.id.hashCode.toString(),
+              id: const Uuid().v4(),
               folderId: newFolderId,
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),

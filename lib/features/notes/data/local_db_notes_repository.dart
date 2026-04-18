@@ -52,4 +52,16 @@ class LocalDbNotesRepository implements NotesRepository {
   Future<void> deleteNotes(List<String> ids) async {
     await _localDb.markNotesDeleted(ids, source: SyncWriteSource.local);
   }
+
+  @override
+  Stream<List<Note>> watchDeletedNotes() => _localDb.watchDeletedNotes();
+
+  @override
+  Future<void> restoreNote(String id) => _localDb.restoreNote(id);
+
+  @override
+  Future<void> permanentlyDeleteNote(String id) => _localDb.hardDeleteNote(id);
+
+  @override
+  Future<void> permanentlyDeleteExpiredNotes() => _localDb.permanentlyDeleteExpiredNotes();
 }

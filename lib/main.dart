@@ -4,10 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/services/firebase_service.dart';
+import 'core/services/supabase_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/permission_service.dart';
 import 'core/theme/app_theme.dart';
-import 'core/providers/firebase_provider.dart';
 import 'core/providers/repository_provider.dart';
 import 'features/shell/presentation/main_shell.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
@@ -17,26 +19,31 @@ import 'package:synq/core/widgets/responsive_wrapper.dart';
 import 'package:synq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:synq/features/auth/presentation/screens/login_screen.dart';
 import 'package:synq/features/sync/data/sync_access_provider.dart';
-import 'package:synq/features/notes/data/notes_provider.dart';
-import 'package:synq/features/tasks/data/tasks_provider.dart';
 import 'package:synq/features/auth/presentation/widgets/device_enforcement_guard.dart';
 import 'package:synq/features/auth/presentation/widgets/downgrade_handler.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
-  String? firebaseError;
   try {
     WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-    await FirebaseService.initialize();
 
-    // Enable offline persistence
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true,
-      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-    );
+    // Load environment variables
+    await dotenv.load(fileName: ".env");
 
-    await NotificationService().init();
+    // Initialize Services in parallel to drastically improve startup time
+    // and reduce jank on the main thread.
+    await Future.wait([
+      // Initialize Supabase (Fatal: App cannot run without this)
+      SupabaseService.initialize(),
+      
+      // Initialize Firebase (Non-fatal: Silently log and continue if this fails)
+      FirebaseService.initialize().catchError((e) {
+        debugPrint('⚠️ Firebase Init Silent Failure: $e');
+      }),
+      
+      // Initialize Notifications
+      NotificationService().init(),
+    ]);
 
     // Enable edge-to-edge mode and set initial overlay style
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -55,16 +62,11 @@ void main() async {
     } else {
       debugPrint('ERROR_IN_MAIN');
     }
-    firebaseError = e.toString();
   }
 
   runApp(
-    ProviderScope(
-      overrides: [
-        if (firebaseError != null)
-          firebaseErrorProvider.overrideWith((ref) => firebaseError),
-      ],
-      child: const SynqApp(),
+    const ProviderScope(
+      child: SynqApp(),
     ),
   );
 }
@@ -88,25 +90,20 @@ class _SynqAppState extends ConsumerState<SynqApp> {
         return;
       }
       _didRequestNotificationPermission = true;
-      NotificationService().requestPermissions();
+      PermissionService().requestInitialPermissions();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final firebaseError = ref.watch(firebaseErrorProvider);
     final syncAccess = ref.watch(syncAccessProvider);
-    final notesAsync = ref.watch(notesProvider);
-    final tasksAsync = ref.watch(tasksProvider);
     ref.watch(appInitializationProvider); // Trigger background initializations
     final requiresCloudAuth = syncAccess.cloudSyncEnabled;
     final canEnterApp = !requiresCloudAuth || authState.isAuthenticated;
     final shouldShowLoading =
         syncAccess.isLoading ||
-        (requiresCloudAuth && authState.isLoading) ||
-        notesAsync.isLoading ||
-        tasksAsync.isLoading;
+        (requiresCloudAuth && authState.isLoading);
 
     return MaterialApp(
       title: 'Synq',
@@ -125,40 +122,7 @@ class _SynqAppState extends ConsumerState<SynqApp> {
       },
       home: AnimatedSwitcher(
         duration: const Duration(milliseconds: 400),
-        child: firebaseError != null
-            ? Scaffold(
-                key: const ValueKey('error'),
-                backgroundColor: AppColors.background,
-                body: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 48,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Initialization Failed',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          firebaseError,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            : (!_isSplashAnimationComplete || shouldShowLoading)
+        child: (!_isSplashAnimationComplete || shouldShowLoading)
             ? SplashScreen(
                 key: const ValueKey('splash'),
                 onAnimationComplete: () {

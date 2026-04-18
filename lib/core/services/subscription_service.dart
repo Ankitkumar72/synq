@@ -1,17 +1,27 @@
 import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class PaddleService {
-  static const String _baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: kReleaseMode
-        ? 'https://synq-synq-paddle-webhook.hf.space'
-        : 'http://localhost:8000',
-  );
+  static String get _baseUrl {
+    final envUrl = dotenv.get('API_BASE_URL', fallback: '');
+    if (envUrl.isNotEmpty) return envUrl;
+
+    if (kReleaseMode) {
+      return 'https://synq-synq-paddle-webhook.hf.space';
+    }
+
+    // For local development on Android emulators
+    if (defaultTargetPlatform == TargetPlatform.android && !kIsWeb) {
+      return 'http://10.0.2.2:8000';
+    }
+
+    return 'http://localhost:8000';
+  }
 
   static const Set<String> _trustedCheckoutHosts = <String>{
     'checkout.paddle.com',
@@ -45,9 +55,13 @@ class PaddleService {
 
   /// for a specific [planSlug] (e.g. 'monthly', 'yearly'), then launches the checkout URL.
   Future<void> launchCheckout(String planSlug) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = Supabase.instance.client.auth.currentUser;
     if (user == null) throw Exception('User not authenticated');
-    final token = await user.getIdToken(true);
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+
+    final priceId = planSlug == 'monthly'
+        ? dotenv.get('PADDLE_MONTHLY_PRICE_ID')
+        : dotenv.get('PADDLE_YEARLY_PRICE_ID');
 
     final response = await http.post(
       Uri.parse('$_baseUrl/create-checkout'),
@@ -55,17 +69,23 @@ class PaddleService {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(<String, String>{'plan_slug': planSlug}),
+      body: jsonEncode(<String, dynamic>{
+        'plan_slug': planSlug,
+        'price_id': priceId,
+      }),
     );
+
 
     if (response.statusCode != 200) {
       if (kDebugMode) {
-        debugPrint(
-          'Checkout request failed with status ${response.statusCode}',
-        );
+        debugPrint('--- CHECKOUT FAILED ---');
+        debugPrint('Status: ${response.statusCode}');
+        debugPrint('Body: ${response.body}');
+        debugPrint('-----------------------');
       }
-      throw Exception('Failed to create checkout session.');
+      throw Exception('Failed to create checkout session: ${response.statusCode}');
     }
+
 
     late final Map<String, dynamic> data;
     try {

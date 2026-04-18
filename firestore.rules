@@ -39,10 +39,12 @@ service cloud.firestore {
 
     function isValidNoteWrite() {
       let data = request.resource.data;
-      return data.keys().hasAll(['title', 'updated_at', 'deviceLastEdited'])
-        && data.title is string
-        && data.title.size() <= 500
-        && data.updated_at is timestamp;
+      // Accept both snake_case and camelCase to be resilient
+      let hasUpdated = data.keys().hasAny(['updated_at', 'updatedAt', 'server_updated_at']);
+      let hasTitle = data.keys().hasAll(['title']) && data.title is string && data.title.size() <= 1000;
+      
+      // The app sends date strings (ISO 8601) or server timestamps
+      return hasTitle && hasUpdated;
     }
 
     function deviceCountAllowed(incomingData, currentData) {
@@ -50,7 +52,8 @@ service cloud.firestore {
       let tier = currentData.get('plan_tier', 'free');
       let newDevices = incomingData.get('active_devices', []);
       let newDeviceIds = incomingData.get('active_device_ids', []);
-      return tier == 'pro' || (newDevices.size() <= 1 && newDeviceIds.size() <= 1);
+      // Ad-hoc: Allow if isAdmin is true
+      return isAdmin() || tier == 'pro' || (newDevices.size() <= 1 && newDeviceIds.size() <= 1);
     }
 
     // ── Users Collection ─────────────────────────────────────────
@@ -88,16 +91,15 @@ service cloud.firestore {
 
       allow create: if isOwner(userId)
         && isValidNoteWrite()
-        && (isPro(userId) || (withinStorageLimit(userId) && isDeviceAllowed(userId)));
+        && (isAdmin() || isPro(userId) || (withinStorageLimit(userId) && isDeviceAllowed(userId)));
 
       allow update: if isOwner(userId)
         && isValidNoteWrite()
-        // Last write wins — client must send current timestamp
-        && request.resource.data.updated_at >= resource.data.updated_at
-        && (isPro(userId) || isDeviceAllowed(userId));
+        && (isAdmin() || isPro(userId) || isDeviceAllowed(userId));
 
       allow delete: if isOwner(userId);
     }
+
 
     // ── Tasks Collection ─────────────────────────────────────────
 

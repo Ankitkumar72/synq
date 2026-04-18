@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../auth/presentation/providers/user_provider.dart';
 import '../../auth/domain/models/synq_user.dart';
 import 'package:synq/core/services/device_service.dart';
@@ -156,10 +155,13 @@ class _DeviceManagementScreenState
     bool isCurrent,
   ) {
     String lastSeenStr = 'Unknown';
-    if (device['last_seen'] != null) {
-      if (device['last_seen'] is Timestamp) {
-        final dt = (device['last_seen'] as Timestamp).toDate();
+    final lastSeen = device['last_seen'];
+    if (lastSeen != null) {
+      try {
+        final dt = DateTime.parse(lastSeen.toString());
         lastSeenStr = DateFormat('MMM d, h:mm a').format(dt);
+      } catch (_) {
+        lastSeenStr = 'Recently';
       }
     }
 

@@ -110,5 +110,17 @@ firebase-debug.log*
 tmp/
 temp/
 *~
+# Temporary and sensitive data
+users.json
+scripts/*.json
 .flutter_analyze.txt
 structure.md
+
+# Utility Scripts
+scripts/debug_user.js
+scripts/upgrade_to_pro.js
+scripts/upgrade_users.js
+
+# Firebase Configuration
+storage.rules
+firebase.json

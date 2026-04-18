@@ -57,6 +57,7 @@ class SynqIconButton extends StatelessWidget {
   final double size;
   final double iconSize;
   final String? tooltip;
+  final bool isSelected;
 
   const SynqIconButton({
     super.key,
@@ -67,20 +68,30 @@ class SynqIconButton extends StatelessWidget {
     this.size = 40,
     this.iconSize = 20,
     this.tooltip,
+    this.isSelected = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // If selected, use a light primary background and primary icon color.
+    final effectiveBgColor = isSelected 
+        ? AppColors.primary.withValues(alpha: 0.1) 
+        : (color ?? Colors.transparent);
+    
+    final effectiveIconColor = isSelected 
+        ? AppColors.primary 
+        : (iconColor ?? AppColors.textPrimary);
+
     return Tooltip(
       message: tooltip ?? '',
       child: SynqCircle(
         size: size,
-        color: color ?? Colors.transparent,
+        color: effectiveBgColor,
         onTap: onTap,
         child: Icon(
           icon,
           size: iconSize,
-          color: iconColor ?? AppColors.textPrimary,
+          color: effectiveIconColor,
         ),
       ),
     );

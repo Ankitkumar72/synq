@@ -31,9 +31,9 @@ class Note with _$Note {
   @JsonSerializable(explicitToJson: true)
   const factory Note({
     required String id,
-    required String title,
+    @Default('') String title,
     String? body,
-    required NoteCategory category,
+    @Default(NoteCategory.personal) NoteCategory category,
     required DateTime createdAt,
     DateTime? scheduledTime,
     DateTime? endTime,
@@ -56,6 +56,8 @@ class Note with _$Note {
     String? deviceLastEdited,
     int? color,
     @Default(0) int order,
+    @Default(false) bool isDeleted,
+    DateTime? deletedAt,
   }) = _Note;
 
   factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);

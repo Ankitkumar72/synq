@@ -15,9 +15,9 @@ import '../../features/notes/domain/models/note.dart';
 enum SyncWriteSource { local, remote }
 
 class SyncCursor {
-  const SyncCursor({required this.timestampMs, required this.lastId});
+  const SyncCursor({required this.timestampMicros, required this.lastId});
 
-  final int? timestampMs;
+  final int? timestampMicros;
   final String? lastId;
 }
 
@@ -56,38 +56,54 @@ class LocalDatabase {
 
   static final Map<String, Database> _cache = {};
   static final Map<String, Lock> _locks = {};
+  static final Map<String, Future<void>> _disposeTasks = {};
 
   final Uuid _uuid = const Uuid();
   Database? _database;
   Completer<Database>? _dbOpenCompleter;
   bool _isClosed = false;
+  bool _isDisposing = false;
 
   Lock _getLock() => _locks.putIfAbsent(_userId, () => Lock());
 
-  Future<T> _readOp<T>(Future<T> Function(Database db) op, {String? name}) async {
-    return _getLock().synchronized(() => _withRetry(() async {
-          final db = await _openDatabase();
-          return op(db);
-        }, name: name));
+  Future<T> _readOp<T>(
+    Future<T> Function(Database db) op, {
+    String? name,
+  }) async {
+    return _getLock().synchronized(
+      () => _withRetry(() async {
+        final db = await _openDatabase();
+        return await op(db);
+      }, name: name),
+    );
   }
 
-  Future<T> _writeOp<T>(Future<T> Function(Database db) op, {String? name}) async {
-    return _getLock().synchronized(() => _withRetry(() async {
-          final db = await _openDatabase();
-          return op(db);
-        }, name: name));
+  Future<T> _writeOp<T>(
+    Future<T> Function(Database db) op, {
+    String? name,
+  }) async {
+    return _getLock().synchronized(
+      () => _withRetry(() async {
+        final db = await _openDatabase();
+        return await op(db);
+      }, name: name),
+    );
   }
 
-  Future<T> _withRetry<T>(Future<T> Function() op,
-      {String? name, int maxAttempts = 3}) async {
+  Future<T> _withRetry<T>(
+    Future<T> Function() op, {
+    String? name,
+    int maxAttempts = 3,
+  }) async {
     for (int i = 0; i < maxAttempts; i++) {
       try {
-        if (_isClosed) throw StateError('Database is closed');
+        if (_isClosed || _isDisposing) return _defaultResult<T>();
         return await op();
       } on DatabaseException catch (e) {
-        if (_isClosed) throw StateError('Database is closed');
+        if (_isClosed || _isDisposing) return _defaultResult<T>();
         final errStr = e.toString();
-        final isTransient = errStr.contains('SQLITE_IOERR') ||
+        final isTransient =
+            errStr.contains('SQLITE_IOERR') ||
             errStr.contains('SQLITE_BUSY') ||
             errStr.contains('SQLITE_LOCKED');
         if (!isTransient || i == maxAttempts - 1) {
@@ -96,12 +112,26 @@ class LocalDatabase {
         }
         await Future.delayed(Duration(milliseconds: 100 * (i + 1)));
       } catch (e) {
-        if (_isClosed) throw StateError('Database is closed');
+        if (_isClosed || _isDisposing) return _defaultResult<T>();
         _reportError(e, name);
         rethrow;
       }
     }
-    throw StateError('unreachable');
+    return _defaultResult<T>();
+  }
+
+  /// Returns a safe default value for various return types to prevent crashes.
+  T _defaultResult<T>() {
+    if (T == List<Note>) return <Note>[] as T;
+    if (T == List<Folder>) return <Folder>[] as T;
+    if (T == List<SyncQueueOperation>) return <SyncQueueOperation>[] as T;
+    if (T == List<Map<String, dynamic>>) return <Map<String, dynamic>>[] as T;
+    if (T == int) return 0 as T;
+    if (T == bool) return false as T;
+    if (T == SyncCursor) {
+      return const SyncCursor(timestampMicros: null, lastId: null) as T;
+    }
+    return null as T;
   }
 
   void _reportError(dynamic e, String? name) {
@@ -134,28 +164,53 @@ class LocalDatabase {
   Stream<void> get syncQueueChanged => _syncQueueChangedController.stream;
 
   Future<void> dispose() async {
-    if (_isClosed) return;
-    _isClosed = true;
+    if (_isClosed || _isDisposing) {
+      return _disposeTasks[_userId] ?? Future.value();
+    }
+    _isDisposing = true;
 
-    await _notesChangedController.close();
-    await _foldersChangedController.close();
-    await _syncQueueChangedController.close();
-    await _database?.close();
-    _database = null;
+    final completer = Completer<void>();
+    _disposeTasks[_userId] = completer.future;
+
+    try {
+      await _notesChangedController.close();
+      await _foldersChangedController.close();
+      await _syncQueueChangedController.close();
+
+      final db = _database;
+      _database = null;
+      _cache.remove(_userId);
+      await db?.close();
+
+      _isClosed = true;
+    } catch (e) {
+      debugPrint('DATABASE_DISPOSE_ERROR: $e');
+    } finally {
+      _isDisposing = false;
+      completer.complete();
+      _disposeTasks.remove(_userId);
+    }
+  }
+
+  /// Waits for all currently disposing database sessions to finish.
+  /// Used during auth transitions to ensure clean file handles.
+  static Future<void> waitForAllToClose() async {
+    if (_disposeTasks.isEmpty) return;
+    await Future.wait(_disposeTasks.values);
   }
 
   Stream<List<Note>> watchNotes() async* {
-    if (!_isClosed) yield await getNotes();
+    if (!_isClosed && !_isDisposing) yield await getNotes();
     yield* _notesChangedController.stream.asyncMap((_) async {
-      if (_isClosed) return <Note>[];
+      if (_isClosed || _isDisposing) return <Note>[];
       return await getNotes();
     });
   }
 
   Stream<Note?> watchNote(String id) async* {
-    if (!_isClosed) yield await getNote(id);
+    if (!_isClosed && !_isDisposing) yield await getNote(id);
     yield* _notesChangedController.stream.asyncMap((_) async {
-      if (_isClosed) return null;
+      if (_isClosed || _isDisposing) return null;
       return await getNote(id);
     });
   }
@@ -167,7 +222,7 @@ class LocalDatabase {
     int? scheduledAfterMs,
     String? folderId,
   }) async* {
-    if (!_isClosed) {
+    if (!_isClosed && !_isDisposing) {
       yield await getFilteredNotes(
         isCompleted: isCompleted,
         isTask: isTask,
@@ -177,7 +232,7 @@ class LocalDatabase {
       );
     }
     yield* _notesChangedController.stream.asyncMap((_) async {
-      if (_isClosed) return <Note>[];
+      if (_isClosed || _isDisposing) return <Note>[];
       return await getFilteredNotes(
         isCompleted: isCompleted,
         isTask: isTask,
@@ -212,9 +267,9 @@ class LocalDatabase {
   }
 
   Stream<List<Folder>> watchFolders() async* {
-    if (!_isClosed) yield await getFolders();
+    if (!_isClosed && !_isDisposing) yield await getFolders();
     yield* _foldersChangedController.stream.asyncMap((_) async {
-      if (_isClosed) return <Folder>[];
+      if (_isClosed || _isDisposing) return <Folder>[];
       return await getFolders();
     });
   }
@@ -234,12 +289,12 @@ class LocalDatabase {
 
         try {
           final payload = jsonDecode(rawPayload) as Map<String, dynamic>;
-          
+
           // Ensure createdAt is present for sorting and model integrity
           if (payload['createdAt'] == null) {
             payload['createdAt'] = DateTime.now().toIso8601String();
           }
-          
+
           notes.add(Note.fromJson(payload));
         } catch (_) {
           continue;
@@ -360,7 +415,8 @@ class LocalDatabase {
           'id': note.id,
           'payload': jsonEncode(note.toJson()),
           'updated_at_ms': updatedAtMs,
-          'is_deleted': 0,
+          'is_deleted': note.isDeleted ? 1 : 0,
+          'deleted_at_ms': note.deletedAt?.millisecondsSinceEpoch,
           'scheduled_time_ms': note.scheduledTime?.millisecondsSinceEpoch,
           'end_time_ms': note.endTime?.millisecondsSinceEpoch,
           'is_completed': note.isCompleted ? 1 : 0,
@@ -378,11 +434,17 @@ class LocalDatabase {
             opType: opTypeUpsert,
             payload: jsonEncode(note.toJson()),
           );
+        } else {
+          await _deletePendingOperation(
+            txn: txn,
+            entityType: entityTypeNote,
+            entityId: note.id,
+          );
         }
       });
     }, name: 'upsertNote');
 
-    if (!_isClosed) {
+    if (!_isClosed && !_isDisposing) {
       _notesChangedController.add(null);
     }
   }
@@ -427,7 +489,120 @@ class LocalDatabase {
       });
     }, name: 'upsertFolder');
 
-    if (!_isClosed) {
+    if (!_isClosed && !_isDisposing) {
+      _foldersChangedController.add(null);
+    }
+  }
+
+  Future<void> batchUpsertNotes(
+    List<Note> notes, {
+    required SyncWriteSource source,
+    Map<String, int>? remoteUpdatedAtMap,
+  }) async {
+    if (notes.isEmpty) return;
+    await _writeOp((db) async {
+      await db.transaction((txn) async {
+        for (final note in notes) {
+          final updatedAtMs =
+              remoteUpdatedAtMap?[note.id] ??
+              note.updatedAt?.millisecondsSinceEpoch ??
+              DateTime.now().millisecondsSinceEpoch;
+
+          final localUpdatedAtMs = await _currentUpdatedAtMs(
+            txn: txn,
+            table: 'notes',
+            id: note.id,
+          );
+          if (source == SyncWriteSource.remote &&
+              localUpdatedAtMs != null &&
+              localUpdatedAtMs > updatedAtMs) {
+            continue;
+          }
+
+          await txn.insert('notes', <String, Object?>{
+            'id': note.id,
+            'payload': jsonEncode(note.toJson()),
+            'updated_at_ms': updatedAtMs,
+            'is_deleted': note.isDeleted ? 1 : 0,
+            'deleted_at_ms': note.deletedAt?.millisecondsSinceEpoch,
+            'scheduled_time_ms': note.scheduledTime?.millisecondsSinceEpoch,
+            'end_time_ms': note.endTime?.millisecondsSinceEpoch,
+            'is_completed': note.isCompleted ? 1 : 0,
+            'is_task': note.isTask ? 1 : 0,
+            'priority': note.priority.name,
+            'category': note.category.name,
+            'folder_id': note.folderId,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+          if (source == SyncWriteSource.local) {
+            await _enqueueOperation(
+              txn: txn,
+              entityType: entityTypeNote,
+              entityId: note.id,
+              opType: opTypeUpsert,
+              payload: jsonEncode(note.toJson()),
+            );
+          } else {
+            await _deletePendingOperation(
+              txn: txn,
+              entityType: entityTypeNote,
+              entityId: note.id,
+            );
+          }
+        }
+      });
+    }, name: 'batchUpsertNotes');
+
+    if (!_isClosed && !_isDisposing) {
+      _notesChangedController.add(null);
+    }
+  }
+
+  Future<void> batchUpsertFolders(
+    List<Folder> folders, {
+    required SyncWriteSource source,
+    Map<String, int>? remoteUpdatedAtMap,
+  }) async {
+    if (folders.isEmpty) return;
+    await _writeOp((db) async {
+      await db.transaction((txn) async {
+        for (final folder in folders) {
+          final updatedAtMs =
+              remoteUpdatedAtMap?[folder.id] ??
+              DateTime.now().millisecondsSinceEpoch;
+
+          final localUpdatedAtMs = await _currentUpdatedAtMs(
+            txn: txn,
+            table: 'folders',
+            id: folder.id,
+          );
+          if (source == SyncWriteSource.remote &&
+              localUpdatedAtMs != null &&
+              localUpdatedAtMs > updatedAtMs) {
+            continue;
+          }
+
+          await txn.insert('folders', <String, Object?>{
+            'id': folder.id,
+            'payload': jsonEncode(folder.toJson()),
+            'updated_at_ms': updatedAtMs,
+            'is_deleted': 0,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+          if (source == SyncWriteSource.local) {
+            await _enqueueOperation(
+              txn: txn,
+              entityType: entityTypeFolder,
+              entityId: folder.id,
+              opType: opTypeUpsert,
+              payload: jsonEncode(folder.toJson()),
+            );
+          }
+        }
+      });
+    }, name: 'batchUpsertFolders');
+
+    if (!_isClosed && !_isDisposing) {
       _foldersChangedController.add(null);
     }
   }
@@ -440,6 +615,10 @@ class LocalDatabase {
     await _writeOp((db) async {
       final updatedAtMs =
           remoteUpdatedAtMs ?? DateTime.now().millisecondsSinceEpoch;
+      final deletedAt = DateTime.fromMillisecondsSinceEpoch(
+        updatedAtMs,
+        isUtc: true,
+      );
 
       await db.transaction((txn) async {
         final localUpdatedAtMs = await _currentUpdatedAtMs(
@@ -453,18 +632,33 @@ class LocalDatabase {
           return;
         }
 
+        final existing = await txn.query(
+          'notes',
+          columns: ['payload'],
+          where: 'id = ?',
+          whereArgs: [noteId],
+          limit: 1,
+        );
+        final payload = _deletedNotePayload(
+          existing.isNotEmpty ? existing.first['payload'] as String? : null,
+          noteId: noteId,
+          deletedAt: deletedAt,
+        );
+        final note = _noteFromPayload(payload);
+
         await txn.insert('notes', <String, Object?>{
           'id': noteId,
-          'payload': '{}',
+          'payload': payload,
           'updated_at_ms': updatedAtMs,
           'is_deleted': 1,
-          'scheduled_time_ms': null,
-          'end_time_ms': null,
-          'is_completed': 0,
-          'is_task': 0,
-          'priority': null,
-          'category': null,
-          'folder_id': null,
+          'deleted_at_ms': updatedAtMs,
+          'scheduled_time_ms': note?.scheduledTime?.millisecondsSinceEpoch,
+          'end_time_ms': note?.endTime?.millisecondsSinceEpoch,
+          'is_completed': (note?.isCompleted ?? false) ? 1 : 0,
+          'is_task': (note?.isTask ?? false) ? 1 : 0,
+          'priority': note?.priority.name,
+          'category': note?.category.name,
+          'folder_id': note?.folderId,
         }, conflictAlgorithm: ConflictAlgorithm.replace);
 
         if (source == SyncWriteSource.local) {
@@ -472,14 +666,20 @@ class LocalDatabase {
             txn: txn,
             entityType: entityTypeNote,
             entityId: noteId,
-            opType: opTypeDelete,
-            payload: null,
+            opType: opTypeUpsert,
+            payload: payload,
+          );
+        } else {
+          await _deletePendingOperation(
+            txn: txn,
+            entityType: entityTypeNote,
+            entityId: noteId,
           );
         }
       });
     }, name: 'markNoteDeleted');
 
-    if (!_isClosed) {
+    if (!_isClosed && !_isDisposing) {
       _notesChangedController.add(null);
     }
   }
@@ -491,21 +691,40 @@ class LocalDatabase {
     if (noteIds.isEmpty) return;
     await _writeOp((db) async {
       final updatedAtMs = DateTime.now().millisecondsSinceEpoch;
+      final deletedAt = DateTime.fromMillisecondsSinceEpoch(
+        updatedAtMs,
+        isUtc: true,
+      );
 
       await db.transaction((txn) async {
         for (final noteId in noteIds) {
+          final existing = await txn.query(
+            'notes',
+            columns: ['payload'],
+            where: 'id = ?',
+            whereArgs: [noteId],
+            limit: 1,
+          );
+          final payload = _deletedNotePayload(
+            existing.isNotEmpty ? existing.first['payload'] as String? : null,
+            noteId: noteId,
+            deletedAt: deletedAt,
+          );
+          final note = _noteFromPayload(payload);
+
           await txn.insert('notes', <String, Object?>{
             'id': noteId,
-            'payload': '{}',
+            'payload': payload,
             'updated_at_ms': updatedAtMs,
             'is_deleted': 1,
-            'scheduled_time_ms': null,
-            'end_time_ms': null,
-            'is_completed': 0,
-            'is_task': 0,
-            'priority': null,
-            'category': null,
-            'folder_id': null,
+            'deleted_at_ms': updatedAtMs,
+            'scheduled_time_ms': note?.scheduledTime?.millisecondsSinceEpoch,
+            'end_time_ms': note?.endTime?.millisecondsSinceEpoch,
+            'is_completed': (note?.isCompleted ?? false) ? 1 : 0,
+            'is_task': (note?.isTask ?? false) ? 1 : 0,
+            'priority': note?.priority.name,
+            'category': note?.category.name,
+            'folder_id': note?.folderId,
           }, conflictAlgorithm: ConflictAlgorithm.replace);
 
           if (source == SyncWriteSource.local) {
@@ -513,17 +732,241 @@ class LocalDatabase {
               txn: txn,
               entityType: entityTypeNote,
               entityId: noteId,
-              opType: opTypeDelete,
-              payload: null,
+              opType: opTypeUpsert,
+              payload: payload,
+            );
+          } else {
+            await _deletePendingOperation(
+              txn: txn,
+              entityType: entityTypeNote,
+              entityId: noteId,
             );
           }
         }
       });
     }, name: 'markNotesDeleted');
 
-    if (!_isClosed) {
+    if (!_isClosed && !_isDisposing) {
       _notesChangedController.add(null);
     }
+  }
+
+  Note? _noteFromRow(Map<String, dynamic> row) {
+    try {
+      final rawPayload = row['payload'] as String?;
+      if (rawPayload == null) {
+        debugPrint(
+          'LOCAL_DB_ERROR: Found note row with null payload: ${row['id']}',
+        );
+        return null;
+      }
+      final payload = jsonDecode(rawPayload) as Map<String, dynamic>;
+      _sanitizeNotePayload(payload);
+      return Note.fromJson(payload);
+    } catch (e) {
+      debugPrint('LOCAL_DB_ERROR: Failed to decode note payload: $e');
+      return null;
+    }
+  }
+
+  /// Ensures all required fields in a note payload have valid defaults.
+  /// This guards against corrupted payloads stored by a previous buggy sync.
+  void _sanitizeNotePayload(Map<String, dynamic> payload) {
+    payload['id'] ??= '';
+    payload['title'] ??= '';
+    payload['category'] ??= 'personal';
+    payload['priority'] ??= 'none';
+    payload['isTask'] ??= false;
+    payload['isAllDay'] ??= false;
+    payload['isCompleted'] ??= false;
+    payload['isRecurringInstance'] ??= false;
+    payload['isDeleted'] ??= false;
+    payload['order'] ??= 0;
+    payload['createdAt'] ??= DateTime.now().toIso8601String();
+
+    // Ensure list fields are lists, not nulls
+    if (payload['tags'] is! List) payload['tags'] = <String>[];
+    if (payload['attachments'] is! List) payload['attachments'] = <String>[];
+    if (payload['links'] is! List) payload['links'] = <String>[];
+    if (payload['subtasks'] is! List) payload['subtasks'] = <dynamic>[];
+  }
+
+  String _deletedNotePayload(
+    String? rawPayload, {
+    required String noteId,
+    required DateTime deletedAt,
+  }) {
+    final deletedAtIso = deletedAt.toIso8601String();
+
+    if (rawPayload != null && rawPayload.isNotEmpty) {
+      try {
+        final payload = jsonDecode(rawPayload) as Map<String, dynamic>;
+        final note = Note.fromJson(
+          payload,
+        ).copyWith(isDeleted: true, deletedAt: deletedAt, updatedAt: deletedAt);
+        return jsonEncode(note.toJson());
+      } catch (_) {
+        try {
+          final payload = jsonDecode(rawPayload) as Map<String, dynamic>;
+          payload['id'] = payload['id'] ?? noteId;
+          payload['title'] = payload['title'] ?? '';
+          payload['category'] = payload['category'] ?? 'personal';
+          payload['createdAt'] = payload['createdAt'] ?? deletedAtIso;
+          payload['isDeleted'] = true;
+          payload['deletedAt'] = deletedAtIso;
+          payload['updatedAt'] = deletedAtIso;
+          return jsonEncode(payload);
+        } catch (_) {}
+      }
+    }
+
+    return jsonEncode(<String, dynamic>{
+      'id': noteId,
+      'title': '',
+      'body': null,
+      'category': 'personal',
+      'createdAt': deletedAtIso,
+      'updatedAt': deletedAtIso,
+      'priority': 'none',
+      'isTask': false,
+      'isAllDay': false,
+      'isRecurringInstance': false,
+      'isCompleted': false,
+      'tags': <String>[],
+      'attachments': <String>[],
+      'links': <String>[],
+      'subtasks': <Object>[],
+      'folderId': null,
+      'deviceLastEdited': null,
+      'color': null,
+      'order': 0,
+      'isDeleted': true,
+      'deletedAt': deletedAtIso,
+    });
+  }
+
+  Note? _noteFromPayload(String rawPayload) {
+    try {
+      return Note.fromJson(jsonDecode(rawPayload) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Stream<List<Note>> watchDeletedNotes() async* {
+    if (!_isClosed && !_isDisposing) {
+      yield await _readOp((db) async {
+        final rows = await db.query(
+          'notes',
+          where: 'is_deleted = 1',
+          orderBy: 'deleted_at_ms DESC',
+        );
+        return rows.map((r) => _noteFromRow(r)).whereType<Note>().toList();
+      });
+    }
+
+    yield* _notesChangedController.stream.asyncMap((_) async {
+      if (_isClosed || _isDisposing) return <Note>[];
+      return await _readOp((db) async {
+        final rows = await db.query(
+          'notes',
+          where: 'is_deleted = 1',
+          orderBy: 'deleted_at_ms DESC',
+        );
+        return rows.map((r) => _noteFromRow(r)).whereType<Note>().toList();
+      });
+    });
+  }
+
+  Future<void> restoreNote(String noteId) async {
+    await _writeOp((db) async {
+      await db.transaction((txn) async {
+        final existing = await txn.query(
+          'notes',
+          where: 'id = ?',
+          whereArgs: [noteId],
+        );
+        if (existing.isEmpty) return;
+
+        final rawPayload = existing.first['payload'] as String;
+        final payloadMap = jsonDecode(rawPayload) as Map<String, dynamic>;
+
+        // Update local payload state to not deleted
+        final note = Note.fromJson(payloadMap).copyWith(
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: DateTime.now(),
+        );
+
+        await txn.update(
+          'notes',
+          {
+            'payload': jsonEncode(note.toJson()),
+            'is_deleted': 0,
+            'deleted_at_ms': null,
+            'updated_at_ms': DateTime.now().millisecondsSinceEpoch,
+          },
+          where: 'id = ?',
+          whereArgs: [noteId],
+        );
+
+        await _enqueueOperation(
+          txn: txn,
+          entityType: entityTypeNote,
+          entityId: noteId,
+          opType: opTypeUpsert,
+          payload: jsonEncode(note.toJson()),
+        );
+      });
+    });
+    _notesChangedController.add(null);
+  }
+
+  Future<void> hardDeleteNote(String noteId) async {
+    await _writeOp((db) async {
+      await db.transaction((txn) async {
+        // Enqueue real delete before removing locally
+        await _enqueueOperation(
+          txn: txn,
+          entityType: entityTypeNote,
+          entityId: noteId,
+          opType: opTypeDelete,
+          payload: null,
+        );
+        await txn.delete('notes', where: 'id = ?', whereArgs: [noteId]);
+      });
+    });
+    _notesChangedController.add(null);
+  }
+
+  Future<void> permanentlyDeleteExpiredNotes() async {
+    final fourteenDaysAgo = DateTime.now()
+        .subtract(const Duration(days: 14))
+        .millisecondsSinceEpoch;
+
+    await _writeOp((db) async {
+      await db.transaction((txn) async {
+        final expired = await txn.query(
+          'notes',
+          columns: ['id'],
+          where: 'is_deleted = 1 AND deleted_at_ms < ?',
+          whereArgs: [fourteenDaysAgo],
+        );
+
+        for (final row in expired) {
+          final id = row['id'] as String;
+          await _enqueueOperation(
+            txn: txn,
+            entityType: entityTypeNote,
+            entityId: id,
+            opType: opTypeDelete,
+            payload: null,
+          );
+          await txn.delete('notes', where: 'id = ?', whereArgs: [id]);
+        }
+      });
+    });
+    _notesChangedController.add(null);
   }
 
   Future<void> markFolderDeleted(
@@ -566,7 +1009,7 @@ class LocalDatabase {
       });
     }, name: 'markFolderDeleted');
 
-    if (!_isClosed) {
+    if (!_isClosed && !_isDisposing) {
       _foldersChangedController.add(null);
     }
   }
@@ -615,6 +1058,64 @@ class LocalDatabase {
     }, name: 'pendingOperations');
   }
 
+  /// Alias for [pendingOperations] used by the Supabase sync engine.
+  Future<List<SyncQueueOperation>> getPendingSyncOps({int limit = 200}) =>
+      pendingOperations(limit: limit);
+
+  /// Deletes a sync queue operation by its ID (used after successful push).
+  Future<void> deleteSyncQueueOp(String opId) => markOperationSucceeded(opId);
+
+  /// Increments the retry count for a failed sync queue operation.
+  Future<void> incrementRetryCount(String opId) async {
+    await _writeOp((db) async {
+      final rows = await db.query(
+        'sync_queue',
+        columns: <String>['retry_count'],
+        where: 'op_id = ?',
+        whereArgs: <Object>[opId],
+        limit: 1,
+      );
+      if (rows.isEmpty) return;
+      final current = (rows.first['retry_count'] as num).toInt();
+      final nextRetry =
+          DateTime.now().millisecondsSinceEpoch +
+          (1000 * (current + 1) * (current + 1)); // quadratic backoff
+      await db.update(
+        'sync_queue',
+        <String, Object?>{
+          'retry_count': current + 1,
+          'next_retry_at_ms': nextRetry,
+        },
+        where: 'op_id = ?',
+        whereArgs: <Object>[opId],
+      );
+    }, name: 'incrementRetryCount');
+  }
+
+  /// Retrieves a single folder by ID (returns null if not found or deleted).
+  Future<Folder?> getFolder(String id) async {
+    return _readOp((db) async {
+      final rows = await db.query(
+        'folders',
+        columns: <String>['payload'],
+        where: 'id = ? AND is_deleted = 0',
+        whereArgs: [id],
+        limit: 1,
+      );
+
+      if (rows.isEmpty) return null;
+      final rawPayload = rows.first['payload'] as String;
+      if (rawPayload.isEmpty) return null;
+
+      try {
+        final payload = jsonDecode(rawPayload) as Map<String, dynamic>;
+        return Folder.fromJson(payload);
+      } catch (_) {
+        return null;
+      }
+    }, name: 'getFolder');
+  }
+
   Future<void> markOperationSucceeded(String opId) async {
     await _writeOp((db) async {
       await db.delete(
@@ -653,25 +1154,25 @@ class LocalDatabase {
         whereArgs: <Object>[tsKey, idKey],
       );
 
-      int? timestampMs;
+      int? timestampMicros;
       String? lastId;
       for (final row in rows) {
         final key = row['key'] as String;
         final value = row['value'] as String?;
         if (key == tsKey && value != null) {
-          timestampMs = int.tryParse(value);
+          timestampMicros = int.tryParse(value);
         } else if (key == idKey && value != null && value.isNotEmpty) {
           lastId = value;
         }
       }
 
-      return SyncCursor(timestampMs: timestampMs, lastId: lastId);
+      return SyncCursor(timestampMicros: timestampMicros, lastId: lastId);
     }, name: 'readCursor');
   }
 
   Future<void> writeCursor({
     required String entityType,
-    required int timestampMs,
+    required int timestampMicros,
     required String lastId,
   }) async {
     await _writeOp((db) async {
@@ -681,7 +1182,7 @@ class LocalDatabase {
       await db.transaction((txn) async {
         await txn.insert('sync_state', <String, Object?>{
           'key': tsKey,
-          'value': '$timestampMs',
+          'value': '$timestampMicros',
         }, conflictAlgorithm: ConflictAlgorithm.replace);
         await txn.insert('sync_state', <String, Object?>{
           'key': idKey,
@@ -703,7 +1204,7 @@ class LocalDatabase {
       });
     }, name: 'clearAllData');
 
-    if (!_isClosed) {
+    if (!_isClosed && !_isDisposing) {
       _notesChangedController.add(null);
       _foldersChangedController.add(null);
     }
@@ -730,7 +1231,7 @@ class LocalDatabase {
       });
     }, name: 'insertActivityEvent');
 
-    if (!_isClosed) {
+    if (!_isClosed && !_isDisposing) {
       _notesChangedController.add(null);
     }
   }
@@ -768,7 +1269,7 @@ class LocalDatabase {
       await db.delete('completion_events');
     }, name: 'deleteAllActivity');
 
-    if (!_isClosed) {
+    if (!_isClosed && !_isDisposing) {
       _notesChangedController.add(null);
     }
   }
@@ -794,8 +1295,11 @@ class LocalDatabase {
       if (!name.startsWith('synq_') || !name.endsWith('.db')) continue;
       if (name == currentFileName) continue;
 
-      final userIdRaw = name.substring(5, name.length - 3); // Remove 'synq_' and '.db'
-      
+      final userIdRaw = name.substring(
+        5,
+        name.length - 3,
+      ); // Remove 'synq_' and '.db'
+
       // Always delete the anonymous DB — it's a throwaway session.
       if (name == anonymousFileName) {
         if (!_cache.containsKey('_anonymous')) {
@@ -803,7 +1307,7 @@ class LocalDatabase {
         }
         continue;
       }
-      
+
       if (_cache.containsKey(userIdRaw)) continue;
 
       // Read the .lastopen sidecar to decide staleness.
@@ -837,10 +1341,10 @@ class LocalDatabase {
 
   Future<Database> _openDatabase() async {
     if (_isClosed) throw StateError('Database is closed');
-    
+
     // Check local instance first
     if (_database != null) return _database!;
-    
+
     // Check static cache
     final cached = _cache[_userId];
     if (cached != null && cached.isOpen) {
@@ -848,20 +1352,25 @@ class LocalDatabase {
       return cached;
     }
 
-    if (_dbOpenCompleter != null) return _dbOpenCompleter!.future;
+    if (_dbOpenCompleter != null) {
+      debugPrint('DB_OPEN_AWAITING_COMPLETER (User: $_userId)');
+      return _dbOpenCompleter!.future;
+    }
 
+    debugPrint('DB_OPEN_STARTING (User: $_userId)');
     _dbOpenCompleter = Completer<Database>();
     try {
       final basePath = await getDatabasesPath();
       final databasePath = path.join(basePath, 'synq_$_userId.db');
-      
+
       Database? db;
       int attempts = 0;
       while (attempts < 3) {
         try {
+          debugPrint('DB_OPEN_ATTEMPT $attempts (User: $_userId)');
           db = await openDatabase(
             databasePath,
-            version: 3,
+            version: 6,
             onCreate: (db, _) async {
               // (Existing onCreate code omitted for brevity but preserved in full file)
               await _onCreate(db);
@@ -873,7 +1382,8 @@ class LocalDatabase {
           attempts++;
           final errStr = e.toString();
           // SQLITE_READONLY_DBMOVED (1032) or standard SQLITE_READONLY
-          if ((errStr.contains('1032') || errStr.contains('READONLY')) && attempts < 3) {
+          if ((errStr.contains('1032') || errStr.contains('READONLY')) &&
+              attempts < 3) {
             // Try to force close any existing handles and wait
             await _cache[_userId]?.close();
             _cache.remove(_userId);
@@ -885,7 +1395,7 @@ class LocalDatabase {
       }
 
       if (db == null) throw StateError('Failed to open database');
-      
+
       _database = db;
       _cache[_userId] = db;
       _dbOpenCompleter!.complete(db);
@@ -912,7 +1422,10 @@ class LocalDatabase {
         is_task INTEGER NOT NULL DEFAULT 0,
         priority TEXT,
         category TEXT,
-        folder_id TEXT
+        folder_id TEXT,
+        field_versions TEXT NOT NULL DEFAULT '{}',
+        hlc_timestamp TEXT,
+        deleted_at_ms INTEGER
       )
     ''');
     await db.execute(
@@ -930,7 +1443,9 @@ class LocalDatabase {
         id TEXT PRIMARY KEY,
         payload TEXT NOT NULL,
         updated_at_ms INTEGER NOT NULL,
-        is_deleted INTEGER NOT NULL DEFAULT 0
+        is_deleted INTEGER NOT NULL DEFAULT 0,
+        field_versions TEXT NOT NULL DEFAULT '{}',
+        hlc_timestamp TEXT
       )
     ''');
     await db.execute(
@@ -978,10 +1493,16 @@ class LocalDatabase {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute('ALTER TABLE notes ADD COLUMN scheduled_time_ms INTEGER');
+      await db.execute(
+        'ALTER TABLE notes ADD COLUMN scheduled_time_ms INTEGER',
+      );
       await db.execute('ALTER TABLE notes ADD COLUMN end_time_ms INTEGER');
-      await db.execute('ALTER TABLE notes ADD COLUMN is_completed INTEGER NOT NULL DEFAULT 0');
-      await db.execute('ALTER TABLE notes ADD COLUMN is_task INTEGER NOT NULL DEFAULT 0');
+      await db.execute(
+        'ALTER TABLE notes ADD COLUMN is_completed INTEGER NOT NULL DEFAULT 0',
+      );
+      await db.execute(
+        'ALTER TABLE notes ADD COLUMN is_task INTEGER NOT NULL DEFAULT 0',
+      );
       await db.execute('ALTER TABLE notes ADD COLUMN priority TEXT');
       await db.execute('ALTER TABLE notes ADD COLUMN category TEXT');
       await db.execute('ALTER TABLE notes ADD COLUMN folder_id TEXT');
@@ -1018,26 +1539,31 @@ class LocalDatabase {
           final isTask = payload['isTask'] as bool? ?? false;
           final priorityRaw = payload['priority'] as String?;
           final priority = priorityRaw == 'medium' ? 'none' : priorityRaw;
-          
+
           if (priorityRaw == 'medium') {
             payload['priority'] = 'none';
           }
-          
+
           final category = payload['category'] as String?;
           final folderId = payload['folderId'] as String?;
           final scheduledTimeMs = parseMs(payload['scheduledTime']);
           final endTimeMs = parseMs(payload['endTime']);
 
-          batch.update('notes', {
-            'payload': jsonEncode(payload),
-            'scheduled_time_ms': scheduledTimeMs,
-            'end_time_ms': endTimeMs,
-            'is_completed': isCompleted ? 1 : 0,
-            'is_task': isTask ? 1 : 0,
-            'priority': priority,
-            'category': category,
-            'folder_id': folderId,
-          }, where: 'id = ?', whereArgs: [row['id']]);
+          batch.update(
+            'notes',
+            {
+              'payload': jsonEncode(payload),
+              'scheduled_time_ms': scheduledTimeMs,
+              'end_time_ms': endTimeMs,
+              'is_completed': isCompleted ? 1 : 0,
+              'is_task': isTask ? 1 : 0,
+              'priority': priority,
+              'category': category,
+              'folder_id': folderId,
+            },
+            where: 'id = ?',
+            whereArgs: [row['id']],
+          );
         } catch (_) {}
       }
       await batch.commit(noResult: true);
@@ -1071,8 +1597,8 @@ class LocalDatabase {
         try {
           final payloadRaw = row['payload'] as String;
           final payload = jsonDecode(payloadRaw) as Map<String, dynamic>;
-          var timestamp = payload['completedAt'] != null 
-              ? DateTime.parse(payload['completedAt']).millisecondsSinceEpoch 
+          var timestamp = payload['completedAt'] != null
+              ? DateTime.parse(payload['completedAt']).millisecondsSinceEpoch
               : (row['scheduled_time_ms'] as int? ?? nowMs);
 
           batch.insert('completion_events', {
@@ -1086,6 +1612,31 @@ class LocalDatabase {
       }
       await batch.commit(noResult: true);
     }
+
+    if (oldVersion < 4) {
+      // Add CRDT metadata columns for Supabase sync engine
+      await db.execute(
+        "ALTER TABLE notes ADD COLUMN field_versions TEXT NOT NULL DEFAULT '{}'",
+      );
+      await db.execute('ALTER TABLE notes ADD COLUMN hlc_timestamp TEXT');
+      await db.execute(
+        "ALTER TABLE folders ADD COLUMN field_versions TEXT NOT NULL DEFAULT '{}'",
+      );
+      await db.execute('ALTER TABLE folders ADD COLUMN hlc_timestamp TEXT');
+    }
+
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE notes ADD COLUMN deleted_at_ms INTEGER');
+    }
+    if (oldVersion < 6) {
+      await _v6Migration(db);
+      debugPrint('MIGRATION_V6: Cleared sync cursors to fix timezone bug.');
+    }
+  }
+
+  // Version 6 migration included here:
+  Future<void> _v6Migration(Database db) async {
+    await db.execute("DELETE FROM sync_state WHERE key LIKE '%.cursor.%'");
   }
 
   /// Writes the current epoch ms to a `.lastopen` sidecar file next to the DB.
@@ -1107,10 +1658,10 @@ class LocalDatabase {
     required String opType,
     required String? payload,
   }) async {
-    await txn.delete(
-      'sync_queue',
-      where: 'entity_type = ? AND entity_id = ? AND status = ?',
-      whereArgs: <Object>[entityType, entityId, _queuePending],
+    await _deletePendingOperation(
+      txn: txn,
+      entityType: entityType,
+      entityId: entityId,
     );
 
     await txn.insert('sync_queue', <String, Object?>{
@@ -1126,6 +1677,18 @@ class LocalDatabase {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
     _syncQueueChangedController.add(null);
+  }
+
+  Future<void> _deletePendingOperation({
+    required Transaction txn,
+    required String entityType,
+    required String entityId,
+  }) async {
+    await txn.delete(
+      'sync_queue',
+      where: 'entity_type = ? AND entity_id = ? AND status = ?',
+      whereArgs: <Object>[entityType, entityId, _queuePending],
+    );
   }
 
   Future<int?> _currentUpdatedAtMs({

@@ -22,9 +22,10 @@ Map<String, dynamic> _$$SubTaskImplToJson(_$SubTaskImpl instance) =>
 
 _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       id: json['id'] as String,
-      title: json['title'] as String,
+      title: json['title'] as String? ?? '',
       body: json['body'] as String?,
-      category: $enumDecode(_$NoteCategoryEnumMap, json['category']),
+      category: $enumDecodeNullable(_$NoteCategoryEnumMap, json['category']) ??
+          NoteCategory.personal,
       createdAt: DateTime.parse(json['createdAt'] as String),
       scheduledTime: json['scheduledTime'] == null
           ? null
@@ -73,6 +74,10 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       deviceLastEdited: json['deviceLastEdited'] as String?,
       color: (json['color'] as num?)?.toInt(),
       order: (json['order'] as num?)?.toInt() ?? 0,
+      isDeleted: json['isDeleted'] as bool? ?? false,
+      deletedAt: json['deletedAt'] == null
+          ? null
+          : DateTime.parse(json['deletedAt'] as String),
     );
 
 Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
@@ -104,6 +109,8 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'deviceLastEdited': instance.deviceLastEdited,
       'color': instance.color,
       'order': instance.order,
+      'isDeleted': instance.isDeleted,
+      'deletedAt': instance.deletedAt?.toIso8601String(),
     };
 
 const _$NoteCategoryEnumMap = {

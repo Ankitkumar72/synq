@@ -23,7 +23,7 @@ const bucket = getStorage().bucket();
 const app = express();
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB cap
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB hard cap
 });
 
 // ─── Health Check ───────────────────────────────────────────────────
@@ -42,37 +42,25 @@ app.post("/upload", upload.single("image"), async (req, res) => {
     const image = sharp(inputBuffer);
     const meta = await image.metadata();
 
-    let optimizedBuffer;
-    let outputContentType = req.file.mimetype;
-    let outputExtension = path.extname(req.file.originalname) || ".jpg";
+    // ── Production Optimization ──
+    // Standardize all attachments to WebP (90% quality) for high fidelity + speed.
+    // Cap resolution at 2048px (2K) to prevent misuse as a general cloud store.
+    const outputExtension = ".webp";
+    const outputContentType = "image/webp";
 
-    // ── Format-specific lossless optimization ──
-    if (meta.format === "png") {
-      optimizedBuffer = await image
-        .png({ compressionLevel: 9, effort: 10 })
-        .withMetadata(false) // strip EXIF
-        .toBuffer();
-      outputContentType = "image/png";
-      outputExtension = ".png";
-    } else if (meta.format === "jpeg" || meta.format === "jpg") {
-      optimizedBuffer = await image
-        .jpeg({ quality: 100, mozjpeg: true })
-        .withMetadata(false)
-        .toBuffer();
-      outputContentType = "image/jpeg";
-      outputExtension = ".jpg";
-    } else if (["bmp", "tiff"].includes(meta.format)) {
-      // Convert wasteful formats to lossless WebP
-      optimizedBuffer = await image
-        .webp({ lossless: true, effort: 6 })
-        .withMetadata(false)
-        .toBuffer();
-      outputContentType = "image/webp";
-      outputExtension = ".webp";
-    } else {
-      // WebP, GIF, etc. — just strip metadata
-      optimizedBuffer = await image.withMetadata(false).toBuffer();
-    }
+    const optimizedBuffer = await image
+      .resize({
+        width: 2048,
+        height: 2048,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({
+        quality: 90, // Pro-level quality
+        effort: 6,
+      })
+      .withMetadata(false) // Strip EXIF for privacy
+      .toBuffer();
 
     // ── Upload to Firebase Storage ──
     const filename = `attachments/${crypto.randomUUID()}${outputExtension}`;
@@ -85,12 +73,13 @@ app.post("/upload", upload.single("image"), async (req, res) => {
           optimized: "true",
           originalSize: inputBuffer.length.toString(),
           optimizedSize: optimizedBuffer.length.toString(),
+          resolution: `${meta.width}x${meta.height}`,
         },
       },
     });
 
-    // Make the file publicly readable (or use signed URLs if you prefer)
-    await file.makePublic();
+    // In production, keep files private and use Signed URLs or Storage rules.
+    // await file.makePublic(); 
 
     const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
 

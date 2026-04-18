@@ -38,6 +38,8 @@ class Task with _$Task {
     String? deviceLastEdited,
     int? color,
     @Default(0) int order,
+    @Default(false) bool isDeleted,
+    DateTime? deletedAt,
   }) = _Task;
 
   factory Task.fromJson(Map<String, dynamic> json) => _$TaskFromJson(json);

@@ -40,7 +40,6 @@ class TasksNotifier extends StreamNotifier<List<Task>> {
   @override
   Stream<List<Task>> build() {
     NotificationService().onAction ??= _handleNotificationAction;
-    ref.watch(syncCoordinatorProvider);
     _repository = ref.watch(tasksRepositoryProvider);
     
     return _repository.watchTasks();
@@ -69,13 +68,6 @@ class TasksNotifier extends StreamNotifier<List<Task>> {
   }
 
   Future<void> deleteTask(String id) async {
-    try {
-      final task = state.value?.firstWhere((t) => t.id == id);
-      if (task != null && task.attachments.isNotEmpty) {
-        await ImageStorageService.deleteFiles(task.attachments);
-      }
-    } catch (_) {}
-
     await _repository.deleteTask(id);
     await NotificationService().cancelNotification(id.hashCode);
   }
@@ -243,7 +235,7 @@ class TasksNotifier extends StreamNotifier<List<Task>> {
       }
 
       final instance = parentTask.copyWith(
-        id: DateTime.now().millisecondsSinceEpoch.toString() + count.toString(),
+        id: const Uuid().v4(),
         scheduledTime: nextDate,
         endTime: nextEndTime,
         reminderTime: nextReminder,

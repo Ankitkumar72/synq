@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/domain/models/recurrence_rule.dart';
 import '../../../notes/domain/models/note.dart';
+import 'package:uuid/uuid.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../timeline/presentation/pages/create_event_page.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -629,7 +630,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
           folderId: _selectedFolderId,
         ) ??
         Note(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          id: const Uuid().v4(),
           title: title,
           body: description.isEmpty ? null : description,
           category: _selectedTaskCategory,

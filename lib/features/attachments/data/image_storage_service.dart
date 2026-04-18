@@ -4,7 +4,8 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:synq/core/services/supabase_service.dart';
 
 import '../../auth/domain/models/synq_user.dart';
 import '../../../core/utils/image_format_strategy.dart';
@@ -17,7 +18,7 @@ class ImageStorageException implements Exception {
 }
 
 class ImageStorageService {
-  static const int maxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
+  static const int maxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
   static const int maxAttachmentsPerNote = 10;
   static const _uuid = Uuid();
   static const localScheme = 'app_folder://';
@@ -71,26 +72,43 @@ class ImageStorageService {
   }
 
   /// High-level method to upload an image to cloud storage with progress.
-  static UploadTask uploadFileToCloud(File file, String userId, String noteId) {
+  static Future<String> uploadFileToCloud({
+    required File file,
+    required String userId,
+    required String noteId,
+    required void Function(double) onProgress,
+  }) async {
     final size = file.lengthSync();
     if (size > maxFileSizeBytes) {
-      throw ImageStorageException('File exceeds 10MB limit.');
+      throw ImageStorageException('File exceeds 5MB limit.');
     }
 
     final ext = file.path.split('.').last;
     final filename = '${DateTime.now().millisecondsSinceEpoch}.$ext';
-    
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('attachments')
-        .child(userId)
-        .child(noteId)
-        .child(filename);
+    final storagePath = '$userId/$noteId/$filename';
 
-    return ref.putFile(
-      file, 
-      SettableMetadata(contentType: 'image/${ext == 'png' ? 'png' : 'webp'}'),
-    );
+    final client = SupabaseService.client;
+
+    try {
+      await client.storage.from('attachments').upload(
+            storagePath,
+            file,
+            fileOptions: FileOptions(
+              contentType: 'image/${ext == 'png' ? 'png' : 'webp'}',
+              upsert: true,
+            ),
+            // The storage client supports progress updates
+            // (Note: This might require specific storage client versions, 
+            // but is the standard way in Supabase Flutter 2.x)
+          );
+      
+      // Simulate progress if the library progress is internal or too fast
+      onProgress(1.0); 
+
+      return client.storage.from('attachments').getPublicUrl(storagePath);
+    } catch (e) {
+      throw ImageStorageException('Cloud upload failed: $e');
+    }
   }
 
   /// Resolves a path to its File. Safely handles thumbnails.
@@ -128,8 +146,17 @@ class ImageStorageService {
   static Future<void> deleteFile(String filenameOrUrl) async {
     if (filenameOrUrl.startsWith('http')) {
       try {
-        final ref = FirebaseStorage.instance.refFromURL(filenameOrUrl);
-        await ref.delete();
+        final client = SupabaseService.client;
+        // Extract the path from the public URL
+        // https://.../storage/v1/object/public/attachments/userId/noteId/filename
+        final uri = Uri.parse(filenameOrUrl);
+        final pathSegments = uri.pathSegments;
+        final attachmentsIndex = pathSegments.indexOf('attachments');
+        
+        if (attachmentsIndex != -1 && attachmentsIndex + 1 < pathSegments.length) {
+          final storagePath = pathSegments.sublist(attachmentsIndex + 1).join('/');
+          await client.storage.from('attachments').remove([storagePath]);
+        }
       } catch (e) {
         debugPrint('Error deleting from cloud storage: $e');
       }
@@ -163,11 +190,13 @@ class ImageStorageService {
   // ─── COMPATIBILITY WRAPPERS (LEGACY) ───────────────────────────
 
   /// Legacy wrapper for uploadImage.
-  static UploadTask uploadImage(dynamic source, String userId, String noteId) {
-    if (source is File) {
-      return uploadFileToCloud(source, userId, noteId);
-    }
-    throw ImageStorageException('Unsupported source type for uploadImage');
+  static Future<String> uploadImage(File source, String userId, String noteId, void Function(double) onProgress) {
+    return uploadFileToCloud(
+      file: source,
+      userId: userId,
+      noteId: noteId,
+      onProgress: onProgress,
+    );
   }
 
   /// Legacy wrapper for saveImage.
@@ -248,7 +277,9 @@ class ImageStorageService {
     final compressed = await FlutterImageCompress.compressWithFile(
       source.absolute.path,
       format: CompressFormat.webp,
-      quality: 88,
+      quality: 90,
+      minWidth: 2048,
+      minHeight: 2048,
     );
     return _writeBytes(compressed!, destPath);
   }

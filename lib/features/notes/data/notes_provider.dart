@@ -3,6 +3,7 @@ import '../../../core/services/notification_service.dart';
 import '../domain/models/note.dart';
 import '../../../../core/domain/models/recurrence_rule.dart';
 import '../../attachments/data/image_storage_service.dart';
+import 'package:uuid/uuid.dart';
 import 'notes_repository.dart';
 import '../../../core/providers/repository_provider.dart';
 
@@ -18,7 +19,6 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   @override
   Stream<List<Note>> build() {
     NotificationService().onAction ??= _handleNotificationAction;
-    ref.watch(syncCoordinatorProvider);
     _repository = ref.watch(notesRepositoryProvider);
     
     return _repository.watchNotes();
@@ -61,13 +61,6 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   }
 
   Future<void> deleteNote(String id) async {
-    try {
-      final note = state.value?.firstWhere((n) => n.id == id);
-      if (note != null && note.attachments.isNotEmpty) {
-        await ImageStorageService.deleteFiles(note.attachments);
-      }
-    } catch (_) {}
-
     await _repository.deleteNote(id);
     await NotificationService().cancelNotification(id.hashCode);
   }
@@ -247,9 +240,7 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
       }
 
       final instance = parentNote.copyWith(
-        id:
-            DateTime.now().millisecondsSinceEpoch.toString() +
-            count.toString(), // Unique ID
+        id: const Uuid().v4(), // Unique ID
         scheduledTime: nextDate,
         endTime: nextEndTime,
         reminderTime: nextReminder,

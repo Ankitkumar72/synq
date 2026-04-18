@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:super_clipboard/super_clipboard.dart';
+import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:synq/features/notes/utils/markdown_bridge.dart';
 import 'package:synq/features/notes/utils/html_parser.dart';
 import 'package:synq/core/theme/app_theme.dart';
@@ -72,9 +73,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   bool _hasUnsavedChanges = false;
   bool _isSaving = false;
   late final ValueNotifier<String> _saveStatusNotifier;
-  Set<String> _lastKnownAttachments = {};
   Timer? _autoSaveTimer;
   StreamSubscription<Note?>? _noteSubscription;
+  StreamSubscription<quill.DocChange>? _quillSubscription;
   String? _deviceId;
 
   late AnimationController _animationController;
@@ -117,10 +118,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     }
 
     _restoreDraftIfAvailable();
-    _lastKnownAttachments = _attachments.toSet();
 
     _titleController.addListener(_onTextChanged);
-    _quillController.addListener(_onTextChanged);
 
     // Listen to focus changes to toggle toolbar
     _bodyFocusNode.addListener(() {
@@ -148,6 +147,62 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     _animationController.forward();
     _loadDeviceId();
     _setupNoteSubscription();
+    _setupQuillChangeTracking();
+  }
+
+  @override
+  void dispose() {
+    _titleController.removeListener(_onTextChanged);
+    _titleController.dispose();
+    _quillController.dispose();
+    _animationController.dispose();
+    _titleFocusNode.dispose();
+    _bodyFocusNode.dispose();
+    _autoSaveTimer?.cancel();
+    _noteSubscription?.cancel();
+    _quillSubscription?.cancel();
+    _saveStatusNotifier.dispose();
+    super.dispose();
+  }
+
+  void _setupQuillChangeTracking() {
+    _quillSubscription = _quillController.document.changes.listen((change) {
+      // 1. Analyze for slash command (/image )
+      final delta = change.change;
+      final text = _quillController.document.toPlainText();
+      final selection = _quillController.selection;
+      
+      // If the change was an insertion and ends with a space
+      if (selection.isCollapsed && selection.start >= 7) {
+        final checkRange = text.substring(selection.start - 7, selection.start);
+        if (checkRange == '/image ') {
+          // Remove the command text
+          _quillController.replaceText(selection.start - 7, 7, '', null);
+          // Auto-trigger image menu
+          _showImageSourceMenu();
+        }
+      }
+
+      // 2. Analyze for attachment sync
+      bool hasImageChange = false;
+      for (final op in delta.toList()) {
+        if (op.isInsert && op.data is Map && (op.data as Map).containsKey('image')) {
+          hasImageChange = true;
+          break;
+        }
+        if (op.isDelete) {
+          hasImageChange = true;
+          break;
+        }
+      }
+
+      if (hasImageChange) {
+        _syncAttachmentsFromDelta();
+      }
+
+      // Trigger auto-save
+      _onTextChanged();
+    });
   }
 
   Future<void> _loadDeviceId() async {
@@ -192,6 +247,20 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   void _restoreDraftIfAvailable() {
     final draft = NoteEditorDraftStore.read(_draftKey);
     if (draft == null) return;
+
+    // When editing an existing note, only restore the draft if it is
+    // strictly newer than the server copy. This prevents a stale
+    // crash-draft from silently overwriting a note that was already
+    // updated (e.g. from another device) after the draft was created.
+    if (widget.noteToEdit != null) {
+      final serverUpdatedAt = widget.noteToEdit!.updatedAt;
+      if (serverUpdatedAt != null &&
+          !draft.lastEdited.isAfter(serverUpdatedAt)) {
+        // Draft is the same age or older — discard it.
+        NoteEditorDraftStore.remove(_draftKey);
+        return;
+      }
+    }
 
     _draftNoteId = draft.noteId ?? _draftNoteId;
     _titleController.text = draft.title;
@@ -243,7 +312,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   }
 
   void _onTextChanged() {
-    _syncAttachmentsFromDelta();
     _markUnsaved();
 
     // Auto-save logic
@@ -254,48 +322,15 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       if (!_isSaving) {
         await _handleSave();
       } else {
-        // If already saving, reschedule once
+        // Already saving — reschedule with a proper async closure so we
+        // await the next save and don't silently drop it.
         _autoSaveTimer?.cancel();
-        _autoSaveTimer = Timer(const Duration(seconds: 1), _handleSave);
+        _autoSaveTimer = Timer(
+          const Duration(seconds: 1),
+          () async => await _handleSave(),
+        );
       }
     });
-  }
-
-  void _syncAttachmentsFromDelta() {
-    final delta = _quillController.document.toDelta();
-    final List<String> currentInlineUrls = [];
-
-    for (final operation in delta.toList()) {
-      if (operation.isInsert && operation.data is Map) {
-        final data = operation.data as Map;
-        if (data.containsKey('image')) {
-          currentInlineUrls.add(data['image'] as String);
-        }
-      }
-    }
-
-    // Only trigger a setState if the attachment set actually changed
-    final currentSet = currentInlineUrls.toSet();
-    if (!setEquals(currentSet, _lastKnownAttachments)) {
-      setState(() {
-        _lastKnownAttachments = currentSet;
-        _attachments.clear();
-        _attachments.addAll(currentSet);
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _quillController.dispose();
-    _titleFocusNode.dispose();
-    _bodyFocusNode.dispose();
-    _autoSaveTimer?.cancel();
-    _noteSubscription?.cancel();
-    _saveStatusNotifier.dispose();
-    _animationController.dispose();
-    super.dispose();
   }
 
   Future<void> _handleSave() async {
@@ -322,7 +357,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     final noteId =
         _editingNote?.id ??
         _draftNoteId ??
-        DateTime.now().millisecondsSinceEpoch.toString();
+        const Uuid().v4();
 
     final note =
         (_editingNote?.copyWith(
@@ -390,23 +425,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     }
   }
 
-  Future<String> _processUploadTask(UploadTask task) async {
-    final subscription = task.snapshotEvents.listen((snapshot) {
-      final progress = snapshot.bytesTransferred / snapshot.totalBytes;
-      final percentage = (progress * 100).toInt();
-      if (mounted) {
-        _saveStatusNotifier.value = 'Uploading $percentage%';
-      }
-    });
-
-    try {
-      final snapshot = await task;
-      final url = await snapshot.ref.getDownloadURL();
-      return url;
-    } finally {
-      subscription.cancel();
-    }
-  }
 
   Future<void> _pickImage() async {
     final user = ref.read(userProvider).valueOrNull;
@@ -424,107 +442,237 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
 
-    final tempPath = image.path;
-    final noteId =
-        _editingNote?.id ??
-        _draftNoteId ??
-        DateTime.now().millisecondsSinceEpoch.toString();
-
-    // 1. OPTIMISTIC INSERTION (Instant UI)
-    final index = _quillController.selection.extentOffset;
-    _quillController.document.insert(index, quill.BlockEmbed.image(tempPath));
-    _quillController.formatText(
-      index,
-      1,
-      quill.Attribute('width', quill.AttributeScope.inline, 300),
-    );
-    _quillController.updateSelection(
-      TextSelection.collapsed(offset: index + 1),
-      quill.ChangeSource.local,
-    );
-
-    setState(() {
-      _hasUnsavedChanges = true;
-      _saveStatusNotifier.value = 'Optimizing...';
-    });
-
-    // 2. BACKGROUND PROCESSING (No await)
-    _finalizeImageUpload(tempPath, noteId, user);
+    _handleSingleImagePath(image.path);
   }
 
-  Future<void> _finalizeImageUpload(
-    String tempPath,
-    String noteId,
-    SynqUser user,
-  ) async {
+  Future<void> _pickImages() async {
+    final user = ref.read(userProvider).valueOrNull;
+    if (user == null) return;
+
+    if (_attachments.length >= ImageStorageService.maxAttachmentsPerNote) {
+      _showToast(context, 'Max images reached.');
+      return;
+    }
+
+    final List<File> images = await _mediaService.pickMultiImage();
+    if (images.isEmpty) return;
+
+    for (final img in images) {
+      await _handleSingleImagePath(img.path);
+    }
+  }
+
+  Future<void> _handleSingleImagePath(String path) async {
+    final user = ref.read(userProvider).valueOrNull;
+    if (user == null) return;
+
+    final noteId = _editingNote?.id ??
+        _draftNoteId ??
+        'temp_${const Uuid().v4()}';
+
+    _saveStatusNotifier.value = 'Optimizing...';
+
     try {
-      // 1. Process via Tiered Storage Service
       final storageResult = await ImageStorageService.storeImage(
-        sourceFile: File(tempPath),
+        sourceFile: File(path),
         planTier: user.planTier,
       );
 
       String finalUri;
+
       if (user.planTier.isPro && storageResult.hasServerCopy) {
-        // Pro users: Upload the server-optimised copy
-        final task = ImageStorageService.uploadFileToCloud(
-          File(storageResult.serverCopyPath!),
-          user.id,
-          noteId,
+        _saveStatusNotifier.value = 'Uploading...';
+        finalUri = await ImageStorageService.uploadFileToCloud(
+          file: File(storageResult.serverCopyPath!),
+          userId: user.id,
+          noteId: noteId,
+          onProgress: (progress) {
+            if (mounted) {
+              final percentage = (progress * 100).toInt();
+              _saveStatusNotifier.value = 'Uploading $percentage%';
+            }
+          },
         );
-        finalUri = await _processUploadTask(task);
       } else {
-        // Free users: Internal URI for the lossless local original
         finalUri = storageResult.localOriginalPath;
       }
 
-      // 3. SILENT SWAP in Editor Delta
-      if (!mounted) return;
+      final selection = _quillController.selection;
+      final index = selection.isValid ? selection.end : _quillController.document.length;
+      
+      _quillController.document.insert(
+        index,
+        quill.BlockEmbed.image(finalUri),
+      );
+      
+      // Default width attribute
+      _quillController.formatText(
+        index,
+        1,
+        quill.Attribute('width', quill.AttributeScope.inline, 300),
+      );
+      
+      // Move cursor after the image
+      _quillController.updateSelection(
+        TextSelection.collapsed(offset: index + 1),
+        quill.ChangeSource.local,
+      );
 
-      final delta = _quillController.document.toDelta();
-      int currentOffset = 0;
-      int? foundOffset;
-
-      for (final op in delta.toList()) {
-        if (op.isInsert) {
-          if (op.data is Map && (op.data as Map)['image'] == tempPath) {
-            foundOffset = currentOffset;
-            break;
-          }
-          currentOffset += op.length ?? 0;
-        } else if (op.isRetain) {
-          currentOffset += op.length ?? 0;
-        }
-      }
-
-      if (foundOffset != null) {
-        // Replace the temp path with the final URI
-        _quillController.replaceText(
-          foundOffset,
-          1,
-          quill.BlockEmbed.image(finalUri),
-          null,
-        );
-        // Re-apply width
-        _quillController.formatText(
-          foundOffset,
-          1,
-          quill.Attribute('width', quill.AttributeScope.inline, 300),
-        );
-
-        setState(() {
-          _saveStatusNotifier.value = 'Saved';
-        });
-        _handleSave();
-      }
+      setState(() {
+        _attachments.add(finalUri);
+        _hasUnsavedChanges = true;
+        _saveStatusNotifier.value = 'Saved';
+      });
+      _handleSave();
     } catch (e) {
+      debugPrint('Error handling image: $e');
       if (mounted) {
-        _showToast(context, 'Media optimization failed: $e');
-        _saveStatusNotifier.value = 'Sync Error';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add image: $e')),
+        );
+        _saveStatusNotifier.value = 'Error';
       }
     }
   }
 
+  void _syncAttachmentsFromDelta() {
+    final delta = _quillController.document.toDelta();
+    final List<String> currentImageUris = [];
+    
+    for (final op in delta.toList()) {
+      if (op.isInsert && op.data is Map) {
+        final data = op.data as Map;
+        if (data.containsKey('image')) {
+          currentImageUris.add(data['image'] as String);
+        }
+      }
+    }
+
+    if (!setEquals(_attachments.toSet(), currentImageUris.toSet())) {
+      setState(() {
+        _attachments.clear();
+        _attachments.addAll(currentImageUris);
+        _hasUnsavedChanges = true;
+      });
+      _persistDraft();
+    }
+  }
+
+  void _showImageSourceMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Insert Image',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: Color(0xFF5473F7)),
+              title: const Text('Take Photo', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImageFromSource(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF5473F7)),
+              title: const Text('Photo Library', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImages();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.link_rounded, color: Color(0xFF5473F7)),
+              title: const Text('Image URL', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                _showImageUrlDialog();
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImageFromSource(ImageSource source) async {
+    final file = await _mediaService.pickImage(source: source);
+    if (file != null) {
+      await _handleSingleImagePath(file.path);
+    }
+  }
+
+  void _showImageUrlDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Insert Image URL'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'https://example.com/image.png',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                _insertRemoteImage(controller.text.trim());
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Insert'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _insertRemoteImage(String url) {
+    if (url.isEmpty) return;
+    final selection = _quillController.selection;
+    _quillController.document.insert(
+      selection.end,
+      quill.BlockEmbed.image(url),
+    );
+    _quillController.updateSelection(
+      TextSelection.collapsed(offset: selection.end + 1),
+      quill.ChangeSource.local,
+    );
+    _markUnsaved();
+  }
 
   Future<void> _openFolderPicker() async {
     final foldersState = ref.read(foldersProvider);
@@ -707,17 +855,14 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   }
 
   void _showNoteOptions(BuildContext context) {
-    final currentNote =
-        _editingNote ??
+    final currentNote = _editingNote ??
         Note(
-          id: _draftNoteId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          id: _draftNoteId ?? const Uuid().v4(),
           title: _titleController.text.trim().isEmpty
               ? 'Untitled'
               : _titleController.text.trim(),
-          body: MarkdownBridge.markdownFromDelta(
-            _quillController.document,
-          ).trim(),
-          category: NoteCategory.work, // Default category
+          body: MarkdownBridge.markdownFromDelta(_quillController.document).trim(),
+          category: NoteCategory.work,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
           folderId: _selectedFolderId,
@@ -737,16 +882,27 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           note: currentNote,
           isReadOnly: _isReadOnly,
           onClose: () {
-            Navigator.pop(sheetContext);
+            Navigator.pop(sheetContext); // Close sheet
+            Navigator.of(context).pop(); // Close note editor
           },
           onToggleReadingView: () {
             setState(() {
               _isReadOnly = !_isReadOnly;
               _quillController.readOnly = _isReadOnly;
             });
+            // Reliably dismiss the keyboard when entering read-only mode
+            if (_isReadOnly) {
+              _titleFocusNode.unfocus();
+              _bodyFocusNode.unfocus();
+              // Delayed fallback for platforms that don't dismiss immediately
+              Future.delayed(const Duration(milliseconds: 100), () {
+                FocusManager.instance.primaryFocus?.unfocus();
+              });
+            }
           },
           onRename: () {
-            _titleFocusNode.requestFocus();
+            Navigator.pop(sheetContext);
+            _showRenameDialog();
           },
           onMove: () {
             _openFolderPicker();
@@ -755,14 +911,12 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
             _confirmDelete();
           },
           onFind: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Find not implemented')),
-            );
+            Navigator.pop(sheetContext);
+            _showFindReplaceDialog(isReplace: false);
           },
           onReplace: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Replace not implemented')),
-            );
+            Navigator.pop(sheetContext);
+            _showFindReplaceDialog(isReplace: true);
           },
         );
       },
@@ -799,12 +953,167 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     }
   }
 
+  void _showRenameDialog() {
+    final controller = TextEditingController(text: _titleController.text);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Rename Note', style: GoogleFonts.roboto(fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'New title...',
+            filled: true,
+            fillColor: Colors.grey[100],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                setState(() => _titleController.text = controller.text.trim());
+                _markUnsaved();
+                _handleSave();
+              }
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF5473F7),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFindReplaceDialog({required bool isReplace}) {
+    final findController = TextEditingController();
+    final replaceController = TextEditingController();
+    int matchCount = 0;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(isReplace ? 'Find & Replace' : 'Find', style: GoogleFonts.roboto(fontWeight: FontWeight.bold)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: findController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Search for...',
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (val) {
+                    final text = _quillController.document.toPlainText();
+                    final count = val.isEmpty ? 0 : val.allMatches(text).length;
+                    setDialogState(() => matchCount = count);
+                  },
+                ),
+                if (matchCount > 0) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5473F7).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '$matchCount occurrences found.',
+                      style: const TextStyle(color: Color(0xFF5473F7), fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  if (isReplace) ...[
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: replaceController,
+                      decoration: InputDecoration(
+                        labelText: 'Replace with...',
+                        prefixIcon: const Icon(Icons.find_replace),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+              ),
+              if (matchCount > 0 && isReplace)
+                ElevatedButton(
+                  onPressed: () {
+                    _performReplace(findController.text, replaceController.text);
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5473F7),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Replace All'),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _performReplace(String find, String replace) {
+    if (find.isEmpty) return;
+
+    final plainText = _quillController.document.toPlainText();
+    final matches = find.allMatches(plainText).toList();
+    if (matches.isEmpty) return;
+
+    // Apply replacements from end → start so earlier offsets stay valid
+    // without shifting, while preserving rich text formatting.
+    for (final match in matches.reversed) {
+      _quillController.replaceText(match.start, find.length, replace, null);
+    }
+
+    _showToast(context, 'Replaced ${matches.length} occurrence${matches.length == 1 ? '' : 's'}');
+    _markUnsaved();
+    _handleSave();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final foldersAsync = ref.watch(foldersProvider);
     final notesAsync = ref.watch(notesProvider);
+    final foldersAsync = ref.watch(foldersProvider);
 
-    // Only check for "missing" if we are editing an existing note
     final bool isNoteMissing =
         _editingNote != null &&
         notesAsync.hasValue &&
@@ -817,9 +1126,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         }
       });
       return Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
@@ -902,7 +1211,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       loading: () => 'Loading...',
       error: (_, __) => 'Error',
     );
-    // Read keyboard inset directly and position toolbar against it.
+
     const toolbarHeight = 48.0;
     const toolbarGap = 6.0;
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
@@ -917,7 +1226,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           _persistDraft();
           await _handleSave();
         }
-        if (context.mounted) Navigator.pop(context);
+        if (context.mounted) Navigator.of(context).pop();
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
@@ -931,282 +1240,394 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               : Brightness.dark,
         ),
         child: Scaffold(
-          // Let Scaffold keep the body pinned to keyboard top.
           resizeToAvoidBottomInset: true,
-          backgroundColor: Colors.white, // As per design
-        appBar: AppBar(
           backgroundColor: Colors.white,
-          elevation: 0,
-          toolbarHeight: 84,
-          leading: IconButton(
-            icon: const Icon(Icons.folder_open_outlined, color: Colors.black),
-            tooltip: 'Folders',
-            onPressed: () {
-              Navigator.of(context).push(
-                FadePageRoute(builder: (context) => const FoldersScreen()),
-              );
-            },
-          ),
-          title: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                folderName.toUpperCase(),
-                style: GoogleFonts.roboto(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black,
-                  letterSpacing: 1.0,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            toolbarHeight: 84,
+            leading: IconButton(
+              icon: const Icon(Icons.folder_open_outlined, color: Colors.black),
+              tooltip: 'Folders',
+              onPressed: () {
+                Navigator.of(context).push(
+                  FadePageRoute(builder: (context) => const FoldersScreen()),
+                );
+              },
+            ),
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  folderName.toUpperCase(),
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                    letterSpacing: 1.0,
+                  ),
                 ),
-              ),
-              ValueListenableBuilder<String>(
-                valueListenable: _saveStatusNotifier,
-                builder: (context, status, _) {
-                  return Text(
-                    status.toUpperCase(),
-                    style: GoogleFonts.roboto(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF5473F7),
-                      letterSpacing: 1.5,
-                    ),
-                  );
-                },
+                ValueListenableBuilder<String>(
+                  valueListenable: _saveStatusNotifier,
+                  builder: (context, status, _) {
+                    return Text(
+                      status.toUpperCase(),
+                      style: GoogleFonts.roboto(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF5473F7),
+                        letterSpacing: 1.5,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.more_vert, color: Colors.black),
+                onPressed: () => _showNoteOptions(context),
               ),
             ],
           ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.black),
-              onPressed: () => _showNoteOptions(context),
-            ),
-          ],
-        ),
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            AnimatedOpacity(
-              duration: const Duration(milliseconds: 300),
-              opacity: 1.0,
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                      24,
-                      0,
-                      24,
-                      // Reserve space for the floating toolbar OR system navigation bar.
-                      showKeyboardToolbar
-                          ? (toolbarHeight + toolbarGap + 28)
-                          : (24 + MediaQuery.paddingOf(context).bottom),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20, bottom: 30),
-                          child: TextField(
-                            controller: _titleController,
-                            focusNode: _titleFocusNode,
-                            readOnly: _isReadOnly,
-                            textAlign: TextAlign.left,
-                            decoration: InputDecoration(
-                              hintText: 'Title',
-                              hintStyle: GoogleFonts.roboto(
-                                color: Colors.grey.shade400,
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: 1.0,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        0,
+                        24,
+                        showKeyboardToolbar
+                            ? (toolbarHeight + toolbarGap + 28)
+                            : (24 + MediaQuery.paddingOf(context).bottom),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20, bottom: 30),
+                            child: TextField(
+                              controller: _titleController,
+                              focusNode: _titleFocusNode,
+                              readOnly: _isReadOnly,
+                              textAlign: TextAlign.left,
+                              decoration: InputDecoration(
+                                hintText: 'Title',
+                                hintStyle: GoogleFonts.roboto(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                                border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                disabledBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                filled: false,
+                              ),
+                              style: GoogleFonts.roboto(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w900,
+                                color: Colors.black,
+                                height: 1.2,
                               ),
-                              border: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              errorBorder: InputBorder.none,
-                              disabledBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                              filled: false,
+                              maxLines: null,
                             ),
-                            style: GoogleFonts.roboto(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              height: 1.2,
-                            ),
-                            maxLines: null,
                           ),
-                        ),
+Container(
+                            constraints: BoxConstraints(
+                              minHeight: MediaQuery.of(context).size.height * 0.5,
+                            ),
+                            child: DropRegion(
+                              formats: const [Formats.png, Formats.jpeg],
+                              onDropOver: (event) => DropOperation.copy,
+                              onPerformDrop: (event) async {
+                                final item = event.session.items.first;
+                                final reader = item.dataReader;
+                                if (reader == null) return;
 
-                        // Body
-                        Container(
-                          constraints: BoxConstraints(
-                            minHeight: MediaQuery.of(context).size.height * 0.5,
-                          ),
-                          child: RepaintBoundary(
-                            child: quill.QuillEditor.basic(
-                              controller: _quillController,
-                              focusNode: _bodyFocusNode,
-                              config: quill.QuillEditorConfig(
-                                placeholder: 'Start writing...',
-                                embedBuilders: [InlineImageEmbedBuilder()],
-                                customShortcuts: {
-                                  LogicalKeySet(
-                                    LogicalKeyboardKey.meta,
-                                    LogicalKeyboardKey.keyV,
-                                  ): const _HandleCustomPasteShortcut(),
-                                  LogicalKeySet(
-                                    LogicalKeyboardKey.control,
-                                    LogicalKeyboardKey.keyV,
-                                  ): const _HandleCustomPasteShortcut(),
-                                },
-                                customActions: {
-                                  _HandleCustomPasteShortcut:
-                                      CallbackAction<_HandleCustomPasteShortcut>(
-                                        onInvoke: (intent) {
-                                          _handleCustomPaste();
-                                          return null;
-                                        },
+                                if (reader.canProvide(Formats.png) || reader.canProvide(Formats.jpeg)) {
+                                  final format = reader.canProvide(Formats.png) ? Formats.png : Formats.jpeg;
+                                  final extension = format == Formats.png ? 'png' : 'jpg';
+
+                                  final completer = Completer<Uint8List?>();
+                                  reader.getFile(format, (file) async {
+                                    final bytes = await file.readAll();
+                                    completer.complete(bytes);
+                                  }, onError: (e) => completer.complete(null));
+
+                                  final bytes = await completer.future;
+                                  if (bytes != null) {
+                                    final path = await _mediaService.saveBytesToLocalDocuments(bytes, extension: extension);
+                                    if (path != null) {
+                                      _handleSingleImagePath(path);
+                                    }
+                                  }
+                                }
+                              },
+                              child: RepaintBoundary(
+                                  child: quill.QuillEditor.basic(
+                                    controller: _quillController,
+                                    focusNode: _bodyFocusNode,
+                                    config: quill.QuillEditorConfig(
+                                      placeholder: 'Start writing...',
+                                      embedBuilders: [InlineImageEmbedBuilder()],
+                                      customShortcuts: {
+                                      LogicalKeySet(
+                                        LogicalKeyboardKey.meta,
+                                        LogicalKeyboardKey.keyV,
+                                      ): const _HandleCustomPasteShortcut(),
+                                      LogicalKeySet(
+                                        LogicalKeyboardKey.control,
+                                        LogicalKeyboardKey.keyV,
+                                      ): const _HandleCustomPasteShortcut(),
+                                    },
+                                    customActions: {
+                                      _HandleCustomPasteShortcut:
+                                          CallbackAction<_HandleCustomPasteShortcut>(
+                                            onInvoke: (intent) => _handleCustomPaste().then((_) => null),
+                                          ),
+                                    },
+                                    scrollable: false,
+                                    padding: EdgeInsets.zero,
+                                    autoFocus: false,
+                                    expands: false,
+                                    customStyles: quill.DefaultStyles(
+                                      paragraph: quill.DefaultTextBlockStyle(
+                                        GoogleFonts.roboto(
+                                          fontSize: 18,
+                                          height: 1.6,
+                                          color: Colors.black87,
+                                        ),
+                                        const quill.HorizontalSpacing(0, 0),
+                                        const quill.VerticalSpacing(0, 0),
+                                        const quill.VerticalSpacing(0, 0),
+                                        null,
                                       ),
-                                },
-                                customStyles: quill.DefaultStyles(
-                                  paragraph: quill.DefaultTextBlockStyle(
-                                    GoogleFonts.roboto(
-                                      fontSize: 18,
-                                      color: AppColors.textPrimary,
-                                      height: 1.6,
+                                    h1: quill.DefaultTextBlockStyle(
+                                      GoogleFonts.roboto(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.black,
+                                        height: 1.15,
+                                      ),
+                                      const quill.HorizontalSpacing(0, 0),
+                                      const quill.VerticalSpacing(16, 8),
+                                      const quill.VerticalSpacing(0, 0),
+                                      null,
                                     ),
-                                    const quill.HorizontalSpacing(0, 0),
-                                    const quill.VerticalSpacing(0, 0),
-                                    const quill.VerticalSpacing(0, 0),
-                                    null,
+                                    h2: quill.DefaultTextBlockStyle(
+                                      GoogleFonts.roboto(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.black,
+                                        height: 1.15,
+                                      ),
+                                      const quill.HorizontalSpacing(0, 0),
+                                      const quill.VerticalSpacing(14, 6),
+                                      const quill.VerticalSpacing(0, 0),
+                                      null,
+                                    ),
+                                    code: quill.DefaultTextBlockStyle(
+                                      GoogleFonts.robotoMono(
+                                        fontSize: 15,
+                                        color: Colors.blue.shade900,
+                                      ),
+                                      const quill.HorizontalSpacing(12, 12),
+                                      const quill.VerticalSpacing(12, 12),
+                                      const quill.VerticalSpacing(0, 0),
+                                      BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.grey.shade200),
+                                      ),
+                                    ),
+                                    placeHolder: quill.DefaultTextBlockStyle(
+                                      GoogleFonts.roboto(
+                                        fontSize: 17,
+                                        color: Colors.grey.shade400,
+                                        height: 1.6,
+                                      ),
+                                      const quill.HorizontalSpacing(0, 0),
+                                      const quill.VerticalSpacing(0, 0),
+                                      const quill.VerticalSpacing(0, 0),
+                                      null,
+                                    ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(
-                          height: 100,
-                        ), // Extra space for Zen scrolling
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Obsidian-style docked toolbar — full-width, flat, edge-to-edge
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-              left: 12,
-              right: 12,
-              bottom: showKeyboardToolbar ? toolbarGap : -120,
-              child: Container(
-                height: toolbarHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: ShapeDecoration(
-                  color: const Color(0xFF1F1F1F),
-                  shape: ContinuousRectangleBorder(
-                    borderRadius: BorderRadius.circular(44),
-                    side: const BorderSide(color: Color(0xFF333333), width: 1),
-                  ),
-                  shadows: const [
-                    BoxShadow(
-                      color: Color(0x22000000),
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        child: Row(
-                          children: [
-                            _buildToolbarButton(Icons.undo, () {
-                              _quillController.undo();
-                            }),
-                            _buildToolbarButton(Icons.redo, () {
-                              _quillController.redo();
-                            }),
-                            _toolbarDivider(),
-                            quill.QuillSimpleToolbar(
-                              controller: _quillController,
-                              config: const quill.QuillSimpleToolbarConfig(
-                                showFontFamily: false,
-                                showFontSize: false,
-                                showColorButton: false,
-                                showBackgroundColorButton: false,
-                                showAlignmentButtons: false,
-                                showClearFormat: false,
-                                showSubscript: false,
-                                showSuperscript: false,
-                                showStrikeThrough: false,
-                                showInlineCode: true,
-                                showSearchButton: false,
-                                showDividers: false,
-                                showIndent: false,
-                              ),
-                            ),
-                            _toolbarDivider(),
-                            _buildToolbarButton(Icons.sell_outlined, () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => TagManageDialog(
-                                  initialTags: _tags,
-                                  onTagsChanged: (tags) {
-                                    setState(() {
-                                      _tags.clear();
-                                      _tags.addAll(tags);
-                                      _hasUnsavedChanges = true;
-                                    });
-                                    _persistDraft();
-                                    _handleSave();
-                                  },
-                                ),
-                              );
-                            }),
-                            _buildToolbarButton(Icons.attach_file, _pickImage),
-                          ],
-                        ),
+                        const SizedBox(height: 100),
+                        ],
                       ),
                     ),
-                    _toolbarDivider(),
-                    _buildToolbarButton(Icons.keyboard_hide, () {
-                      FocusScope.of(context).unfocus();
-                    }),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                left: 12,
+                right: 12,
+                bottom: showKeyboardToolbar ? 12 : -120,
+                child: Container(
+                  height: toolbarHeight,
+                  decoration: ShapeDecoration(
+                    color: Colors.white,
+                    shape: ContinuousRectangleBorder(
+                      borderRadius: BorderRadius.circular(44),
+                      side: BorderSide(color: Colors.grey.shade200, width: 1),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ListenableBuilder(
+                    listenable: _quillController,
+                    builder: (context, _) {
+                      final selectionStyle = _quillController.getSelectionStyle();
+                      final isBold = selectionStyle.attributes.containsKey(quill.Attribute.bold.key);
+                      final isItalic = selectionStyle.attributes.containsKey(quill.Attribute.italic.key);
+                      final isUnderline = selectionStyle.attributes.containsKey(quill.Attribute.underline.key);
+                      final listAttr = selectionStyle.attributes[quill.Attribute.list.key];
+                      final isBullet = listAttr?.value == 'bullet';
+                      final isOrdered = listAttr?.value == 'ordered';
+                      final isChecklist = listAttr?.value == 'checked' || listAttr?.value == 'unchecked';
+                      final headerAttr = selectionStyle.attributes[quill.Attribute.header.key];
+                      final isAnyHeader = headerAttr != null;
+                      final isQuote = selectionStyle.attributes.containsKey(quill.Attribute.blockQuote.key);
+                      final isCodeBlock = selectionStyle.attributes.containsKey(quill.Attribute.codeBlock.key);
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: [
+                                  _buildToolbarButton(Icons.undo_rounded, () => _quillController.undo()),
+                                  _buildToolbarButton(Icons.redo_rounded, () => _quillController.redo()),
+                                  _toolbarDivider(),
+                                  MenuAnchor(
+                                    alignmentOffset: const Offset(0, -180),
+                                    menuChildren: [
+                                      MenuItemButton(
+                                        onPressed: () => _quillController.formatSelection(quill.Attribute.h1),
+                                        child: Text('Heading 1', style: GoogleFonts.roboto()),
+                                      ),
+                                      MenuItemButton(
+                                        onPressed: () => _quillController.formatSelection(quill.Attribute.h2),
+                                        child: Text('Heading 2', style: GoogleFonts.roboto()),
+                                      ),
+                                      MenuItemButton(
+                                        onPressed: () => _quillController.formatSelection(quill.Attribute.h3),
+                                        child: Text('Heading 3', style: GoogleFonts.roboto()),
+                                      ),
+                                    ],
+                                    builder: (context, controller, child) => _buildToolbarButton(
+                                      Icons.format_size_rounded, 
+                                      () => controller.isOpen ? controller.close() : controller.open(),
+                                      isSelected: isAnyHeader,
+                                    ),
+                                  ),
+                                  _buildToolbarButton(Icons.format_bold_rounded, () => _quillController.formatSelection(isBold ? quill.Attribute.clone(quill.Attribute.bold, null) : quill.Attribute.bold), isSelected: isBold),
+                                  _buildToolbarButton(Icons.format_italic_rounded, () => _quillController.formatSelection(isItalic ? quill.Attribute.clone(quill.Attribute.italic, null) : quill.Attribute.italic), isSelected: isItalic),
+                                  _buildToolbarButton(Icons.format_underlined_rounded, () => _quillController.formatSelection(isUnderline ? quill.Attribute.clone(quill.Attribute.underline, null) : quill.Attribute.underline), isSelected: isUnderline),
+                                  _toolbarDivider(),
+                                  _buildToolbarButton(Icons.format_list_bulleted_rounded, () => _quillController.formatSelection(isBullet ? quill.Attribute.clone(quill.Attribute.ul, null) : quill.Attribute.ul), isSelected: isBullet),
+                                  _buildToolbarButton(Icons.format_list_numbered_rounded, () => _quillController.formatSelection(isOrdered ? quill.Attribute.clone(quill.Attribute.ol, null) : quill.Attribute.ol), isSelected: isOrdered),
+                                  _buildToolbarButton(Icons.checklist_rtl_rounded, () => _quillController.formatSelection(isChecklist ? quill.Attribute.clone(quill.Attribute.unchecked, null) : quill.Attribute.unchecked), isSelected: isChecklist),
+                                  _toolbarDivider(),
+                                  _buildToolbarButton(Icons.format_quote_rounded, () => _quillController.formatSelection(isQuote ? quill.Attribute.clone(quill.Attribute.blockQuote, null) : quill.Attribute.blockQuote), isSelected: isQuote),
+                                  _buildToolbarButton(Icons.code_rounded, () => _quillController.formatSelection(isCodeBlock ? quill.Attribute.clone(quill.Attribute.codeBlock, null) : quill.Attribute.codeBlock), isSelected: isCodeBlock),
+                                  _toolbarDivider(),
+                                  _buildToolbarButton(Icons.sell_outlined, () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => TagManageDialog(
+                                        initialTags: _tags,
+                                        onTagsChanged: (tags) {
+                                          setState(() {
+                                            _tags.clear();
+                                            _tags.addAll(tags);
+                                            _hasUnsavedChanges = true;
+                                          });
+                                          _persistDraft();
+                                          _handleSave();
+                                        },
+                                      ),
+                                    );
+                                  }),
+                                  _buildToolbarButton(Icons.image_outlined, _showImageSourceMenu),
+                                  _buildToolbarButton(Icons.attach_file, _pickImage),
+                                ],
+                              ),
+                            ),
+                          ),
+                          _toolbarDivider(),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _buildToolbarButton(Icons.keyboard_hide_rounded, () => FocusManager.instance.primaryFocus?.unfocus()),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
-  Widget _buildToolbarButton(IconData icon, VoidCallback onTap) {
+  Widget _buildToolbarButton(
+    IconData icon, 
+    VoidCallback onTap, {
+    bool isSelected = false,
+    double iconSize = 18,
+    double size = 36,
+  }) {
     return SynqIconButton(
       icon: icon,
       onTap: onTap,
-      iconColor: const Color(0xFFAAAAAA),
+      isSelected: isSelected,
+      iconSize: iconSize,
+      size: size,
     );
   }
 
   Widget _toolbarDivider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Container(width: 1, height: 22, color: const Color(0xFF333333)),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Container(
+        width: 1, 
+        height: 20, 
+        color: Colors.grey.shade200,
+      ),
     );
   }
 
-  // ignore: unused_element
   Future<void> _handleCustomPaste() async {
     final clipboard = SystemClipboard.instance;
     if (clipboard == null) return;
@@ -1214,9 +1635,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
 
     // 1. Handle Images First
     if (reader.canProvide(Formats.png) || reader.canProvide(Formats.jpeg)) {
-      final format = reader.canProvide(Formats.png)
-          ? Formats.png
-          : Formats.jpeg;
+      final format = reader.canProvide(Formats.png) ? Formats.png : Formats.jpeg;
       final extension = format == Formats.png ? 'png' : 'jpg';
 
       final completer = Completer<Uint8List?>();
@@ -1241,56 +1660,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           extension: extension,
         );
         if (path != null) {
-          final user = ref.read(userProvider).valueOrNull;
-          if (user == null) return;
-
-          final noteId =
-              _editingNote?.id ??
-              _draftNoteId ??
-              DateTime.now().millisecondsSinceEpoch.toString();
-
-          _saveStatusNotifier.value = 'Optimizing...';
-          
-          final storageResult = await ImageStorageService.storeImage(
-            sourceFile: File(path),
-            planTier: user.planTier,
-          );
-
-          String finalUri;
-          if (user.planTier.isPro && storageResult.hasServerCopy) {
-            _saveStatusNotifier.value = 'Uploading...';
-            final task = ImageStorageService.uploadFileToCloud(
-              File(storageResult.serverCopyPath!),
-              user.id,
-              noteId,
-            );
-            finalUri = await _processUploadTask(task);
-          } else {
-            finalUri = storageResult.localOriginalPath;
-          }
-
-          final selection = _quillController.selection;
-          _quillController.document.insert(
-            selection.end,
-            quill.BlockEmbed.image(finalUri),
-          );
-          // Apply initial width attribute
-          _quillController.formatText(
-            selection.end,
-            1,
-            quill.Attribute('width', quill.AttributeScope.inline, 300),
-          );
-
-          _quillController.updateSelection(
-            TextSelection.collapsed(offset: selection.end + 1),
-            quill.ChangeSource.local,
-          );
-
-          setState(() {
-            _hasUnsavedChanges = true;
-            _saveStatusNotifier.value = 'Saved';
-          });
-          _handleSave();
+          _handleSingleImagePath(path);
           return;
         }
       }
@@ -1303,7 +1673,6 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         final parsedDoc = HtmlParser.deltaFromHtml(htmlStr);
         final selection = _quillController.selection;
 
-        // Insert the parsed rich layout directly at the cursor
         _quillController.replaceText(
           selection.start,
           selection.end - selection.start,
@@ -1314,7 +1683,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       }
     }
 
-    // Fallback if no HTML exists (plain text pasting)
+    // 3. Plain Text Fallback
     if (reader.canProvide(Formats.plainText)) {
       final text = await reader.readValue(Formats.plainText);
       if (text != null) {

@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:uuid/uuid.dart';
 import '../../data/image_storage_service.dart';
-
 class AttachmentBubble extends StatefulWidget {
   final String filename;
   final String userId; // 👈 userId now required
@@ -37,10 +37,16 @@ class _AttachmentBubbleState extends State<AttachmentBubble> {
     try {
       final file = await ImageStorageService.getFile(widget.filename);
       // Generate a migration-specific noteId if none available
-      final noteId = 'migrated_${DateTime.now().millisecondsSinceEpoch}';
-      final task = ImageStorageService.uploadImage(file, widget.userId, noteId);
-      final snapshot = await task;
-      final url = await snapshot.ref.getDownloadURL();
+      final noteId = 'migrated_${const Uuid().v4()}';
+      
+      final url = await ImageStorageService.uploadImage(
+        file, 
+        widget.userId, 
+        noteId,
+        (progress) {
+           // Optional: Update internal migration progress UI if needed
+        },
+      );
       
       if (widget.onMigrated != null) {
         widget.onMigrated!(url);

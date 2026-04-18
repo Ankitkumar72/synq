@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../notes/domain/models/note.dart' show SubTask;
 import '../../domain/models/task.dart';
@@ -81,7 +82,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     if (_subTaskController.text.trim().isEmpty) return;
 
     final newSubTask = SubTask(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       title: _subTaskController.text.trim(),
       isCompleted: false,
     );

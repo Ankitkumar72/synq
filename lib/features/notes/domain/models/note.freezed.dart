@@ -217,6 +217,8 @@ mixin _$Note {
   String? get deviceLastEdited => throw _privateConstructorUsedError;
   int? get color => throw _privateConstructorUsedError;
   int get order => throw _privateConstructorUsedError;
+  bool get isDeleted => throw _privateConstructorUsedError;
+  DateTime? get deletedAt => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -254,7 +256,9 @@ abstract class $NoteCopyWith<$Res> {
       DateTime? updatedAt,
       String? deviceLastEdited,
       int? color,
-      int order});
+      int order,
+      bool isDeleted,
+      DateTime? deletedAt});
 
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
 }
@@ -298,6 +302,8 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? deviceLastEdited = freezed,
     Object? color = freezed,
     Object? order = null,
+    Object? isDeleted = null,
+    Object? deletedAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -404,6 +410,14 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
               as int,
+      isDeleted: null == isDeleted
+          ? _value.isDeleted
+          : isDeleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+      deletedAt: freezed == deletedAt
+          ? _value.deletedAt
+          : deletedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ) as $Val);
   }
 
@@ -453,7 +467,9 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       DateTime? updatedAt,
       String? deviceLastEdited,
       int? color,
-      int order});
+      int order,
+      bool isDeleted,
+      DateTime? deletedAt});
 
   @override
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
@@ -495,6 +511,8 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? deviceLastEdited = freezed,
     Object? color = freezed,
     Object? order = null,
+    Object? isDeleted = null,
+    Object? deletedAt = freezed,
   }) {
     return _then(_$NoteImpl(
       id: null == id
@@ -601,6 +619,14 @@ class __$$NoteImplCopyWithImpl<$Res>
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
               as int,
+      isDeleted: null == isDeleted
+          ? _value.isDeleted
+          : isDeleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+      deletedAt: freezed == deletedAt
+          ? _value.deletedAt
+          : deletedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -611,9 +637,9 @@ class __$$NoteImplCopyWithImpl<$Res>
 class _$NoteImpl extends _Note {
   const _$NoteImpl(
       {required this.id,
-      required this.title,
+      this.title = '',
       this.body,
-      required this.category,
+      this.category = NoteCategory.personal,
       required this.createdAt,
       this.scheduledTime,
       this.endTime,
@@ -635,7 +661,9 @@ class _$NoteImpl extends _Note {
       this.updatedAt,
       this.deviceLastEdited,
       this.color,
-      this.order = 0})
+      this.order = 0,
+      this.isDeleted = false,
+      this.deletedAt})
       : _tags = tags,
         _attachments = attachments,
         _links = links,
@@ -648,10 +676,12 @@ class _$NoteImpl extends _Note {
   @override
   final String id;
   @override
+  @JsonKey()
   final String title;
   @override
   final String? body;
   @override
+  @JsonKey()
   final NoteCategory category;
   @override
   final DateTime createdAt;
@@ -731,10 +761,15 @@ class _$NoteImpl extends _Note {
   @override
   @JsonKey()
   final int order;
+  @override
+  @JsonKey()
+  final bool isDeleted;
+  @override
+  final DateTime? deletedAt;
 
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, deviceLastEdited: $deviceLastEdited, color: $color, order: $order)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, deviceLastEdited: $deviceLastEdited, color: $color, order: $order, isDeleted: $isDeleted, deletedAt: $deletedAt)';
   }
 
   @override
@@ -783,7 +818,11 @@ class _$NoteImpl extends _Note {
             (identical(other.deviceLastEdited, deviceLastEdited) ||
                 other.deviceLastEdited == deviceLastEdited) &&
             (identical(other.color, color) || other.color == color) &&
-            (identical(other.order, order) || other.order == order));
+            (identical(other.order, order) || other.order == order) &&
+            (identical(other.isDeleted, isDeleted) ||
+                other.isDeleted == isDeleted) &&
+            (identical(other.deletedAt, deletedAt) ||
+                other.deletedAt == deletedAt));
   }
 
   @JsonKey(ignore: true)
@@ -815,7 +854,9 @@ class _$NoteImpl extends _Note {
         updatedAt,
         deviceLastEdited,
         color,
-        order
+        order,
+        isDeleted,
+        deletedAt
       ]);
 
   @JsonKey(ignore: true)
@@ -835,9 +876,9 @@ class _$NoteImpl extends _Note {
 abstract class _Note extends Note {
   const factory _Note(
       {required final String id,
-      required final String title,
+      final String title,
       final String? body,
-      required final NoteCategory category,
+      final NoteCategory category,
       required final DateTime createdAt,
       final DateTime? scheduledTime,
       final DateTime? endTime,
@@ -859,7 +900,9 @@ abstract class _Note extends Note {
       final DateTime? updatedAt,
       final String? deviceLastEdited,
       final int? color,
-      final int order}) = _$NoteImpl;
+      final int order,
+      final bool isDeleted,
+      final DateTime? deletedAt}) = _$NoteImpl;
   const _Note._() : super._();
 
   factory _Note.fromJson(Map<String, dynamic> json) = _$NoteImpl.fromJson;
@@ -916,6 +959,10 @@ abstract class _Note extends Note {
   int? get color;
   @override
   int get order;
+  @override
+  bool get isDeleted;
+  @override
+  DateTime? get deletedAt;
   @override
   @JsonKey(ignore: true)
   _$$NoteImplCopyWith<_$NoteImpl> get copyWith =>

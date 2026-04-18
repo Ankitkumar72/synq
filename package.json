@@ -1,0 +1,27 @@
+{
+  "name": "task_app",
+  "version": "1.0.0",
+  "description": "Synq is a powerful and intuitive task and note management application built with Flutter. It seamlessly merges task tracking, note-taking, and daily schedule planning into an elegant, unified interface.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ankitkumar72/synq.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ankitkumar72/synq/issues"
+  },
+  "homepage": "https://github.com/Ankitkumar72/synq#readme",
+  "dependencies": {
+    "firebase-admin": "^13.7.0"
+  }
+}

@@ -2,12 +2,27 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:synq/core/services/permission_service.dart';
 
 class MediaService {
   final ImagePicker _picker = ImagePicker();
 
   /// Pick an image from the specified source
   Future<File?> pickImage({ImageSource source = ImageSource.gallery}) async {
+    // 1. Check Permissions
+    bool hasPermission = false;
+    if (source == ImageSource.camera) {
+      hasPermission = await PermissionService().requestCameraPermission();
+    } else {
+      hasPermission = await PermissionService().requestPhotoPermission();
+    }
+
+    if (!hasPermission) {
+      debugPrint('Media access permission denied.');
+      return null;
+    }
+
+    // 2. Pick Image
     final XFile? pickedFile = await _picker.pickImage(
       source: source,
       maxWidth: 1920,
@@ -51,6 +66,23 @@ class MediaService {
       debugPrint('Error saving pasted image bytes: $e');
       return null;
     }
+  }
+
+  /// Pick multiple images from the gallery
+  Future<List<File>> pickMultiImage() async {
+    final hasPermission = await PermissionService().requestPhotoPermission();
+    if (!hasPermission) {
+      debugPrint('Media access permission denied.');
+      return [];
+    }
+
+    final List<XFile> pickedFiles = await _picker.pickMultiImage(
+      maxWidth: 1920,
+      maxHeight: 1080,
+      imageQuality: 85,
+    );
+
+    return pickedFiles.map((xFile) => File(xFile.path)).toList();
   }
 
   /// Pick and save an image locally, returning the file path

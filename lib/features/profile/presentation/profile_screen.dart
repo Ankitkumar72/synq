@@ -4,13 +4,14 @@ import '../../../../core/theme/app_theme.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/providers/user_provider.dart';
 import '../../auth/domain/models/synq_user.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'subscription_screen.dart';
 import 'device_management_screen.dart';
 import '../../analytics/presentation/screens/monthly_streaks_screen.dart';
 import '../../../../core/widgets/synq_ui_toolkit.dart';
 
 import '../../analytics/data/performance_providers.dart';
+import '../../notes/presentation/trash_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -93,7 +94,7 @@ class ProfileScreen extends ConsumerWidget {
                                     userAsync.valueOrNull?.planTier ==
                                     PlanTier.pro;
                                 final email =
-                                    FirebaseAuth.instance.currentUser?.email ??
+                                    Supabase.instance.client.auth.currentUser?.email ??
                                     'User';
                                 return Column(
                                   children: [
@@ -219,6 +220,17 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                             _buildSettingItem('Data Export'),
                             _buildSettingItem('Privacy'),
+                            _buildSettingItem(
+                              'Trash',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const TrashScreen(),
+                                  ),
+                                );
+                              },
+                            ),
 
                             const SizedBox(height: 16),
 

@@ -1,11 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/user_repository.dart';
+import '../../data/supabase_user_repository.dart';
 import '../../domain/models/synq_user.dart';
 import 'auth_provider.dart';
 
-final userRepositoryProvider = Provider<UserRepository>((ref) {
-  return UserRepository();
+final userRepositoryProvider = Provider<SupabaseUserRepository>((ref) {
+  return SupabaseUserRepository();
 });
 
 final userProvider = StreamProvider<SynqUser?>((ref) {
@@ -15,11 +15,11 @@ final userProvider = StreamProvider<SynqUser?>((ref) {
     return Stream.value(null);
   }
 
-  final uid = FirebaseAuth.instance.currentUser?.uid;
+  final uid = Supabase.instance.client.auth.currentUser?.id;
   if (uid == null) {
     return Stream.value(null);
   }
 
   final userRepo = ref.watch(userRepositoryProvider);
-  return userRepo.watchUser(uid);
+  return userRepo.watchUser(uid).distinct();
 });

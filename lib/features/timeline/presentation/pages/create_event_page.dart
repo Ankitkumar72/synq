@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uuid/uuid.dart';
 import '../../../home/presentation/widgets/create_task_sheet.dart';
 import '../../../notes/data/notes_provider.dart';
 import '../../../notes/domain/models/note.dart';
@@ -179,7 +180,7 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     }
 
     final event = Note(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       title: title,
       body: description.isEmpty ? null : description,
       category: NoteCategory.work,
