@@ -72,14 +72,16 @@ class _WaveformGraphState extends State<WaveformGraph>
             ],
           ),
           Expanded(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return CustomPaint(
-                  painter: WavePainter(animationValue: _controller.value),
-                  child: Container(),
-                );
-              },
+            child: ClipRect(
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: WavePainter(animationValue: _controller.value),
+                    child: Container(),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -125,7 +127,13 @@ class WavePainter extends CustomPainter {
     double phaseShift,
   ) {
     final path = Path();
-    final midY = size.height * 0.7;
+    final midY = size.height / 2; // Perfectly centered
+    
+    // Dynamically scale amplitude so it perfectly fits the container
+    // Leaving a small 10% margin so it never touches the bounds
+    final maxAmplitude = (size.height / 2) * 0.90;
+    final a1 = maxAmplitude * (15 / 25);
+    final a2 = maxAmplitude * (10 / 25);
 
     path.moveTo(0, midY);
 
@@ -142,8 +150,8 @@ class WavePainter extends CustomPainter {
 
       final y =
           midY +
-          (wave1 * 15 * amplitudeFactor) +
-          (wave2 * 10 * amplitudeFactor);
+          (wave1 * a1 * amplitudeFactor) +
+          (wave2 * a2 * amplitudeFactor);
       path.lineTo(x, y);
     }
 

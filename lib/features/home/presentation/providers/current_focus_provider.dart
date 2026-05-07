@@ -5,6 +5,7 @@ import '../../../notes/domain/models/note.dart';
 
 final currentFocusProvider = Provider<AsyncValue<Note?>>((ref) {
   final notesAsync = ref.watch(notesProvider);
+  ref.watch(currentTimeProvider); // Re-evaluate when time changes
   return notesAsync.whenData((notes) {
     // Only look for an active task (within its scheduled time)
     return notes.firstWhereOrNull(

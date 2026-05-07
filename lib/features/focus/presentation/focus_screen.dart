@@ -77,7 +77,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 
     final task = _cachedTask;
 
-    final now = DateTime.now();
+    final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
     final wallClockTime = DateFormat('HH:mm:ss').format(now);
 
     // Check if task time is up and we haven't completed it yet
