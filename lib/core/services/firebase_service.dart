@@ -4,7 +4,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import '../../firebase_options.dart';
+import 'package:synq/firebase_options.dart';
 
 
 class FirebaseService {

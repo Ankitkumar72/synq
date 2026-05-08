@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../auth/presentation/providers/auth_provider.dart';
-import '../../auth/presentation/providers/user_provider.dart';
-import '../../auth/domain/models/synq_user.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/auth/presentation/providers/auth_provider.dart';
+import 'package:synq/features/auth/presentation/providers/user_provider.dart';
+import 'package:synq/features/auth/domain/models/synq_user.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'subscription_screen.dart';
 import 'device_management_screen.dart';
-import '../../analytics/presentation/screens/monthly_streaks_screen.dart';
-import '../../../../core/widgets/synq_ui_toolkit.dart';
+import 'package:synq/features/analytics/presentation/screens/monthly_streaks_screen.dart';
+import 'package:synq/core/widgets/synq_ui_toolkit.dart';
 
-import '../../analytics/data/performance_providers.dart';
-import '../../notes/presentation/trash_screen.dart';
+import 'package:synq/features/analytics/data/performance_providers.dart';
+import 'package:synq/features/notes/presentation/trash_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});

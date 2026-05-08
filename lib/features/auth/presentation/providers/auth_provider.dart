@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/supabase_auth_repository.dart';
-import '../../../notes/data/note_editor_draft_store.dart';
+import 'package:synq/features/auth/data/supabase_auth_repository.dart';
+import 'package:synq/features/notes/data/note_editor_draft_store.dart';
 
 enum AuthStatus {
   uninitialized,

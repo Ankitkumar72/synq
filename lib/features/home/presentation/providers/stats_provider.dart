@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../tasks/data/tasks_provider.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
 
 class TaskStats {
   final int completed;

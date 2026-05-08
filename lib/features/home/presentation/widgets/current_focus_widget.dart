@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../providers/current_focus_provider.dart';
-import '../../../notes/domain/models/note.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/home/presentation/providers/current_focus_provider.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 
 class CurrentFocusWidget extends ConsumerWidget {
   const CurrentFocusWidget({super.key});

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../auth/presentation/providers/user_provider.dart';
-import '../../auth/domain/models/synq_user.dart';
+import 'package:synq/features/auth/presentation/providers/user_provider.dart';
+import 'package:synq/features/auth/domain/models/synq_user.dart';
 import 'package:synq/core/services/device_service.dart';
 
 class DeviceManagementScreen extends ConsumerStatefulWidget {

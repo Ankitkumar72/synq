@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../home/presentation/home_screen_content.dart';
-import '../../timeline/presentation/pages/daily_timeline_content.dart';
-import '../../notes/presentation/note_detail_screen.dart';
-import '../../profile/presentation/profile_screen.dart';
-import '../../../../core/navigation/fade_page_route.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/home/presentation/home_screen_content.dart';
+import 'package:synq/features/timeline/presentation/pages/daily_timeline_content.dart';
+import 'package:synq/features/notes/presentation/note_detail_screen.dart';
+import 'package:synq/features/profile/presentation/profile_screen.dart';
+import 'package:synq/core/navigation/fade_page_route.dart';
 
 final currentNavIndexProvider = StateProvider<int>((ref) => 0);
 

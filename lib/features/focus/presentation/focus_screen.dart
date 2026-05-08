@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../home/presentation/providers/current_focus_provider.dart';
-import '../../notes/domain/models/note.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/home/presentation/providers/current_focus_provider.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 import 'widgets/circular_timer.dart';
 import 'widgets/waveform_graph.dart';
 import 'session_complete_screen.dart';
-import '../../notes/data/notes_provider.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
 import 'widgets/ambient_sound_selector.dart';
 import 'providers/ambient_sound_provider.dart';
 

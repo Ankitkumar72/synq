@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import '../domain/models/note.dart';
-import '../../../../core/database/local_database.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/core/database/local_database.dart';
 
 class SeedNotesService {
   static const _uuid = Uuid();

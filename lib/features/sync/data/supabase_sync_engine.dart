@@ -5,9 +5,9 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/crdt/hlc.dart';
-import '../../../core/database/local_database.dart';
-import '../../../core/services/supabase_service.dart';
+import 'package:synq/core/crdt/hlc.dart';
+import 'package:synq/core/database/local_database.dart';
+import 'package:synq/core/services/supabase_service.dart';
 import 'supabase_note_syncer.dart';
 import 'supabase_folder_syncer.dart';
 

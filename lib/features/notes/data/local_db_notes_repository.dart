@@ -1,5 +1,5 @@
-import '../domain/models/note.dart';
-import '../../../../core/database/local_database.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/core/database/local_database.dart';
 import 'notes_repository.dart';
 
 class LocalDbNotesRepository implements NotesRepository {

@@ -2,8 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
-import '../../../core/database/local_database.dart';
-import '../../../core/services/supabase_service.dart';
+import 'package:synq/core/database/local_database.dart';
+import 'package:synq/core/services/supabase_service.dart';
 
 
 /// Supabase-backed auth repository — replaces [AuthRepository] (Firebase).

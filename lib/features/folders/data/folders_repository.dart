@@ -1,4 +1,4 @@
-import '../domain/models/folder.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
 
 abstract class FoldersRepository {
   Stream<List<Folder>> watchFolders();

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../domain/models/timeline_event.dart';
+import 'package:synq/features/timeline/domain/models/timeline_event.dart';
 
 typedef TaskTappedCallback = void Function(TimelineEvent task);
 typedef TaskToggleCallback = void Function(TimelineEvent task, bool isCompleted);

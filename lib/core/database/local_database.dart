@@ -9,8 +9,8 @@ import 'package:synchronized/synchronized.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../features/folders/domain/models/folder.dart';
-import '../../features/notes/domain/models/note.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 
 enum SyncWriteSource { local, remote }
 

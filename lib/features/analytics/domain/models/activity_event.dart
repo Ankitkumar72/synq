@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../../../features/notes/domain/models/note.dart' show NoteCategory;
+import 'package:synq/features/notes/domain/models/note.dart' show NoteCategory;
 
 part 'activity_event.freezed.dart';
 part 'activity_event.g.dart';

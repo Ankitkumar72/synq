@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/synq_ui_toolkit.dart';
-import '../../data/timeline_provider.dart';
-import '../../domain/models/timeline_event.dart';
-import '../widgets/calendar_selector.dart';
-import '../widgets/daily_timeline_view.dart';
-import '../widgets/synq_drawer.dart';
-import '../../../home/presentation/widgets/create_task_sheet.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../tasks/data/tasks_provider.dart';
-import '../../../tasks/presentation/pages/task_detail_screen.dart';
-import '../../../shell/presentation/main_shell.dart';
-import '../pages/create_event_page.dart';
-import '../pages/view_event_page.dart';
-import '../pages/schedule_timeline_content.dart';
-import '../pages/weekly_timeline_content.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/core/widgets/synq_ui_toolkit.dart';
+import 'package:synq/features/timeline/data/timeline_provider.dart';
+import 'package:synq/features/timeline/domain/models/timeline_event.dart';
+import 'package:synq/features/timeline/presentation/widgets/calendar_selector.dart';
+import 'package:synq/features/timeline/presentation/widgets/daily_timeline_view.dart';
+import 'package:synq/features/timeline/presentation/widgets/synq_drawer.dart';
+import 'package:synq/features/home/presentation/widgets/create_task_sheet.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
+import 'package:synq/features/tasks/presentation/pages/task_detail_screen.dart';
+import 'package:synq/features/shell/presentation/main_shell.dart';
+import 'package:synq/features/timeline/presentation/pages/create_event_page.dart';
+import 'package:synq/features/timeline/presentation/pages/view_event_page.dart';
+import 'package:synq/features/timeline/presentation/pages/schedule_timeline_content.dart';
+import 'package:synq/features/timeline/presentation/pages/weekly_timeline_content.dart';
 
 /// Timeline page content without bottom navigation bar (for use in MainShell)
 class DailyTimelineContent extends ConsumerStatefulWidget {
@@ -41,7 +41,7 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
         if (selectedDate.year != now.year ||
             selectedDate.month != now.month ||
             selectedDate.day != now.day) {
-          ref.read(selectedDateProvider.notifier).state = now;
+          ref.read(selectedDateProvider.notifier).state = DateTime(now.year, now.month, now.day);
         }
       }
     });
@@ -169,7 +169,10 @@ class _DailyTimelineContentState extends ConsumerState<DailyTimelineContent> {
                     color: const Color(0xFF1A73E8),
                     onTap: () {
                       Navigator.pop(ctx);
-                      showCreateEventSheet(context);
+                      showCreateEventSheet(
+                        context,
+                        initialDateTime: initialDateTime,
+                      );
                     },
                   ),
                 ),

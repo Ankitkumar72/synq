@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/utils/productivity_utils.dart';
-import '../domain/models/activity_event.dart';
-import '../../../core/providers/repository_provider.dart';
+import 'package:synq/core/utils/productivity_utils.dart';
+import 'package:synq/features/analytics/domain/models/activity_event.dart';
+import 'package:synq/core/providers/repository_provider.dart';
 
 final clockProvider = Provider<DateTime>((ref) => DateTime.now());
 

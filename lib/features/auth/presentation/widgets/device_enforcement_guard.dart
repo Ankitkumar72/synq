@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:synq/core/services/device_service.dart';
-import '../providers/user_provider.dart';
+import 'package:synq/features/auth/presentation/providers/user_provider.dart';
 
 class DeviceEnforcementGuard extends ConsumerStatefulWidget {
   final Widget child;

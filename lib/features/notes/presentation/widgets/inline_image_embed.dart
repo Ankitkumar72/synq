@@ -7,7 +7,7 @@ import 'package:synq/core/services/cache_manager.dart';
 import 'package:synq/core/navigation/fade_page_route.dart';
 import 'package:synq/core/widgets/image_viewer.dart';
 import 'package:synq/core/widgets/image_error_widget.dart';
-import '../../../attachments/data/image_storage_service.dart';
+import 'package:synq/features/attachments/data/image_storage_service.dart';
 
 class ResizableInlineImage extends StatefulWidget {
   final String path;

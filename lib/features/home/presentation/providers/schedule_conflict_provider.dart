@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../notes/domain/models/note.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
+import 'package:synq/features/tasks/domain/models/task.dart';
 
 /// Default focus-block duration used when a task has no explicit [endTime].
 const _defaultBlockDuration = Duration(hours: 1);
@@ -15,32 +15,32 @@ const _defaultBlockDuration = Duration(hours: 1);
 ///                     against itself.
 final scheduleConflictProvider =
     FutureProvider.family<
-      List<Note>,
+      List<Task>,
       ({DateTime proposedStart, DateTime? proposedEnd, String? excludeId})
     >((ref, params) async {
-      final notes = await ref.watch(notesProvider.future);
+      final tasks = await ref.watch(tasksProvider.future);
 
       final pStart = params.proposedStart;
       final pEnd = params.proposedEnd ?? pStart.add(_defaultBlockDuration);
 
-      final conflicts = <Note>[];
+      final conflicts = <Task>[];
 
-      for (final note in notes) {
+      for (final t in tasks) {
         // Only consider incomplete, scheduled tasks
-        if (!note.isTask || note.isCompleted || note.scheduledTime == null) {
+        if (t.isCompleted || t.scheduledTime == null) {
           continue;
         }
         // Don't flag the task we're currently editing
-        if (params.excludeId != null && note.id == params.excludeId) continue;
+        if (params.excludeId != null && t.id == params.excludeId) continue;
 
-        final eStart = note.scheduledTime!;
-        final eEnd = note.endTime ?? eStart.add(_defaultBlockDuration);
+        final eStart = t.scheduledTime!;
+        final eEnd = t.endTime ?? eStart.add(_defaultBlockDuration);
 
         // Two blocks conflict only when they overlap.
         // Formally: pStart < eEnd AND eStart < pEnd
         final overlaps = pStart.isBefore(eEnd) && eStart.isBefore(pEnd);
 
-        if (overlaps) conflicts.add(note);
+        if (overlaps) conflicts.add(t);
       }
 
       return conflicts;

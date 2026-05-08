@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/ambient_sound_provider.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:synq/features/focus/presentation/providers/ambient_sound_provider.dart';
+import 'package:synq/core/theme/app_theme.dart';
 
 class AmbientSoundSelector extends ConsumerWidget {
   const AmbientSoundSelector({super.key});

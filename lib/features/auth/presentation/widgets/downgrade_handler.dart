@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../providers/user_provider.dart';
-import '../../domain/models/synq_user.dart';
+import 'package:synq/features/auth/presentation/providers/user_provider.dart';
+import 'package:synq/features/auth/domain/models/synq_user.dart';
 import 'package:synq/features/profile/presentation/device_management_screen.dart';
 
 class DowngradeHandler extends ConsumerWidget {

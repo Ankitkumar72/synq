@@ -7,8 +7,8 @@ import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:synq/core/services/supabase_service.dart';
 
-import '../../auth/domain/models/synq_user.dart';
-import '../../../core/utils/image_format_strategy.dart';
+import 'package:synq/features/auth/domain/models/synq_user.dart';
+import 'package:synq/core/utils/image_format_strategy.dart';
 
 class ImageStorageException implements Exception {
   final String message;

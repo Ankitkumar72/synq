@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/navigation/fade_page_route.dart';
-import '../providers/auth_provider.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/core/navigation/fade_page_route.dart';
+import 'package:synq/features/auth/presentation/providers/auth_provider.dart';
 import 'signup_screen.dart';
-import '../../../../core/widgets/google_logo.dart';
+import 'package:synq/core/widgets/google_logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../data/weekly_focus_provider.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../home/presentation/widgets/create_task_sheet.dart';
-import '../../../notes/domain/models/note.dart';
-import '../widgets/update_goal_sheet.dart';
-import '../widgets/synq_drawer.dart';
+import 'package:synq/features/timeline/data/weekly_focus_provider.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/home/presentation/widgets/create_task_sheet.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/features/timeline/presentation/widgets/update_goal_sheet.dart';
+import 'package:synq/features/timeline/presentation/widgets/synq_drawer.dart';
 
 class WeeklyFocusScreen extends ConsumerStatefulWidget {
   const WeeklyFocusScreen({super.key});

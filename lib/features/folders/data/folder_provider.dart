@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/models/folder.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
 import 'folders_repository.dart';
-import '../../../core/providers/repository_provider.dart';
+import 'package:synq/core/providers/repository_provider.dart';
 
 final foldersProvider = StreamNotifierProvider<FoldersNotifier, List<Folder>>(
   () {

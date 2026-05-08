@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../domain/models/timeline_event.dart';
+import 'package:synq/features/timeline/domain/models/timeline_event.dart';
 import 'draggable_timeline_event.dart';
 import 'timeline_layout_engine.dart';
 import 'timeline_task_group_widget.dart';

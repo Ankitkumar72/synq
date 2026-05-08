@@ -1,4 +1,4 @@
-import '../domain/models/task.dart';
+import 'package:synq/features/tasks/domain/models/task.dart';
 
 abstract class TasksRepository {
   Stream<List<Task>> watchTasks();

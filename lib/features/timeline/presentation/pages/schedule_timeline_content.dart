@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../data/timeline_provider.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../tasks/data/tasks_provider.dart';
-import '../../../tasks/presentation/pages/task_detail_screen.dart';
-import '../pages/view_event_page.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/timeline/data/timeline_provider.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
+import 'package:synq/features/tasks/presentation/pages/task_detail_screen.dart';
+import 'package:synq/features/timeline/presentation/pages/view_event_page.dart';
 
 class ScheduleTimelineContent extends ConsumerStatefulWidget {
   const ScheduleTimelineContent({super.key});

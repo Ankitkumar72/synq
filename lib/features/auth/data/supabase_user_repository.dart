@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/services/supabase_service.dart';
-import '../domain/models/synq_user.dart';
+import 'package:synq/core/services/supabase_service.dart';
+import 'package:synq/features/auth/domain/models/synq_user.dart';
 
 /// Supabase-backed user repository — replaces [UserRepository] (Firestore).
 ///

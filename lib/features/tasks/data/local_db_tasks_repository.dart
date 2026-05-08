@@ -1,6 +1,6 @@
-import '../../../core/database/local_database.dart';
-import '../../notes/domain/models/note.dart';
-import '../domain/models/task.dart';
+import 'package:synq/core/database/local_database.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/features/tasks/domain/models/task.dart';
 import 'tasks_repository.dart';
 
 class LocalDbTasksRepository implements TasksRepository {

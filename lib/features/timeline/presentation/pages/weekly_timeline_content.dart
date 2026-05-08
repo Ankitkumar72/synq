@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../data/timeline_provider.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../notes/domain/models/note.dart';
-import '../../../tasks/data/tasks_provider.dart';
-import '../widgets/weekly_focus_card.dart';
-import '../widgets/daily_schedule_card.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/timeline/data/timeline_provider.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
+import 'package:synq/features/timeline/presentation/widgets/weekly_focus_card.dart';
+import 'package:synq/features/timeline/presentation/widgets/daily_schedule_card.dart';
 
 class WeeklyTimelineContent extends ConsumerStatefulWidget {
   const WeeklyTimelineContent({super.key});
@@ -19,14 +19,15 @@ class WeeklyTimelineContent extends ConsumerStatefulWidget {
 }
 
 class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
-  final DateTime _currentWeekStart = DateTime.now().subtract(
-    Duration(days: DateTime.now().weekday - 1),
-  );
+  late final DateTime _currentWeekStart;
   late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    _currentWeekStart = today.subtract(Duration(days: today.weekday - 1));
     _scrollController = ScrollController();
 
     // Scroll to today after first frame
@@ -97,14 +98,15 @@ class _WeeklyTimelineContentState extends ConsumerState<WeeklyTimelineContent> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // Group tasks by date for weekly view
+    // Group tasks AND events by date for weekly view
     final tasksByDate = <DateTime, List<Note>>{};
     for (final note in combinedItems) {
-      if (note.isTask && note.scheduledTime != null) {
+      if (note.scheduledTime != null) {
+        final local = note.scheduledTime!.toLocal();
         final date = DateTime(
-          note.scheduledTime!.year,
-          note.scheduledTime!.month,
-          note.scheduledTime!.day,
+          local.year,
+          local.month,
+          local.day,
         );
         tasksByDate.putIfAbsent(date, () => []).add(note);
       }

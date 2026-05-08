@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../data/timeline_provider.dart';
-import '../../../tasks/presentation/pages/overdue_tasks_page.dart';
-import '../../../../core/widgets/synq_ui_toolkit.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/timeline/data/timeline_provider.dart';
+import 'package:synq/features/tasks/presentation/pages/overdue_tasks_page.dart';
+import 'package:synq/core/widgets/synq_ui_toolkit.dart';
 
 class SynqDrawer extends ConsumerWidget {
   final bool isOverdueTasksPage;

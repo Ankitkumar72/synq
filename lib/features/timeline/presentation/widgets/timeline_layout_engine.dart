@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-import '../../domain/models/timeline_event.dart';
+import 'package:synq/features/timeline/domain/models/timeline_event.dart';
 
 class PositionedTimelineEvent {
   final TimelineEvent event;

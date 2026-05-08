@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/notification_service.dart';
-import '../domain/models/note.dart';
-import '../../../../core/domain/models/recurrence_rule.dart';
-import '../../attachments/data/image_storage_service.dart';
+import 'package:synq/core/services/notification_service.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/core/domain/models/recurrence_rule.dart';
+import 'package:synq/features/attachments/data/image_storage_service.dart';
 import 'package:uuid/uuid.dart';
 import 'notes_repository.dart';
-import '../../../core/providers/repository_provider.dart';
+import 'package:synq/core/providers/repository_provider.dart';
 
 final notesProvider = StreamNotifierProvider<NotesNotifier, List<Note>>(() {
   return NotesNotifier();

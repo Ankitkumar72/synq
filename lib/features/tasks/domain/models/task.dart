@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../../notes/domain/models/note.dart' show NoteCategory, SubTask, TaskPriority;
-import '../../../../core/domain/models/recurrence_rule.dart';
+import 'package:synq/features/notes/domain/models/note.dart' show NoteCategory, SubTask, TaskPriority;
+import 'package:synq/core/domain/models/recurrence_rule.dart';
 
 part 'task.freezed.dart';
 part 'task.g.dart';

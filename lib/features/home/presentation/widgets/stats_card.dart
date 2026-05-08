@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/bento_card.dart';
-import '../providers/stats_provider.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/core/widgets/bento_card.dart';
+import 'package:synq/features/home/presentation/providers/stats_provider.dart';
 
 class StatsCard extends ConsumerWidget {
   const StatsCard({super.key});

@@ -6,20 +6,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../data/folder_search_engine.dart';
-import '../data/folder_provider.dart';
-import '../../notes/data/notes_provider.dart';
-import '../../notes/data/notes_settings_provider.dart'; // Added
-import '../domain/models/folder.dart';
-import '../../notes/domain/models/note.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/folders/data/folder_search_engine.dart';
+import 'package:synq/features/folders/data/folder_provider.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/notes/data/notes_settings_provider.dart'; // Added
+import 'package:synq/features/folders/domain/models/folder.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 import 'widgets/folder_card.dart';
 import 'widgets/add_folder_sheet.dart';
 import 'widgets/folder_options_sheet.dart';
-import '../../notes/presentation/widgets/delete_confirmation_sheet.dart'; // Added
+import 'package:synq/features/notes/presentation/widgets/delete_confirmation_sheet.dart'; // Added
 import 'folder_detail_screen.dart';
-import '../../notes/presentation/note_detail_screen.dart';
-import '../../../../core/navigation/fade_page_route.dart';
+import 'package:synq/features/notes/presentation/note_detail_screen.dart';
+import 'package:synq/core/navigation/fade_page_route.dart';
 
 final folderSearchEngineProvider = Provider<FolderSearchEngine>((ref) {
   final folders = ref.watch(foldersProvider).value ?? const <Folder>[];

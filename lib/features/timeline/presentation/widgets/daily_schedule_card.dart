@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../../notes/domain/models/note.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 
 class DailyScheduleCard extends StatelessWidget {
   final DateTime date;
@@ -41,14 +41,14 @@ class DailyScheduleCard extends StatelessWidget {
 
     String subtitle;
     if (!hasTasks) {
-      subtitle = 'No tasks scheduled';
+      subtitle = 'Nothing scheduled';
     } else if (completedTasks == totalTasks) {
-      subtitle = 'All tasks completed';
+      subtitle = 'All items completed';
     } else if (completedTasks > 0) {
       subtitle =
-          '$completedTasks task${completedTasks > 1 ? 's' : ''} completed, $totalTasks scheduled';
+          '$completedTasks item${completedTasks > 1 ? 's' : ''} completed, $totalTasks scheduled';
     } else {
-      subtitle = '$totalTasks task${totalTasks > 1 ? 's' : ''} scheduled';
+      subtitle = '$totalTasks item${totalTasks > 1 ? 's' : ''} scheduled';
     }
 
     final dotColor = (hasTasks && completedTasks == totalTasks)

@@ -1,5 +1,5 @@
-import '../domain/models/folder.dart';
-import '../../notes/domain/models/note.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 
 class FolderSearchEngine {
   FolderSearchEngine({required List<Folder> folders, required List<Note> notes})

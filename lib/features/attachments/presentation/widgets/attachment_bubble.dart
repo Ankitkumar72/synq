@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:uuid/uuid.dart';
-import '../../data/image_storage_service.dart';
+import 'package:synq/features/attachments/data/image_storage_service.dart';
 class AttachmentBubble extends StatefulWidget {
   final String filename;
   final String userId; // 👈 userId now required

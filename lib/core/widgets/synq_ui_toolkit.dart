@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import 'package:synq/core/theme/app_theme.dart';
 
 /// A premium, standardized card component for the Synq design system.
 /// Uses [ContinuousRectangleBorder] for smooth "squircle" corners.

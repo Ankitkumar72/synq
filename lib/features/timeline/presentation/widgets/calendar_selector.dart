@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../data/timeline_provider.dart';
-import '../../domain/models/timeline_event.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/timeline/data/timeline_provider.dart';
+import 'package:synq/features/timeline/domain/models/timeline_event.dart';
 
 
 

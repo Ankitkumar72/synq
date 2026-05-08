@@ -1,4 +1,4 @@
-import '../domain/models/activity_event.dart';
+import 'package:synq/features/analytics/domain/models/activity_event.dart';
 
 abstract class ActivityRepository {
   Future<void> logEvent(ActivityEvent event);

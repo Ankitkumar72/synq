@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../notes/domain/models/note.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/navigation/fade_page_route.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/core/navigation/fade_page_route.dart';
 import 'widgets/current_focus_widget.dart';
 import 'widgets/next_up_card.dart';
 import 'widgets/stats_card.dart';
-import '../../focus/presentation/focus_screen.dart';
+import 'package:synq/features/focus/presentation/focus_screen.dart';
 
-import '../../notes/presentation/note_detail_screen.dart';
-import '../../notes/data/notes_provider.dart';
-import '../../attachments/data/image_storage_service.dart';
-import '../../tasks/domain/models/task.dart';
-import '../../tasks/data/tasks_provider.dart';
+import 'package:synq/features/notes/presentation/note_detail_screen.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/attachments/data/image_storage_service.dart';
+import 'package:synq/features/tasks/domain/models/task.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
 import 'dart:io';
-import '../../tasks/presentation/pages/task_detail_screen.dart';
-import '../../notes/utils/markdown_bridge.dart';
+import 'package:synq/features/tasks/presentation/pages/task_detail_screen.dart';
+import 'package:synq/features/notes/utils/markdown_bridge.dart';
 import 'package:intl/intl.dart';
-import '../../timeline/presentation/pages/view_event_page.dart';
+import 'package:synq/features/timeline/presentation/pages/view_event_page.dart';
 
 /// HomeScreen content without the bottom navigation bar (for use in MainShell)
 class HomeScreenContent extends ConsumerWidget {
@@ -111,13 +111,15 @@ class HomeScreenContent extends ConsumerWidget {
     // Separate tasks and notes into categories
     final scheduledTasks = tasks.where((t) {
       if (t.scheduledTime == null) return false;
-      final scheduledDate = DateTime(t.scheduledTime!.year, t.scheduledTime!.month, t.scheduledTime!.day);
+      final local = t.scheduledTime!.toLocal();
+      final scheduledDate = DateTime(local.year, local.month, local.day);
       return scheduledDate.isAtSameMomentAs(today);
     }).toList();
 
     final scheduledEvents = notes.where((n) {
       if (n.scheduledTime == null) return false;
-      final scheduledDate = DateTime(n.scheduledTime!.year, n.scheduledTime!.month, n.scheduledTime!.day);
+      final local = n.scheduledTime!.toLocal();
+      final scheduledDate = DateTime(local.year, local.month, local.day);
       return scheduledDate.isAtSameMomentAs(today);
     }).toList();
 

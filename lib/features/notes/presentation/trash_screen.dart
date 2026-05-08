@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/trash_provider.dart';
-import '../domain/models/note.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:synq/features/notes/data/trash_provider.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/core/theme/app_theme.dart';
 
 class TrashScreen extends ConsumerWidget {
   const TrashScreen({super.key});

@@ -5,12 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../notes/domain/models/note.dart' show SubTask;
-import '../../domain/models/task.dart';
-import '../../data/tasks_provider.dart';
-import '../../../notes/utils/markdown_controller.dart';
-import '../../../home/presentation/providers/schedule_conflict_provider.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/notes/domain/models/note.dart' show SubTask;
+import 'package:synq/features/tasks/domain/models/task.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
+import 'package:synq/features/notes/utils/markdown_controller.dart';
+import 'package:synq/features/home/presentation/providers/schedule_conflict_provider.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
   final Task task;

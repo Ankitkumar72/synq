@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../subscription/presentation/widgets/upgrade_paywall_sheet.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/subscription/presentation/widgets/upgrade_paywall_sheet.dart';
 
 class SubscriptionScreen extends StatelessWidget {
   const SubscriptionScreen({super.key});

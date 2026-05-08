@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-import '../../domain/models/timeline_event.dart';
+import 'package:synq/features/timeline/domain/models/timeline_event.dart';
 import 'timeline_layout_engine.dart';
 
 typedef EventRescheduledCallback =

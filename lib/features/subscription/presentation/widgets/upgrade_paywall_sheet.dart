@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/subscription_service.dart';
-import '../../../auth/domain/models/synq_user.dart';
-import '../../../auth/presentation/providers/user_provider.dart';
+import 'package:synq/core/services/subscription_service.dart';
+import 'package:synq/features/auth/domain/models/synq_user.dart';
+import 'package:synq/features/auth/presentation/providers/user_provider.dart';
 
 final paddleServiceProvider = Provider<PaddleService>((ref) {
   return PaddleService();

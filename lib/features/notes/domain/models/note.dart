@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import '../../../../core/domain/models/recurrence_rule.dart';
+import 'package:synq/core/domain/models/recurrence_rule.dart';
 
 part 'note.freezed.dart';
 part 'note.g.dart';

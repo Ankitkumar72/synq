@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../notes/domain/models/note.dart';
-import '../../../notes/data/notes_provider.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
 
 class ViewEventPage extends ConsumerStatefulWidget {
   final Note event;
@@ -101,9 +101,9 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
 
   Future<void> _openTimePlannerSheet() async {
     final currentEvent = _currentEvent;
-    var selectedDate = currentEvent.scheduledTime ?? DateTime.now();
+    var selectedDate = currentEvent.scheduledTime?.toLocal() ?? DateTime.now();
     TimeOfDay? selectedStartTime = TimeOfDay.fromDateTime(selectedDate);
-    TimeOfDay? selectedEndTime = currentEvent.endTime != null ? TimeOfDay.fromDateTime(currentEvent.endTime!) : selectedStartTime.replacing(hour: (selectedStartTime.hour + 1) % 24);
+    TimeOfDay? selectedEndTime = currentEvent.endTime != null ? TimeOfDay.fromDateTime(currentEvent.endTime!.toLocal()) : selectedStartTime.replacing(hour: (selectedStartTime.hour + 1) % 24);
     var selectedIsAllDay = currentEvent.isAllDay;
 
     await showDialog<void>(
@@ -220,8 +220,8 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
                                   const SizedBox(width: 8),
                                   ElevatedButton(
                                     onPressed: () {
-                                      final finalStart = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, selectedStartTime!.hour, selectedStartTime!.minute);
-                                      final finalEnd = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, selectedEndTime!.hour, selectedEndTime!.minute);
+                                      final finalStart = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, selectedStartTime!.hour, selectedStartTime!.minute).toUtc();
+                                      final finalEnd = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, selectedEndTime!.hour, selectedEndTime!.minute).toUtc();
                                       
                                       final updatedEvent = currentEvent.copyWith(
                                         scheduledTime: finalStart,
@@ -387,9 +387,11 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
   }
 
   Widget _buildDateTimeCard(Note event) {
-    final dateStr = event.scheduledTime != null ? DateFormat('MMM d, yyyy').format(event.scheduledTime!) : 'No date';
-    final startTimeStr = event.scheduledTime != null ? DateFormat('h:mm a').format(event.scheduledTime!) : 'Set start';
-    final endTimeStr = event.endTime != null ? DateFormat('h:mm a').format(event.endTime!) : '';
+    final localScheduled = event.scheduledTime?.toLocal();
+    final localEnd = event.endTime?.toLocal();
+    final dateStr = localScheduled != null ? DateFormat('MMM d, yyyy').format(localScheduled) : 'No date';
+    final startTimeStr = localScheduled != null ? DateFormat('h:mm a').format(localScheduled) : 'Set start';
+    final endTimeStr = localEnd != null ? DateFormat('h:mm a').format(localEnd) : '';
 
     final timeDisplay = event.isAllDay ? 'All Day' : (endTimeStr.isNotEmpty ? '$startTimeStr - $endTimeStr' : startTimeStr);
 

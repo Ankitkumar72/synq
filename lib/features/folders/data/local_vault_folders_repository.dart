@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-import '../domain/models/folder.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
 import 'folders_repository.dart';
 
 class LocalVaultFoldersRepository implements FoldersRepository {

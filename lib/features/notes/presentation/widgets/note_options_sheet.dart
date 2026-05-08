@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../domain/models/note.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 
 class NoteOptionsSheet extends StatelessWidget {
   final Note note;

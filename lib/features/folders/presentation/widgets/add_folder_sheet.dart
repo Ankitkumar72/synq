@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:synq/core/theme/app_theme.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/utils/icon_utils.dart';
-import '../../domain/models/folder.dart';
-import '../../data/folder_provider.dart';
+import 'package:synq/core/utils/icon_utils.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
+import 'package:synq/features/folders/data/folder_provider.dart';
 
 class AddFolderSheet extends ConsumerStatefulWidget {
   final Folder? folderToEdit;

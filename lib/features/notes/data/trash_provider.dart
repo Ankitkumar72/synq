@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/models/note.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 import 'notes_repository.dart';
-import '../../../core/providers/repository_provider.dart';
-import '../../attachments/data/image_storage_service.dart';
+import 'package:synq/core/providers/repository_provider.dart';
+import 'package:synq/features/attachments/data/image_storage_service.dart';
 
 final trashProvider = StreamNotifierProvider<TrashNotifier, List<Note>>(() {
   return TrashNotifier();

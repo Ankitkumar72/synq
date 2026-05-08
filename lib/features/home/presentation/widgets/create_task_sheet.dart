@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/domain/models/recurrence_rule.dart';
-import '../../../notes/domain/models/note.dart';
+import 'package:synq/core/domain/models/recurrence_rule.dart';
+import 'package:synq/features/notes/domain/models/note.dart' show NoteCategory, TaskPriority;
+import 'package:synq/features/tasks/domain/models/task.dart';
 import 'package:uuid/uuid.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../timeline/presentation/pages/create_event_page.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../providers/schedule_conflict_provider.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
+import 'package:synq/features/timeline/presentation/pages/create_event_page.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/features/home/presentation/providers/schedule_conflict_provider.dart';
 import 'repeat_settings_screen.dart';
 
 class CreateTaskSheet extends ConsumerStatefulWidget {
-  final Note? taskToEdit;
+  final Task? taskToEdit;
   final String? initialFolderId;
   final DateTime? initialDate;
 
@@ -619,9 +620,9 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
           title: title,
           body: description.isEmpty ? null : description,
           category: _selectedTaskCategory,
-          scheduledTime: startTime,
-          endTime: endTime,
-          reminderTime: _taskReminderTime,
+          scheduledTime: startTime?.toUtc(),
+          endTime: endTime?.toUtc(),
+          reminderTime: _taskReminderTime?.toUtc(),
           recurrenceRule: _recurrenceRule,
           priority: _selectedPriority,
           isTask: true,
@@ -629,15 +630,15 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
           tags: _selectedTags,
           folderId: _selectedFolderId,
         ) ??
-        Note(
+        Task(
           id: const Uuid().v4(),
           title: title,
           body: description.isEmpty ? null : description,
           category: _selectedTaskCategory,
-          createdAt: DateTime.now(),
-          scheduledTime: startTime,
-          endTime: endTime,
-          reminderTime: _taskReminderTime,
+          createdAt: DateTime.now().toUtc(),
+          scheduledTime: startTime?.toUtc(),
+          endTime: endTime?.toUtc(),
+          reminderTime: _taskReminderTime?.toUtc(),
           recurrenceRule: _recurrenceRule,
           parentRecurringId: null,
           isRecurringInstance: false,
@@ -652,9 +653,9 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
 
     try {
       if (widget.taskToEdit == null) {
-        await ref.read(notesProvider.notifier).addNote(task);
+        await ref.read(tasksProvider.notifier).addTask(task);
       } else {
-        await ref.read(notesProvider.notifier).updateNote(task);
+        await ref.read(tasksProvider.notifier).updateTask(task);
       }
 
       if (mounted) {
@@ -1208,7 +1209,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
 
   /// Builds the amber conflict-warning banner used in both the time-planner
   /// dialog and below the schedule card.
-  Widget _buildConflictBanner(List<Note> conflicts, {required bool dark}) {
+  Widget _buildConflictBanner(List<Task> conflicts, {required bool dark}) {
     final first = conflicts.first;
     final timeStr = _formatTime(first.scheduledTime);
     final bg = dark ? const Color(0xFF3A3020) : const Color(0xFFFFF8E1);
@@ -1244,7 +1245,7 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
 
 void showCreateTaskSheet(
   BuildContext context, {
-  Note? taskToEdit,
+  Task? taskToEdit,
   String? initialFolderId,
   DateTime? initialDate,
 }) {

@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:synq/core/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
-import '../../../home/presentation/widgets/create_task_sheet.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../notes/domain/models/note.dart';
-import '../../../../core/domain/models/recurrence_rule.dart';
-import '../../data/timeline_provider.dart';
+import 'package:synq/features/home/presentation/widgets/create_task_sheet.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/core/domain/models/recurrence_rule.dart';
+import 'package:synq/features/timeline/data/timeline_provider.dart';
 // Adjust this path to where your repeat_settings_screen.dart is located
-import '../../../home/presentation/widgets/repeat_settings_screen.dart';
+import 'package:synq/features/home/presentation/widgets/repeat_settings_screen.dart';
 
 class CreateEventPage extends ConsumerStatefulWidget {
-  const CreateEventPage({super.key});
+  final DateTime? initialDateTime;
+
+  const CreateEventPage({super.key, this.initialDateTime});
 
   @override
   ConsumerState<CreateEventPage> createState() => _CreateEventPageState();
@@ -22,11 +24,9 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   bool _isAllDay = false;
-  DateTime _startDate = DateTime.now();
-  TimeOfDay _startTime = TimeOfDay.now();
-  TimeOfDay _endTime = TimeOfDay.now().replacing(
-    hour: (TimeOfDay.now().hour + 1) % 24,
-  );
+  late DateTime _startDate;
+  late TimeOfDay _startTime;
+  late TimeOfDay _endTime;
   int _selectedChipIndex =
       0; // 0: Event, 1: Task, 2: Working location, 3: Out of office
 
@@ -48,8 +48,13 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   @override
   void initState() {
     super.initState();
-    // Initialize start date from the selected date in the timeline
-    _startDate = ref.read(selectedDateProvider);
+    _startDate = widget.initialDateTime ?? DateTime.now();
+    _startTime = widget.initialDateTime != null
+        ? TimeOfDay.fromDateTime(widget.initialDateTime!)
+        : TimeOfDay.now();
+    _endTime = _startTime.replacing(
+      hour: (_startTime.hour + 1) % 24,
+    );
   }
 
   @override
@@ -184,10 +189,10 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
       title: title,
       body: description.isEmpty ? null : description,
       category: NoteCategory.work,
-      createdAt: DateTime.now(),
-      scheduledTime: startDateTime,
-      endTime: endDateTime,
-      reminderTime: _eventReminderTime,
+      createdAt: DateTime.now().toUtc(),
+      scheduledTime: startDateTime.toUtc(),
+      endTime: endDateTime.toUtc(),
+      reminderTime: _eventReminderTime?.toUtc(),
       recurrenceRule: _recurrenceRule,
       isTask: false,
       isAllDay: _isAllDay,
@@ -1227,12 +1232,12 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
   }
 }
 
-void showCreateEventSheet(BuildContext context) {
+void showCreateEventSheet(BuildContext context, {DateTime? initialDateTime}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => const CreateEventPage(),
+    builder: (context) => CreateEventPage(initialDateTime: initialDateTime),
   );
 }

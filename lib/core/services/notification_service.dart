@@ -4,8 +4,8 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
 import 'dart:ui';
-import '../../features/notes/domain/models/note.dart';
-import '../../features/tasks/domain/models/task.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/features/tasks/domain/models/task.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {

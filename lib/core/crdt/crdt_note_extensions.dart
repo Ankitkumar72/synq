@@ -1,5 +1,5 @@
-import '../../features/notes/domain/models/note.dart';
-import '../../features/folders/domain/models/folder.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
 import 'hlc.dart';
 import 'field_level_crdt.dart';
 

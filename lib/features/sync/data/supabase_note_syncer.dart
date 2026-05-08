@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/crdt/hlc.dart';
-import '../../../core/crdt/field_level_crdt.dart';
-import '../../../core/database/local_database.dart';
-import '../../notes/domain/models/note.dart';
-import '../../../core/constants/database_constants.dart';
+import 'package:synq/core/crdt/hlc.dart';
+import 'package:synq/core/crdt/field_level_crdt.dart';
+import 'package:synq/core/database/local_database.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/core/constants/database_constants.dart';
 
 /// Handles note-specific sync operations between local SQLite and Supabase.
 ///

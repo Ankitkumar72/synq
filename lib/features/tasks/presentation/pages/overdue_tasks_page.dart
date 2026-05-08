@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/navigation/fade_page_route.dart';
-import '../../data/tasks_provider.dart';
-import '../../domain/models/task.dart';
-import '../../../notes/domain/models/note.dart' show TaskPriority;
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/core/navigation/fade_page_route.dart';
+import 'package:synq/features/tasks/data/tasks_provider.dart';
+import 'package:synq/features/tasks/domain/models/task.dart';
+import 'package:synq/features/notes/domain/models/note.dart' show TaskPriority;
 import 'task_detail_screen.dart';
-import '../../../timeline/presentation/widgets/synq_drawer.dart';
+import 'package:synq/features/timeline/presentation/widgets/synq_drawer.dart';
 
 class OverdueTasksPage extends ConsumerStatefulWidget {
   const OverdueTasksPage({super.key});

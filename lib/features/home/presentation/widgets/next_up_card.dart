@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/bento_card.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/core/widgets/bento_card.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/next_task_provider.dart';
+import 'package:synq/features/home/presentation/providers/next_task_provider.dart';
 
 class NextUpCard extends ConsumerWidget {
   const NextUpCard({super.key});

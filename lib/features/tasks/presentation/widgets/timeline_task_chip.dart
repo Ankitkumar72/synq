@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-import '../../../timeline/domain/models/timeline_event.dart';
-import '../../../timeline/presentation/widgets/timeline_layout_engine.dart';
+import 'package:synq/features/timeline/domain/models/timeline_event.dart';
+import 'package:synq/features/timeline/presentation/widgets/timeline_layout_engine.dart';
 
 // ---------------------------------------------------------------------------
 // Callbacks

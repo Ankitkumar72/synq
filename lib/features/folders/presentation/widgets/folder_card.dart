@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/icon_utils.dart';
-import '../../domain/models/folder.dart';
+import 'package:synq/core/theme/app_theme.dart';
+import 'package:synq/core/utils/icon_utils.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
 
 class FolderCard extends StatelessWidget {
   final Folder folder;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import 'package:synq/core/theme/app_theme.dart';
 
 class BentoCard extends StatelessWidget {
   final Widget child;

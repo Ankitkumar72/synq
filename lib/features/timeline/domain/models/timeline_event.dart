@@ -1,4 +1,4 @@
-// import '../models/task.dart'; // No longer needed as we're independent
+// import 'package:synq/features/timeline/domain/models/task.dart'; // No longer needed as we're independent
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'timeline_event.freezed.dart';

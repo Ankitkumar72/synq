@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:synq/core/theme/app_theme.dart';
 
 class WaveformGraph extends StatefulWidget {
   const WaveformGraph({super.key});
@@ -129,8 +129,6 @@ class WavePainter extends CustomPainter {
     final path = Path();
     final midY = size.height / 2; // Perfectly centered
     
-    // Dynamically scale amplitude so it perfectly fits the container
-    // Leaving a small 10% margin so it never touches the bounds
     final maxAmplitude = (size.height / 2) * 0.90;
     final a1 = maxAmplitude * (15 / 25);
     final a2 = maxAmplitude * (10 / 25);

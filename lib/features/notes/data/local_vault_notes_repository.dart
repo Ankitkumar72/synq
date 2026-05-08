@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 
 import 'package:path_provider/path_provider.dart';
 
-import '../domain/models/note.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 import 'notes_repository.dart';
 
 class LocalVaultNotesRepository implements NotesRepository {

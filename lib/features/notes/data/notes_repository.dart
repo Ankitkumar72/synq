@@ -1,4 +1,4 @@
-import '../domain/models/note.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 
 abstract class NotesRepository {
   Stream<List<Note>> watchNotes();

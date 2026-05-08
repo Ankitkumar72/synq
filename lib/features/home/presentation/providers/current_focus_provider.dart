@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../notes/data/notes_provider.dart';
-import '../../../notes/domain/models/note.dart';
+import 'package:synq/features/notes/data/notes_provider.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
 
 final currentFocusProvider = Provider<AsyncValue<Note?>>((ref) {
   final notesAsync = ref.watch(notesProvider);

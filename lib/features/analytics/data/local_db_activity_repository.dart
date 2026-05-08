@@ -1,6 +1,6 @@
-import '../../../core/database/local_database.dart';
-import '../../notes/domain/models/note.dart';
-import '../domain/models/activity_event.dart';
+import 'package:synq/core/database/local_database.dart';
+import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/features/analytics/domain/models/activity_event.dart';
 import 'activity_repository.dart';
 
 class LocalDbActivityRepository implements ActivityRepository {

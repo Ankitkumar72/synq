@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/notification_service.dart';
-import '../../attachments/data/image_storage_service.dart';
-import '../../../core/providers/repository_provider.dart'; // contains tasksRepositoryProvider and syncCoordinatorProvider
-import '../domain/models/task.dart';
-import '../../../core/domain/models/recurrence_rule.dart';
-import '../../analytics/domain/models/activity_event.dart';
+import 'package:synq/core/services/notification_service.dart';
+import 'package:synq/features/attachments/data/image_storage_service.dart';
+import 'package:synq/core/providers/repository_provider.dart'; // contains tasksRepositoryProvider and syncCoordinatorProvider
+import 'package:synq/features/tasks/domain/models/task.dart';
+import 'package:synq/core/domain/models/recurrence_rule.dart';
+import 'package:synq/features/analytics/domain/models/activity_event.dart';
 import 'tasks_repository.dart';
 import 'package:uuid/uuid.dart';
 
@@ -25,7 +25,9 @@ final overdueTasksProvider = StreamProvider.autoDispose<List<Task>>((ref) {
 /// Leverages native SQLite indexes to fetch only tasks scheduled for a specific day in O(log n) time.
 final timelineTasksProvider = StreamProvider.autoDispose.family<List<Task>, DateTime>((ref, day) {
   final repository = ref.watch(tasksRepositoryProvider);
-  final startOfDay = DateTime(day.year, day.month, day.day);
+  // Ensure day is local for boundary calculations
+  final localDay = day.toLocal();
+  final startOfDay = DateTime(localDay.year, localDay.month, localDay.day);
   final endOfDay = startOfDay.add(const Duration(days: 1));
   
   return repository.watchFilteredTasks(

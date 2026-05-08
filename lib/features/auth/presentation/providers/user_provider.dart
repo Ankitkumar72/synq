@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/supabase_user_repository.dart';
-import '../../domain/models/synq_user.dart';
+import 'package:synq/features/auth/data/supabase_user_repository.dart';
+import 'package:synq/features/auth/domain/models/synq_user.dart';
 import 'auth_provider.dart';
 
 final userRepositoryProvider = Provider<SupabaseUserRepository>((ref) {

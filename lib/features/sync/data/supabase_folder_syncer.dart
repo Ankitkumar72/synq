@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/crdt/hlc.dart';
-import '../../../core/crdt/field_level_crdt.dart';
-import '../../../core/database/local_database.dart';
-import '../../folders/domain/models/folder.dart';
+import 'package:synq/core/crdt/hlc.dart';
+import 'package:synq/core/crdt/field_level_crdt.dart';
+import 'package:synq/core/database/local_database.dart';
+import 'package:synq/features/folders/domain/models/folder.dart';
 
 /// Handles folder-specific sync operations between local SQLite and Supabase.
 ///

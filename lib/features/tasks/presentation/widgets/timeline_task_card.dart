@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:synq/core/theme/app_theme.dart';
 
 enum TaskType { strategy, active, rest, standard, admin, design }
 
