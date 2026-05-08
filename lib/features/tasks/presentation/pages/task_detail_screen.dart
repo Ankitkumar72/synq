@@ -1051,13 +1051,14 @@ class _DateDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     if (scheduledTime != null) {
       final now = DateTime.now();
+      final localTime = scheduledTime!.toLocal();
       String text;
-      if (scheduledTime!.year == now.year &&
-          scheduledTime!.month == now.month &&
-          scheduledTime!.day == now.day) {
+      if (localTime.year == now.year &&
+          localTime.month == now.month &&
+          localTime.day == now.day) {
         text = 'Today';
       } else {
-        text = DateFormat('MMM d, yyyy').format(scheduledTime!);
+        text = DateFormat('MMM d, yyyy').format(localTime);
       }
       return Text(
         text,
@@ -1094,7 +1095,7 @@ class _TimeDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     if (scheduledTime != null) {
       return Text(
-        DateFormat('h:mm a').format(scheduledTime!),
+        DateFormat('h:mm a').format(scheduledTime!.toLocal()),
         style: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,

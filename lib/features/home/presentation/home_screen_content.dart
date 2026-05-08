@@ -498,7 +498,7 @@ class HomeScreenContent extends ConsumerWidget {
                                 ),
                               ),
                             Text(
-                              '${task.category.name.toUpperCase()}${task.priority != TaskPriority.none ? ' · ${task.priority.name}' : ''}${task.isAllDay ? ' · ALL DAY' : (task.scheduledTime != null ? ' · ${task.scheduledTime!.hour > 12 ? task.scheduledTime!.hour - 12 : (task.scheduledTime!.hour == 0 ? 12 : task.scheduledTime!.hour)}:${task.scheduledTime!.minute.toString().padLeft(2, '0')} ${task.scheduledTime!.hour >= 12 ? 'PM' : 'AM'}' : '')}',
+                              '${task.category.name.toUpperCase()}${task.priority != TaskPriority.none ? ' · ${task.priority.name}' : ''}${task.isAllDay ? ' · ALL DAY' : (task.scheduledTime != null ? ' · ${DateFormat('h:mm a').format(task.scheduledTime!.toLocal())}' : '')}',
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(color: AppColors.textSecondary),
                             ),
@@ -741,7 +741,7 @@ class HomeScreenContent extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'EVENT · ${event.scheduledTime!.hour > 12 ? event.scheduledTime!.hour - 12 : (event.scheduledTime!.hour == 0 ? 12 : event.scheduledTime!.hour)}:${event.scheduledTime!.minute.toString().padLeft(2, "0")} ${event.scheduledTime!.hour >= 12 ? "PM" : "AM"}',
+                    'EVENT · ${DateFormat('h:mm a').format(event.scheduledTime!.toLocal())}',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.textSecondary),
                   ),
                 ],
