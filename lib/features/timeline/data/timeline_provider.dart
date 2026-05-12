@@ -28,10 +28,10 @@ final timelineViewModeProvider = StateProvider<TimelineViewMode>(
 
 final datesWithTasksProvider = Provider<Set<DateTime>>((ref) {
   final tasksAsync = ref.watch(tasksProvider);
-  final tasks = tasksAsync.value ?? [];
+  final tasks = tasksAsync.asData?.value ?? [];
 
   final notesAsync = ref.watch(notesProvider);
-  final notes = notesAsync.value ?? [];
+  final notes = notesAsync.asData?.value ?? [];
 
   final taskDates = tasks
       .where((t) => t.scheduledTime != null)
@@ -67,10 +67,10 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     final selectedDate = rawSelectedDate.toLocal();
     
     final tasksAsync = ref.watch(tasksProvider);
-    final tasks = tasksAsync.value ?? [];
+    final tasks = tasksAsync.asData?.value ?? [];
 
     final notesAsync = ref.watch(notesProvider);
-    final notes = notesAsync.value ?? [];
+    final notes = notesAsync.asData?.value ?? [];
 
     final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
@@ -167,6 +167,10 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
 
       final start = TimelineEvent.parseMinutes(e.startTime);
       final end = TimelineEvent.parseMinutes(e.endTime);
+      
+      // If either is -1 (ALL DAY/TODO), it's not "Current" in the timed sense
+      if (start < 0 || end < 0) return e.copyWith(isCurrent: false);
+      
       final isNow = currentMinutes >= start && currentMinutes < end;
       return e.copyWith(isCurrent: isNow);
     }).toList();
@@ -311,10 +315,10 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
   ref,
 ) {
   final notesAsync = ref.watch(notesProvider);
-  final notes = notesAsync.value ?? [];
+  final notes = notesAsync.asData?.value ?? [];
 
   final tasksAsync = ref.watch(tasksProvider);
-  final tasks = tasksAsync.value ?? [];
+  final tasks = tasksAsync.asData?.value ?? [];
 
   final grouped = <DateTime, List<TimelineEvent>>{};
 

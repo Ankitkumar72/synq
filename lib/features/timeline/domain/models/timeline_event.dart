@@ -38,6 +38,12 @@ class TimelineEvent with _$TimelineEvent {
   static int parseMinutes(String timeStr) {
     try {
       final cleanTime = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase();
+      
+      // Special cases for sorting
+      if (cleanTime == 'ALL DAY' || cleanTime == 'TODO') {
+        return -1;
+      }
+
       // Handle 12-hour AM/PM
       try {
         final date = DateFormat('h:mm a').parse(cleanTime);

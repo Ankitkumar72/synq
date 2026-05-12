@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:synq/features/timeline/data/timeline_provider.dart';
 import 'package:synq/features/notes/domain/models/note.dart';
+import 'package:synq/features/tasks/domain/models/task.dart';
 import 'package:synq/features/notes/data/notes_provider.dart';
 import 'package:synq/features/tasks/data/tasks_provider.dart';
 import 'package:synq/features/timeline/domain/models/timeline_event.dart';
@@ -15,6 +16,17 @@ class MockNotesNotifier extends NotesNotifier {
   @override
   Stream<List<Note>> build() => Stream.value(_notes);
 }
+
+class MockTasksNotifier extends TasksNotifier {
+  final List<Task> _tasks;
+  MockTasksNotifier(this._tasks);
+
+  @override
+  Stream<List<Task>> build() => Stream.value(_tasks);
+}
+
+// Dummy provider for deviceId to avoid missing provider errors
+final deviceIdProvider = Provider<AsyncValue<String>>((ref) => const AsyncValue.data('test_device'));
 
 void main() {
   group('TimelineEventsNotifier Timezone Logic', () {
@@ -32,6 +44,7 @@ void main() {
         ProviderScope(
           overrides: [
             notesProvider.overrideWith(() => MockNotesNotifier([note])),
+            tasksProvider.overrideWith(() => MockTasksNotifier([])),
             selectedDateProvider.overrideWith((ref) => DateTime(2026, 5, 8)),
             timelineTasksProvider.overrideWith((ref, date) => Stream.value([])),
             minuteProvider.overrideWith((ref) => Stream.value(0)),
@@ -77,6 +90,7 @@ void main() {
         ProviderScope(
           overrides: [
             notesProvider.overrideWith(() => MockNotesNotifier([note])),
+            tasksProvider.overrideWith(() => MockTasksNotifier([])),
             selectedDateProvider.overrideWith((ref) => DateTime(2026, 5, 8)),
             timelineTasksProvider.overrideWith((ref, date) => Stream.value([])),
             minuteProvider.overrideWith((ref) => Stream.value(0)),
@@ -125,6 +139,7 @@ void main() {
         ProviderScope(
           overrides: [
             notesProvider.overrideWith(() => MockNotesNotifier(notes)),
+            tasksProvider.overrideWith(() => MockTasksNotifier([])),
             selectedDateProvider.overrideWith((ref) => DateTime(2026, 5, 8)),
             timelineTasksProvider.overrideWith((ref, date) => Stream.value([])),
             minuteProvider.overrideWith((ref) => Stream.value(0)),
