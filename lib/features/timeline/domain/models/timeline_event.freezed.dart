@@ -250,7 +250,7 @@ class __$$TimelineEventImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$TimelineEventImpl implements _TimelineEvent {
+class _$TimelineEventImpl extends _TimelineEvent {
   const _$TimelineEventImpl(
       {required this.id,
       required this.title,
@@ -265,7 +265,8 @@ class _$TimelineEventImpl implements _TimelineEvent {
       this.isCurrent = false,
       this.color,
       final List<TimelineEvent>? groupedTasks})
-      : _groupedTasks = groupedTasks;
+      : _groupedTasks = groupedTasks,
+        super._();
 
   @override
   final String id;
@@ -360,7 +361,7 @@ class _$TimelineEventImpl implements _TimelineEvent {
       __$$TimelineEventImplCopyWithImpl<_$TimelineEventImpl>(this, _$identity);
 }
 
-abstract class _TimelineEvent implements TimelineEvent {
+abstract class _TimelineEvent extends TimelineEvent {
   const factory _TimelineEvent(
       {required final String id,
       required final String title,
@@ -375,6 +376,7 @@ abstract class _TimelineEvent implements TimelineEvent {
       final bool isCurrent,
       final int? color,
       final List<TimelineEvent>? groupedTasks}) = _$TimelineEventImpl;
+  const _TimelineEvent._() : super._();
 
   @override
   String get id;

@@ -148,15 +148,15 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     }
 
     // 4. Sort and Calculate isCurrent
+    // 4. Sort and Calculate isCurrent
     allEvents.sort(
-      (a, b) =>
-          _parseToMinutes(a.startTime).compareTo(_parseToMinutes(b.startTime)),
+      (a, b) => TimelineEvent.parseMinutes(a.startTime)
+          .compareTo(TimelineEvent.parseMinutes(b.startTime)),
     );
 
     // Calculate isCurrent
     final now = DateTime.now();
-    final isSelectedDateToday =
-        selectedDate.year == now.year &&
+    final isSelectedDateToday = selectedDate.year == now.year &&
         selectedDate.month == now.month &&
         selectedDate.day == now.day;
 
@@ -165,8 +165,8 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     return allEvents.map((e) {
       if (!isSelectedDateToday) return e.copyWith(isCurrent: false);
 
-      final start = _parseToMinutes(e.startTime);
-      final end = _parseToMinutes(e.endTime);
+      final start = TimelineEvent.parseMinutes(e.startTime);
+      final end = TimelineEvent.parseMinutes(e.endTime);
       final isNow = currentMinutes >= start && currentMinutes < end;
       return e.copyWith(isCurrent: isNow);
     }).toList();
@@ -273,46 +273,13 @@ class TimelineEventsNotifier extends Notifier<List<TimelineEvent>> {
     );
   }
 
-  TimelineEventType _mapCategoryToType(String category) {
-    switch (category.toLowerCase()) {
-      case 'work':
-        return TimelineEventType.active;
-      case 'personal':
-        return TimelineEventType.rest;
-      case 'idea':
-        return TimelineEventType.strategy;
-      default:
-        return TimelineEventType.standard;
-    }
-  }
-
-  int _parseToMinutes(String timeStr) {
-    try {
-      timeStr = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase();
-      // Try 12-hour with AM/PM first
-      try {
-        final date = DateFormat('h:mm a').parse(timeStr);
-        return date.hour * 60 + date.minute;
-      } catch (_) {}
-      // Fall back to 24-hour format (e.g. "14:30")
-      final parts = timeStr.split(':');
-      if (parts.length == 2) {
-        final h = int.tryParse(parts[0]) ?? 0;
-        final m = int.tryParse(parts[1]) ?? 0;
-        return h * 60 + m;
-      }
-      return 0;
-    } catch (e) {
-      return 0;
-    }
+  TimelineEventType _mapCategoryToType(String? category) {
+    return _mapCategoryToTypeGlobal(category);
   }
 
   Note? _findTimelineNote(String eventId) {
-    final separatorIndex = eventId.indexOf('_');
-    if (separatorIndex <= 0 || separatorIndex >= eventId.length - 1) {
-      return null;
-    }
-    final noteId = eventId.substring(separatorIndex + 1);
+    if (!eventId.startsWith('event_')) return null;
+    final noteId = eventId.substring(6);
     final notes = ref.read(notesProvider).value ?? const <Note>[];
     for (final note in notes) {
       if (note.id == noteId) return note;
@@ -379,7 +346,7 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
       subtitle: 'EVENT',
       startTime: startTimeString,
       endTime: endTimeString,
-      type: _mapCategoryToTypeForDict(n.category.name),
+      type: _mapCategoryToTypeGlobal(n.category.name),
       tag: 'EVENT',
       isCompleted: n.isCompleted,
       color: n.color,
@@ -421,7 +388,7 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
       subtitle: t.category.name.toUpperCase(),
       startTime: startTimeString,
       endTime: endTimeString,
-      type: _mapCategoryToTypeForDict(t.category.name),
+      type: _mapCategoryToTypeGlobal(t.category.name),
       tag: t.category.name.toUpperCase(),
       isCompleted: t.isCompleted,
       color: t.color,
@@ -431,40 +398,26 @@ final scheduleEventsProvider = Provider<Map<DateTime, List<TimelineEvent>>>((
 
   // Sort each day's events
   for (final key in grouped.keys) {
-    grouped[key]!.sort((a, b) => _parseToMinutesDict(a.startTime).compareTo(_parseToMinutesDict(b.startTime)));
+    grouped[key]!.sort((a, b) => TimelineEvent.parseMinutes(a.startTime).compareTo(TimelineEvent.parseMinutes(b.startTime)));
   }
 
   return grouped;
 });
 
-TimelineEventType _mapCategoryToTypeForDict(String category) {
+TimelineEventType _mapCategoryToTypeGlobal(String? category) {
+  if (category == null) return TimelineEventType.standard;
   switch (category.toLowerCase()) {
-    case 'work': return TimelineEventType.active;
-    case 'personal': return TimelineEventType.rest;
-    case 'idea': return TimelineEventType.strategy;
-    default: return TimelineEventType.standard;
+    case 'work':
+      return TimelineEventType.active;
+    case 'personal':
+      return TimelineEventType.rest;
+    case 'idea':
+      return TimelineEventType.strategy;
+    default:
+      return TimelineEventType.standard;
   }
 }
 
-int _parseToMinutesDict(String timeStr) {
-  try {
-    if (timeStr == 'TODO' || timeStr == 'All Day') return -1;
-    timeStr = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase();
-    // Try 12-hour AM/PM first
-    try {
-      final date = DateFormat('h:mm a').parse(timeStr);
-      return date.hour * 60 + date.minute;
-    } catch (_) {}
-    // Fall back to 24-hour
-    final parts = timeStr.split(':');
-    if (parts.length == 2) {
-      final h = int.tryParse(parts[0]) ?? 0;
-      final m = int.tryParse(parts[1]) ?? 0;
-      return h * 60 + m;
-    }
-    return 0;
-  } catch (e) {
-    return 0;
-  }
-}
+
+
 

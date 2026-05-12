@@ -101,30 +101,35 @@ class _InlineTaskChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isCompleted
-                  ? Icons.check_circle
-                  : Icons.check_circle_outline,
-              size: 15, // Increased icon size slightly to match bigger text
-              color: Colors.white.withValues(alpha: 0.9),
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                task.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.roboto(
-                  fontSize: 14, // Increased from 12 to 14
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                  decoration: isCompleted
-                      ? TextDecoration.lineThrough
-                      : TextDecoration.none,
-                  decorationColor: Colors.white70,
-                ),
+            if (maxWidth > 40) ...[
+              Icon(
+                isCompleted
+                    ? Icons.check_circle
+                    : Icons.check_circle_outline,
+                size: 14,
+                color: Colors.white.withValues(alpha: 0.9),
               ),
-            ),
+              const SizedBox(width: 4),
+            ],
+            if (maxWidth > 24)
+              Flexible(
+                child: Text(
+                  task.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.roboto(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    decoration: isCompleted
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+                    decorationColor: Colors.white70,
+                  ),
+                ),
+              )
+            else
+              const Expanded(child: Center(child: Icon(Icons.check, size: 10, color: Colors.white))),
           ],
         ),
       ),

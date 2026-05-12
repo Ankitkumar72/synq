@@ -1,5 +1,5 @@
-// import 'package:synq/features/timeline/domain/models/task.dart'; // No longer needed as we're independent
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:intl/intl.dart';
 
 part 'timeline_event.freezed.dart';
 
@@ -25,4 +25,35 @@ class TimelineEvent with _$TimelineEvent {
     int? color,
     List<TimelineEvent>? groupedTasks,
   }) = _TimelineEvent;
+
+  const TimelineEvent._();
+
+  int get startMinutes => parseMinutes(startTime);
+  int get endMinutes => parseMinutes(endTime);
+  int get durationMinutes {
+    final diff = endMinutes - startMinutes;
+    return diff <= 0 ? 15 : diff;
+  }
+
+  static int parseMinutes(String timeStr) {
+    try {
+      final cleanTime = timeStr.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase();
+      // Handle 12-hour AM/PM
+      try {
+        final date = DateFormat('h:mm a').parse(cleanTime);
+        return date.hour * 60 + date.minute;
+      } catch (_) {}
+      
+      // Handle 24-hour HH:mm
+      final parts = cleanTime.split(':');
+      if (parts.length == 2) {
+        final h = int.tryParse(parts[0]) ?? 0;
+        final m = int.tryParse(parts[1]) ?? 0;
+        return h * 60 + m;
+      }
+      return 0;
+    } catch (_) {
+      return 0;
+    }
+  }
 }

@@ -214,13 +214,36 @@ class SupabaseNoteSyncer {
     );
   }
 
-  /// Pulls all notes for this user from Supabase using as batch upsert and
-  /// resumable cursor for performance.
+  /// Pulls all items (Notes, Tasks, Events) from Supabase and merges them into
+  /// the local Note storage. This ensures the mobile app stays in sync with 
+  /// the decoupled desktop architecture.
   Future<void> bootstrapNotes() async {
-    const pageSize = 500;
+    // 1. Fetch regular Notes
+    await _bootstrapTable(table: 'notes', entityType: 'notes');
+    
+    // 2. Fetch decoupled Tasks
+    await _bootstrapTable(
+      table: 'tasks', 
+      entityType: 'tasks_as_notes',
+      mapper: taskRowToNoteJson,
+    );
+    
+    // 3. Fetch decoupled Events
+    await _bootstrapTable(
+      table: 'events', 
+      entityType: 'events_as_notes',
+      mapper: eventRowToNoteJson,
+    );
+  }
 
-    // 1. Read last sync progress
-    final cursor = await _database.readCursor('notes');
+  /// Internal helper for paginated bootstrap of any table.
+  Future<void> _bootstrapTable({
+    required String table,
+    required String entityType,
+    Map<String, dynamic> Function(Map<String, dynamic>)? mapper,
+  }) async {
+    const pageSize = 500;
+    final cursor = await _database.readCursor(entityType);
     String? lastUpdatedAt = cursor.timestampMicros != null
         ? DateTime.fromMicrosecondsSinceEpoch(
             cursor.timestampMicros!,
@@ -228,104 +251,82 @@ class SupabaseNoteSyncer {
           ).toIso8601String()
         : null;
 
-    debugPrint('BOOTSTRAP_NOTES: starting from $lastUpdatedAt');
+    debugPrint('BOOTSTRAP_$table: starting from $lastUpdatedAt');
 
     while (true) {
       var queryBuilder = _client
-          .from(_table)
+          .from(table)
           .select()
           .eq(DatabaseConstants.userId, userId);
 
       if (lastUpdatedAt != null) {
-        // Use gte + lastId to ensure no records are skipped if they share the same timestamp
-        queryBuilder = queryBuilder.gte(
-          DatabaseConstants.updatedAt,
-          lastUpdatedAt,
-        );
+        queryBuilder = queryBuilder.gte(DatabaseConstants.updatedAt, lastUpdatedAt);
       }
 
-      var query = queryBuilder
+      final rows = await queryBuilder
           .order(DatabaseConstants.updatedAt, ascending: true)
-          .order(DatabaseConstants.id, ascending: true) // Tie-breaker for pagination
+          .order(DatabaseConstants.id, ascending: true)
           .limit(pageSize);
 
-      final rows = await query;
       if (rows.isEmpty) break;
 
-      // If we are using gte, we must skip the first record if it matches our cursor exactly
       final cursorId = cursor.lastId;
       final List<Map<String, dynamic>> filteredRows = [];
       for (final row in rows) {
-        final rowId = row[DatabaseConstants.id]?.toString();
+        final rowId = row['id']?.toString();
         final rowUpdatedAt = row[DatabaseConstants.updatedAt]?.toString();
-        
-        if (rowUpdatedAt == lastUpdatedAt && rowId == cursorId) {
-          continue; // Skip the exact record we left off on
-        }
+        if (rowUpdatedAt == lastUpdatedAt && rowId == cursorId) continue;
         filteredRows.add(row);
       }
 
-      if (filteredRows.isEmpty && rows.isNotEmpty) {
-        // We only got the overlap record, and there were no more.
-        break;
-      }
+      if (filteredRows.isEmpty) break;
 
-      // 2. Map rows to Note objects and collect timestamps
       final List<Note> batchNotes = [];
       final Map<String, int> updatedAtMap = {};
-
       String? batchLastUpdatedAt;
       String? batchLastId;
 
       for (final row in filteredRows) {
         try {
-          final noteJson = _supabaseRowToNoteJson(row);
+          // Map to Note JSON via the provided mapper or default note mapper
+          final noteJson = mapper != null 
+              ? mapper(row) 
+              : _supabaseRowToNoteJson(row);
+          
           final note = Note.fromJson(noteJson);
           batchNotes.add(note);
 
-          final updatedAt =
-              row[DatabaseConstants.updatedAt]?.toString() ?? '';
+          final updatedAt = row[DatabaseConstants.updatedAt]?.toString() ?? '';
           if (updatedAt.isNotEmpty) {
-            updatedAtMap[note.id] = DateTime.parse(
-              updatedAt,
-            ).millisecondsSinceEpoch;
+            updatedAtMap[note.id] = DateTime.parse(updatedAt).millisecondsSinceEpoch;
             batchLastUpdatedAt = updatedAt;
           }
-          batchLastId = row[DatabaseConstants.id]?.toString();
+          batchLastId = row['id']?.toString();
         } catch (e) {
-          debugPrint(
-            'BOOTSTRAP_SKIP_NOTE: ${row[DatabaseConstants.id]}: $e',
-          );
-          continue; // Skip bad row, don't crash the batch
+          debugPrint('BOOTSTRAP_SKIP_$table: ${row['id']}: $e');
+          continue;
         }
       }
 
-      // 3. Perform batch upsert
       await _database.batchUpsertNotes(
         batchNotes,
         source: SyncWriteSource.remote,
         remoteUpdatedAtMap: updatedAtMap,
       );
 
-      // 4. Update cursor for resumability
       if (batchLastUpdatedAt != null && batchLastId != null) {
         await _database.writeCursor(
-          entityType: 'notes',
-          timestampMicros: DateTime.parse(
-            batchLastUpdatedAt,
-          ).microsecondsSinceEpoch,
+          entityType: entityType,
+          timestampMicros: DateTime.parse(batchLastUpdatedAt).microsecondsSinceEpoch,
           lastId: batchLastId,
         );
         lastUpdatedAt = batchLastUpdatedAt;
       }
 
-      debugPrint('BOOTSTRAP_NOTES: processed batch of ${rows.length}');
-
       if (rows.length < pageSize) break;
     }
-
-    debugPrint('BOOTSTRAP_NOTES: finished');
   }
+
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -483,6 +484,60 @@ class SupabaseNoteSyncer {
     }
   }
 
+  /// Converts a Task row from the tasks table to Note JSON format.
+  Map<String, dynamic> taskRowToNoteJson(Map<String, dynamic> row) {
+    return {
+      'id': row['id']?.toString() ?? '',
+      'title': row['title'] as String? ?? '',
+      'body': row['description'] as String?,
+      'category': _safeString(row['category'], 'personal'),
+      'priority': _safeString(row['priority'], 'none'),
+      'isTask': true,
+      'isAllDay': false,
+      'isCompleted': row['status'] == 'completed',
+      'scheduledTime': _safeTimestamp(row['start_at'] ?? row['due_date']),
+      'endTime': _safeTimestamp(row['end_at']),
+      'hlcTimestamp': row['hlc_timestamp']?.toString(),
+      'fieldVersions': row['field_versions'],
+      'isDeleted': _safeBool(row['is_deleted']),
+      'deletedAt': _safeTimestamp(row['deleted_at']),
+      'updatedAt': _safeTimestamp(row['updated_at']),
+      'createdAt': _safeTimestamp(row['created_at']) ?? DateTime.now().toIso8601String(),
+      // Preserved for syncer internal checks (_isRemoteDeleted, etc)
+      'is_deleted': _safeBool(row['is_deleted']),
+      'deleted_at': _safeTimestamp(row['deleted_at']),
+      'updated_at': _safeTimestamp(row['updated_at']),
+      'device_last_edited': row['device_last_edited']?.toString(),
+    };
+  }
+
+
+  /// Converts an Event row from the events table to Note JSON format.
+  Map<String, dynamic> eventRowToNoteJson(Map<String, dynamic> row) {
+    return {
+      'id': row['id']?.toString() ?? '',
+      'title': row['title'] as String? ?? '',
+      'body': row['description'] as String?,
+      'isTask': false,
+      'isAllDay': false,
+      'scheduledTime': _safeTimestamp(row['start_date']),
+      'endTime': _safeTimestamp(row['end_date']),
+      'color': row['color'],
+      'hlcTimestamp': row['hlc_timestamp']?.toString(),
+      'fieldVersions': row['field_versions'],
+      'isDeleted': _safeBool(row['is_deleted']),
+      'deletedAt': _safeTimestamp(row['deleted_at']),
+      'updatedAt': _safeTimestamp(row['updated_at']),
+      'createdAt': _safeTimestamp(row['created_at']) ?? DateTime.now().toIso8601String(),
+      // Preserved for syncer internal checks (_isRemoteDeleted, etc)
+      'is_deleted': _safeBool(row['is_deleted']),
+      'deleted_at': _safeTimestamp(row['deleted_at']),
+      'updated_at': _safeTimestamp(row['updated_at']),
+      'device_last_edited': row['device_last_edited']?.toString(),
+    };
+  }
+
+
   /// Converts a Supabase row (snake_case) to Note JSON (camelCase).
   ///
   /// Notion rule: Never crash on data from the wire.
@@ -527,6 +582,7 @@ class SupabaseNoteSyncer {
           DateTime.now().toIso8601String(),
     };
   }
+
 
   /// Returns true if value is true, 'true', 1, or '1'.
   bool _safeBool(dynamic value) {

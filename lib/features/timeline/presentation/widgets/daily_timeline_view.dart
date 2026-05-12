@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 import 'package:synq/features/timeline/domain/models/timeline_event.dart';
 import 'draggable_timeline_event.dart';
@@ -49,7 +50,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
   double? _liveDragTop;
 
   String? _activeResizeEventId;
+  double? _liveResizeTop;
   double? _liveResizeBottom;
+
+  TimelineEvent? _phantomEvent;
+  double? _livePhantomBottom;
 
   late final ValueNotifier<DateTime> _now;
 
@@ -126,6 +131,60 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
     widget.onEmptySlotTap?.call(timeStr);
   }
 
+  void _onEmptySlotLongPressStart(LongPressStartDetails details) {
+    HapticFeedback.mediumImpact();
+    final localY = details.localPosition.dy;
+    final pixelsPerSnap = TimelineLayoutEngine.pixelsPerHour * 15 / 60.0;
+    final snappedY = (localY / pixelsPerSnap).floorToDouble() * pixelsPerSnap;
+    final timeStr = TimelineLayoutEngine.topToTime(snappedY);
+
+    setState(() {
+      _phantomEvent = TimelineEvent(
+        id: 'phantom_${DateTime.now().millisecondsSinceEpoch}',
+        title: 'New Event',
+        startTime: timeStr,
+        endTime: TimelineLayoutEngine.topToTime(
+          snappedY + TimelineLayoutEngine.pixelsPerHour / 2,
+        ),
+        type: TimelineEventType.standard,
+        kind: EventKind.event,
+      );
+      _livePhantomBottom = snappedY + TimelineLayoutEngine.pixelsPerHour / 2;
+    });
+  }
+
+  void _onEmptySlotLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
+    final localY = details.localPosition.dy;
+    final pixelsPerSnap = TimelineLayoutEngine.pixelsPerHour * 15 / 60.0;
+    final snappedY = (localY / pixelsPerSnap).roundToDouble() * pixelsPerSnap;
+
+    final startMinutes = _parseMinutes(_phantomEvent!.startTime);
+    final currentBottomMinutes = (snappedY / TimelineLayoutEngine.pixelsPerHour * 60).round();
+    
+    if (currentBottomMinutes > startMinutes) {
+      setState(() {
+        _livePhantomBottom = snappedY;
+      });
+    }
+  }
+
+  void _onEmptySlotLongPressEnd(LongPressEndDetails details) {
+    if (_phantomEvent == null || _livePhantomBottom == null) return;
+    HapticFeedback.lightImpact();
+    
+    final finalEnd = TimelineLayoutEngine.topToTime(_livePhantomBottom!);
+    // Trigger creation sheet or directly add
+    widget.onEmptySlotTap?.call(_phantomEvent!.startTime); 
+    
+    // Note: finalEnd is currently logged or could be passed if API allowed multiple params
+    debugPrint('Created phantom event ending at: $finalEnd');
+    
+    setState(() {
+      _phantomEvent = null;
+      _livePhantomBottom = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -152,6 +211,17 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         // Combine taskGroups and previewEvents to layout together so they share columns
         final combinedEvents = [...previewEvents, ...taskGroups];
 
+        if (_phantomEvent != null && _livePhantomBottom != null) {
+          final startMinutes = _parseMinutes(_phantomEvent!.startTime);
+          var endMinutes = (_livePhantomBottom! / TimelineLayoutEngine.pixelsPerHour * 60).round();
+          if (endMinutes <= startMinutes) {
+            endMinutes = startMinutes + 15;
+          }
+          combinedEvents.add(_phantomEvent!.copyWith(
+            endTime: _formatMinutes(endMinutes),
+          ));
+        }
+
         final positionedItems = TimelineLayoutEngine.calculatePositions(
           events: combinedEvents,
           containerWidth: eventAreaWidth,
@@ -164,7 +234,7 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                 containerWidth: eventAreaWidth,
               );
 
-        final snapLineTop = _liveDragTop;
+        final snapLineTop = _liveDragTop ?? _liveResizeTop ?? _liveResizeBottom;
 
         return SingleChildScrollView(
           controller: _scrollController,
@@ -193,61 +263,86 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTapUp: (details) => _onEmptySlotTap(details, constraints),
+                    onLongPressStart: _onEmptySlotLongPressStart,
+                    onLongPressMoveUpdate: _onEmptySlotLongPressMoveUpdate,
+                    onLongPressEnd: _onEmptySlotLongPressEnd,
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        _HourSlots(totalHeight: totalHeight, colorScheme: colorScheme),
-                        _GridLines(totalHeight: totalHeight, colorScheme: colorScheme),
+                        RepaintBoundary(child: _HourSlots(totalHeight: totalHeight, colorScheme: colorScheme)),
+                        RepaintBoundary(child: _GridLines(totalHeight: totalHeight, colorScheme: colorScheme)),
 
-                        if (_activeDragEventId != null)
-                          ..._buildGhostTiles(basePositioned),
+                        RepaintBoundary(
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              if (_activeDragEventId != null)
+                                ..._buildGhostTiles(basePositioned),
 
-                        // Render Unified Items
-                        ...positionedItems.map((p) {
-                          if (p.event.kind == EventKind.taskGroup) {
-                            return TimelineTaskGroupWidget(
-                              key: ValueKey(p.event.id),
-                              taskGroup: p.event,
-                              top: p.top,
-                              left: p.left,
-                              width: p.width,
-                              height: TimelineLayoutEngine.pixelsPerHour.toDouble(),
-                              onTapped: widget.onEventTapped,
-                            );
-                          } else {
-                            return DraggableTimelineEvent(
-                              key: ValueKey(p.event.id),
-                              positioned: p,
-                              onRescheduled: (event, start, end) {
-                                setState(() {
-                                  _activeDragEventId = null;
-                                  _liveDragTop = null;
-                                });
-                                widget.onEventRescheduled?.call(event, start, end);
-                              },
-                              onResized: (event, end) {
-                                setState(() {
-                                  _activeResizeEventId = null;
-                                  _liveResizeBottom = null;
-                                });
-                                widget.onEventResized?.call(event, end);
-                              },
-                              onTapped: widget.onEventTapped,
-                              onDragTopChanged: (top) {
-                                setState(() {
-                                  _activeDragEventId = top != null ? p.event.id : null;
-                                  _liveDragTop = top;
-                                });
-                              },
-                              onResizeBottomChanged: (bottom) {
-                                setState(() {
-                                  _activeResizeEventId = bottom != null ? p.event.id : null;
-                                  _liveResizeBottom = bottom;
-                                });
-                              },
-                            );
-                          }
-                        }),
+                              // Render Unified Items
+                              ...positionedItems.map((p) {
+                                if (p.event.kind == EventKind.taskGroup) {
+                                  return TimelineTaskGroupWidget(
+                                    key: ValueKey(p.event.id),
+                                    taskGroup: p.event,
+                                    top: p.top,
+                                    left: p.left,
+                                    width: p.width,
+                                    height: TimelineLayoutEngine.pixelsPerHour.toDouble(),
+                                    onTapped: widget.onEventTapped,
+                                    onToggle: widget.onEventRescheduled != null 
+                                      ? (task, isCompleted) => widget.onEventRescheduled!(task, task.startTime, task.endTime) // Emulating toggle
+                                      : null,
+                                  );
+                                } else {
+                                  return DraggableTimelineEvent(
+                                    key: ValueKey('${p.event.id}_${p.index}'),
+                                    positioned: p,
+                                    onRescheduled: (event, start, end) {
+                                      setState(() {
+                                        _activeDragEventId = null;
+                                        _liveDragTop = null;
+                                        _activeResizeEventId = null;
+                                        _liveResizeTop = null;
+                                        _liveResizeBottom = null;
+                                      });
+                                      widget.onEventRescheduled?.call(event, start, end);
+                                    },
+                                    onResized: (event, end) {
+                                      setState(() {
+                                        _activeResizeEventId = null;
+                                        _liveResizeTop = null;
+                                        _liveResizeBottom = null;
+                                        _activeDragEventId = null;
+                                        _liveDragTop = null;
+                                      });
+                                      widget.onEventResized?.call(event, end);
+                                    },
+                                    onTapped: widget.onEventTapped,
+                                    onDragTopChanged: (top) {
+                                      setState(() {
+                                        _activeDragEventId = top != null ? p.event.id : null;
+                                        _liveDragTop = top;
+                                      });
+                                    },
+                                    onResizeTopChanged: (top) {
+                                      setState(() {
+                                        _activeResizeEventId = top != null ? p.event.id : null;
+                                        _liveResizeTop = top;
+                                      });
+                                    },
+                                    onResizeBottomChanged: (bottom) {
+                                      setState(() {
+                                        _activeResizeEventId = bottom != null ? p.event.id : null;
+                                        _liveResizeBottom = bottom;
+                                      });
+                                    },
+                                  );
+                                }
+                              }),
+                            ],
+                          ),
+                        ),
 
                         if (snapLineTop != null)
                           _SnapLine(top: snapLineTop, colorScheme: colorScheme),
@@ -305,7 +400,8 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
 
   List<TimelineEvent> _buildPreviewEvents(List<TimelineEvent> original) {
     if ((_activeDragEventId == null || _liveDragTop == null) &&
-        (_activeResizeEventId == null || _liveResizeBottom == null)) {
+        (_activeResizeEventId == null ||
+            (_liveResizeTop == null && _liveResizeBottom == null))) {
       return original;
     }
 
@@ -321,16 +417,32 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
         );
       }
 
-      if (_activeResizeEventId == event.id && _liveResizeBottom != null) {
-        final startMinutes = _parseMinutes(event.startTime);
-        var endMinutes = _parseMinutes(
-          TimelineLayoutEngine.topToTime(_liveResizeBottom!),
-        );
-        if (endMinutes <= startMinutes) {
-          endMinutes = startMinutes + TimelineLayoutEngine.minimumEventDurationMinutes;
+      if (_activeResizeEventId == event.id) {
+        if (_liveResizeTop != null) {
+          final newStart = TimelineLayoutEngine.topToTime(_liveResizeTop!);
+          final startMinutes = _parseMinutes(newStart);
+          var endMinutes = _parseMinutes(event.endTime);
+          if (startMinutes >= endMinutes) {
+            endMinutes = startMinutes + TimelineLayoutEngine.minimumEventDurationMinutes;
+          }
+          return event.copyWith(
+            startTime: newStart,
+            endTime: _formatMinutes(endMinutes),
+          );
         }
-        endMinutes = endMinutes.clamp(0, 23 * 60 + 59);
-        return event.copyWith(endTime: _formatMinutes(endMinutes));
+
+        if (_liveResizeBottom != null) {
+          final startMinutes = _parseMinutes(event.startTime);
+          var endMinutes = _parseMinutes(
+            TimelineLayoutEngine.topToTime(_liveResizeBottom!),
+          );
+          if (endMinutes <= startMinutes) {
+            endMinutes =
+                startMinutes + TimelineLayoutEngine.minimumEventDurationMinutes;
+          }
+          endMinutes = endMinutes.clamp(0, 23 * 60 + 59);
+          return event.copyWith(endTime: _formatMinutes(endMinutes));
+        }
       }
 
       return event;
@@ -338,21 +450,11 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
   }
 
   int _durationMinutes(String start, String end) {
-    final startMinutes = _parseMinutes(start);
-    final endMinutes = _parseMinutes(end);
-    final diff = endMinutes - startMinutes;
-    if (diff <= 0) return TimelineLayoutEngine.minimumEventDurationMinutes;
-    return diff;
+    final diff = TimelineEvent.parseMinutes(end) - TimelineEvent.parseMinutes(start);
+    return diff <= 0 ? TimelineLayoutEngine.minimumEventDurationMinutes : diff;
   }
 
-  int _parseMinutes(String timeStr) {
-    try {
-      final dt = DateFormat('h:mm a').parse(timeStr.trim().toUpperCase());
-      return dt.hour * 60 + dt.minute;
-    } catch (_) {
-      return 0;
-    }
-  }
+  int _parseMinutes(String timeStr) => TimelineEvent.parseMinutes(timeStr);
 
   String _formatMinutes(int totalMinutes) {
     final safe = totalMinutes.clamp(0, 23 * 60 + 59);
@@ -510,7 +612,26 @@ class _GridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Hidden to match the clean card look in design 1
+    final paint = Paint()
+      ..color = colorScheme.outlineVariant.withValues(alpha: 0.15)
+      ..strokeWidth = 1.0;
+
+    final dashPaint = Paint()
+      ..color = colorScheme.outlineVariant.withValues(alpha: 0.08)
+      ..strokeWidth = 0.5;
+
+    for (var hour = 0; hour <= 24; hour++) {
+      final y = hour * TimelineLayoutEngine.pixelsPerHour;
+      
+      // Hour Line (Solid)
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+
+      // Half-hour line (Subtle)
+      if (hour < 24) {
+        final midY = y + TimelineLayoutEngine.pixelsPerHour / 2;
+        canvas.drawLine(Offset(0, midY), Offset(size.width, midY), dashPaint);
+      }
+    }
   }
 
   @override

@@ -206,7 +206,44 @@ class SupabaseSyncEngine {
       _foldersStatus = status;
       _handleRealtimeStatus('folders', status, attempt);
     });
+
+    // Subscribe to tasks changes for this user
+    _client
+        .channel('tasks_$userId$suffix')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'tasks',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: userId,
+          ),
+          callback: (payload) => _onRemoteChange('task', payload),
+        )
+        .subscribe((status, error) {
+      debugPrint('REALTIME_TASKS_STATUS: $status ${error ?? ""}');
+    });
+
+    // Subscribe to events changes for this user
+    _client
+        .channel('events_$userId$suffix')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'events',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: userId,
+          ),
+          callback: (payload) => _onRemoteChange('event', payload),
+        )
+        .subscribe((status, error) {
+      debugPrint('REALTIME_EVENTS_STATUS: $status ${error ?? ""}');
+    });
   }
+
 
   /// Handles realtime subscription status — retries with exponential backoff
   /// on timeout or errors, up to [_maxRealtimeRetries] attempts.
@@ -310,10 +347,21 @@ class SupabaseSyncEngine {
         case 'note':
           await _noteSyncer.mergeRemoteNote(newRecord);
           break;
+        case 'task':
+          // Map task record to note format for local storage
+          final noteJson = _noteSyncer.taskRowToNoteJson(newRecord);
+          await _noteSyncer.mergeRemoteNote(noteJson);
+          break;
+        case 'event':
+          // Map event record to note format for local storage
+          final noteJson = _noteSyncer.eventRowToNoteJson(newRecord);
+          await _noteSyncer.mergeRemoteNote(noteJson);
+          break;
         case 'folder':
           await _folderSyncer.mergeRemoteFolder(newRecord);
           break;
       }
+
     } catch (e) {
       debugPrint('REALTIME_HANDLER_ERROR: $e');
     }
