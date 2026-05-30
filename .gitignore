@@ -124,3 +124,6 @@ scripts/upgrade_users.js
 # Firebase Configuration
 storage.rules
 firebase.json
+
+# Obsidian
+.obsidian/
