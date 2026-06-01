@@ -2,13 +2,12 @@ import 'dart:convert';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class PaddleService {
   static String get _baseUrl {
-    final envUrl = dotenv.get('API_BASE_URL', fallback: '');
+    const envUrl = String.fromEnvironment('API_BASE_URL', defaultValue: '');
     if (envUrl.isNotEmpty) return envUrl;
 
     if (kReleaseMode) {
@@ -60,8 +59,8 @@ class PaddleService {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
 
     final priceId = planSlug == 'monthly'
-        ? dotenv.get('PADDLE_MONTHLY_PRICE_ID')
-        : dotenv.get('PADDLE_YEARLY_PRICE_ID');
+        ? const String.fromEnvironment('PADDLE_MONTHLY_PRICE_ID')
+        : const String.fromEnvironment('PADDLE_YEARLY_PRICE_ID');
 
     final response = await http.post(
       Uri.parse('$_baseUrl/create-checkout'),

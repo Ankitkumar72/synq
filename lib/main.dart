@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/services/firebase_service.dart';
 import 'core/services/supabase_service.dart';
 import 'core/services/notification_service.dart';
@@ -26,9 +25,6 @@ void main() async {
   try {
     WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-
-    // Load environment variables
-    await dotenv.load(fileName: ".env");
 
     // Initialize Services in parallel to drastically improve startup time
     // and reduce jank on the main thread.

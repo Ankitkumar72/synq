@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:synq/core/database/local_database.dart';
 import 'package:synq/core/services/supabase_service.dart';
@@ -103,7 +102,7 @@ class SupabaseAuthRepository {
   /// Signs in with Google using native Google Sign-In and Supabase.
   Future<bool> signInWithGoogle() async {
     try {
-      final webClientId = dotenv.get('GOOGLE_WEB_CLIENT_ID');
+      const webClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
       
       // On iOS, the Google SDK requires the iOS-specific Client ID
       // On Android, it's generally picked up from google-services.json
