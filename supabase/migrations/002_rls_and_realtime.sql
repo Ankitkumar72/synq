@@ -40,6 +40,23 @@ CREATE POLICY "Service role can insert profiles"
   WITH CHECK (true);
 
 -- ---------------------------------------------------------------------------
+-- 2.5 Helper Functions for RLS
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.is_within_plan_limits(uid uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = uid
+    AND (plan_tier = 'pro' OR storage_used_bytes <= 5368709120)
+  );
+$$;
+
+-- ---------------------------------------------------------------------------
 -- 3. RLS Policies: Notes
 -- ---------------------------------------------------------------------------
 -- Users can only CRUD their own notes.
@@ -52,7 +69,7 @@ CREATE POLICY "Users can view own notes"
 CREATE POLICY "Users can insert own notes"
   ON public.notes
   FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = user_id AND public.is_within_plan_limits(auth.uid()));
 
 CREATE POLICY "Users can update own notes"
   ON public.notes

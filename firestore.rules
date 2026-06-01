@@ -20,21 +20,29 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(userId)).data;
     }
 
-    function isPro(userId) {
-      return getUserData(userId).plan_tier == 'pro';
+    function isPro(userData) {
+      return userData.plan_tier == 'pro';
     }
 
-    function isDeviceAllowed(userId) {
-      let userData = getUserData(userId);
+    function isDeviceAllowed(userData) {
       let deviceId = request.resource.data.deviceLastEdited;
       // Check if the device exists in active_device_ids flat list
       return deviceId in userData.get('active_device_ids', []);
     }
 
-    function withinStorageLimit(userId) {
-      let userData = getUserData(userId);
+    function withinStorageLimit(userData) {
       let used = userData.get('storage_used_bytes', 0);
       return used <= 5368709120; // 5GB in bytes
+    }
+
+    function canCreateNote(userId) {
+      let userData = getUserData(userId);
+      return isAdmin() || isPro(userData) || (withinStorageLimit(userData) && isDeviceAllowed(userData));
+    }
+
+    function canUpdateNote(userId) {
+      let userData = getUserData(userId);
+      return isAdmin() || isPro(userData) || isDeviceAllowed(userData);
     }
 
     function isValidNoteWrite() {
@@ -91,11 +99,11 @@ service cloud.firestore {
 
       allow create: if isOwner(userId)
         && isValidNoteWrite()
-        && (isAdmin() || isPro(userId) || (withinStorageLimit(userId) && isDeviceAllowed(userId)));
+        && canCreateNote(userId);
 
       allow update: if isOwner(userId)
         && isValidNoteWrite()
-        && (isAdmin() || isPro(userId) || isDeviceAllowed(userId));
+        && canUpdateNote(userId);
 
       allow delete: if isOwner(userId);
     }
