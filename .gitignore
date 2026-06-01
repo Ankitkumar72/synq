@@ -128,3 +128,6 @@ firebase.json
 # Obsidian
 .obsidian/
 
+#Misc
+realtime-notes-architecture-blueprint.md
+tech-stack-dependencies.md
