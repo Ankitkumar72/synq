@@ -102,7 +102,8 @@ class SupabaseAuthRepository {
   /// Signs in with Google using native Google Sign-In and Supabase.
   Future<bool> signInWithGoogle() async {
     try {
-      const webClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+      const envWebClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+      final webClientId = envWebClientId.isEmpty ? null : envWebClientId;
       
       // On iOS, the Google SDK requires the iOS-specific Client ID
       // On Android, it's generally picked up from google-services.json
@@ -113,6 +114,7 @@ class SupabaseAuthRepository {
       
       final googleUser = await googleSignIn.authenticate();
       
+      // In google_sign_in ^7.2.0, authentication is a synchronous getter
       final googleAuth = googleUser.authentication;
       final idToken = googleAuth.idToken;
 

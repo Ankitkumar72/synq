@@ -53,7 +53,7 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
+            // applicationIdSuffix = ".debug" // Removed to match Google Cloud Console SHA-1 fingerprint
             versionNameSuffix = "-debug"
         }
         release {
