@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:synq/core/database/local_database.dart';
 import 'package:synq/core/services/supabase_service.dart';
 
@@ -102,7 +103,7 @@ class SupabaseAuthRepository {
   /// Signs in with Google using native Google Sign-In and Supabase.
   Future<bool> signInWithGoogle() async {
     try {
-      const envWebClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+      final envWebClientId = dotenv.get('GOOGLE_WEB_CLIENT_ID', fallback: '');
       final webClientId = envWebClientId.isEmpty ? null : envWebClientId;
       
       // On iOS, the Google SDK requires the iOS-specific Client ID
@@ -176,37 +177,20 @@ class SupabaseAuthRepository {
   /// The profile is stored in a `profiles` table in public schema.
   Future<void> _ensureProfileExists(User user, {String? name}) async {
     try {
-      final existing = await _client
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .maybeSingle();
+      // The DB trigger 'handle_new_user' handles the initial INSERT synchronously
+      // during signup. We only need to update non-privileged fields here to keep them fresh.
+      final resolvedName = name ??
+          user.userMetadata?['full_name'] as String? ??
+          user.userMetadata?['name'] as String?;
 
-      if (existing == null) {
-        // New user — create profile
-        await _client.from('profiles').insert({
-          'id': user.id,
-          'email': user.email ?? '',
-          'name': name ??
-              user.userMetadata?['full_name'] as String? ??
-              user.userMetadata?['name'] as String? ??
-              'User',
-          'plan_tier': 'free',
-          'is_admin': false,
-          'storage_used_bytes': 0,
-          'active_devices': '[]',
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      } else {
-        // Existing user — update non-privileged fields
-        await _client.from('profiles').update({
-          'email': user.email ?? '',
-          'name': name ??
-              user.userMetadata?['full_name'] as String? ??
-              user.userMetadata?['name'] as String? ??
-              'User',
-        }).eq('id', user.id);
+      final updateData = <String, dynamic>{
+        'email': user.email ?? '',
+      };
+      if (resolvedName != null && resolvedName.isNotEmpty) {
+        updateData['name'] = resolvedName;
       }
+
+      await _client.from('profiles').update(updateData).eq('id', user.id);
     } catch (e) {
       debugPrint('PROFILE_ENSURE_ERROR: $e');
       // Non-fatal: user can still use the app with auth alone
@@ -242,6 +226,9 @@ class SupabaseAuthRepository {
     }
     if (lower.contains('invalid email')) {
       return 'Please enter a valid email address.';
+    }
+    if (lower.contains('email not confirmed')) {
+      return 'Please check your inbox and verify your email address before logging in.';
     }
     if (lower.contains('password')) {
       return 'Password is too weak. Try a longer one.';

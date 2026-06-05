@@ -2,6 +2,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:synq/firebase_options.dart';
 
@@ -12,7 +13,7 @@ class FirebaseService {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    final recaptchaSiteKey = const String.fromEnvironment('RECAPTCHA_V3_SITE_KEY', defaultValue: '');
+    final recaptchaSiteKey = dotenv.get('RECAPTCHA_V3_SITE_KEY', fallback: '');
     if (kIsWeb && recaptchaSiteKey.isEmpty) {
       throw StateError(
         'Missing RECAPTCHA_V3_SITE_KEY for Firebase App Check on web.',

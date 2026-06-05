@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/services/firebase_service.dart';
 import 'core/services/supabase_service.dart';
 import 'core/services/notification_service.dart';
@@ -26,22 +27,23 @@ void main() async {
     WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-    // Initialize Services in parallel to drastically improve startup time
-    // and reduce jank on the main thread.
+    
+    await dotenv.load(fileName: ".env");
+
     await Future.wait([
-      // Initialize Supabase (Fatal: App cannot run without this)
+      
       SupabaseService.initialize(),
       
-      // Initialize Firebase (Non-fatal: Silently log and continue if this fails)
+      
       FirebaseService.initialize().catchError((e) {
-        debugPrint('⚠️ Firebase Init Silent Failure: $e');
+        debugPrint(' Firebase Init Silent Failure: $e');
       }),
       
-      // Initialize Notifications
+      
       NotificationService().init(),
     ]);
 
-    // Enable edge-to-edge mode and set initial overlay style
+    
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(

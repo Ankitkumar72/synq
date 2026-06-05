@@ -54,6 +54,7 @@ dependencies:
   flutter_cache_manager: ^3.4.1
   flutter_native_splash: ^2.4.0
   supabase_flutter: ^2.8.1
+  flutter_dotenv: ^5.2.1
   super_drag_and_drop: ^0.9.1
 
 dev_dependencies:
@@ -87,5 +88,6 @@ flutter:
 
   
   assets:
+    - .env
     - assets/images/
     - assets/audio/

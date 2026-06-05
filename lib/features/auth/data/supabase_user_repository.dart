@@ -54,29 +54,12 @@ class SupabaseUserRepository {
     required String name,
   }) async {
     try {
-      final existing = await _client
-          .from(_table)
-          .select('id')
-          .eq('id', uid)
-          .maybeSingle();
-
-      if (existing == null) {
-        await _client.from(_table).insert({
-          'id': uid,
-          'email': email,
-          'name': name,
-          'plan_tier': 'free',
-          'is_admin': false,
-          'storage_used_bytes': 0,
-          'active_devices': <Map<String, dynamic>>[],
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      } else {
-        await _client.from(_table).update({
-          'email': email,
-          'name': name,
-        }).eq('id', uid);
-      }
+      // The DB trigger 'handle_new_user' handles the initial INSERT synchronously
+      // during signup. We only need to update non-privileged fields here to keep them fresh.
+      await _client.from(_table).update({
+        'email': email,
+        'name': name,
+      }).eq('id', uid);
     } catch (e) {
       debugPrint('SUPABASE_USER_CREATE_ERROR: $e');
       rethrow;

@@ -55,6 +55,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.474773003470-5acaiju56e462hsdjlaotuaed2t0pju4</string>
+				<string>io.supabase.synq</string>
 			</array>
 		</dict>
 	</array>
