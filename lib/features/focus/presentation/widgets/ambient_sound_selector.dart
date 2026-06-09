@@ -57,7 +57,7 @@ class AmbientSoundButton extends ConsumerWidget {
         decoration: BoxDecoration(
           color: isActive
               ? Colors.transparent
-              : Colors.black.withValues(alpha: 0.05),
+              : Colors.black.withOpacity(0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isActive ? AppColors.primary : Colors.transparent,

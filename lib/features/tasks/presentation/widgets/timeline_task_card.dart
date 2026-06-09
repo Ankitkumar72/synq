@@ -88,7 +88,7 @@ class TimelineTaskCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: color != null
-              ? Color(color!).withValues(alpha: 0.1)
+              ? Color(color!).withOpacity(0.1)
               : AppColors.surface,
           borderRadius: BorderRadius.circular(100), // Pill shape
         ),
@@ -151,7 +151,7 @@ class TimelineTaskCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: color != null
-              ? Color(color!).withValues(alpha: 0.1)
+              ? Color(color!).withOpacity(0.1)
               : AppColors.activeCardBg,
           border: Border(
             left: BorderSide(
@@ -167,7 +167,7 @@ class TimelineTaskCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: AppColors.primary.withOpacity(0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -229,14 +229,14 @@ class TimelineTaskCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: color != null
               ? (isCompleted
-                    ? Color(color!).withValues(alpha: 0.05)
-                    : Color(color!).withValues(alpha: 0.1))
+                    ? Color(color!).withOpacity(0.05)
+                    : Color(color!).withOpacity(0.1))
               : (isCompleted
                     ? AppColors.surface.withAlpha(150)
                     : AppColors.surface),
           borderRadius: BorderRadius.circular(8),
           border: color != null
-              ? Border.all(color: Color(color!).withValues(alpha: 0.3))
+              ? Border.all(color: Color(color!).withOpacity(0.3))
               : null,
           boxShadow: const [
             BoxShadow(

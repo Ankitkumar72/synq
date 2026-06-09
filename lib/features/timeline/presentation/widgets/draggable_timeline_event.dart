@@ -214,20 +214,20 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
                   decoration: BoxDecoration(
-                    color: isActive ? tileColor.withValues(alpha: 0.85) : tileColor,
+                    color: isActive ? tileColor.withOpacity(0.85) : tileColor,
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: tileColor.darken(0.15), width: 1),
                     boxShadow: isActive
                         ? [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.22),
+                              color: Colors.black.withOpacity(0.22),
                               blurRadius: 12,
                               offset: const Offset(0, 6),
                             ),
                           ]
                         : [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
+                              color: Colors.black.withOpacity(0.08),
                               blurRadius: 2,
                               offset: const Offset(0, 1),
                             ),
@@ -283,7 +283,7 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
                       width: 32,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: textColor.withValues(alpha: 0.4),
+                        color: textColor.withOpacity(0.4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -325,7 +325,7 @@ class _DraggableTimelineEventState extends State<DraggableTimelineEvent>
                       width: 32,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: textColor.withValues(alpha: 0.4),
+                        color: textColor.withOpacity(0.4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -401,14 +401,14 @@ class _EventBody extends StatelessWidget {
                       Icon(
                         event.isCompleted ? Icons.check_circle : Icons.check_circle_outline,
                         size: 14,
-                        color: textColor.withValues(alpha: 0.9),
+                        color: textColor.withOpacity(0.9),
                       ),
                       const SizedBox(width: 4),
                     ] else if (event.isCompleted) ...[
                       Icon(
                         Icons.check_circle_outline,
                         size: 12,
-                        color: textColor.withValues(alpha: 0.9),
+                        color: textColor.withOpacity(0.9),
                       ),
                       const SizedBox(width: 4),
                     ],
@@ -436,7 +436,7 @@ class _EventBody extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: textColor.withValues(alpha: 0.8),
+                      color: textColor.withOpacity(0.8),
                       fontSize: 11,
                       height: 1.2,
                     ),

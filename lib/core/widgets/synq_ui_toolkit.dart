@@ -75,7 +75,7 @@ class SynqIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     // If selected, use a light primary background and primary icon color.
     final effectiveBgColor = isSelected 
-        ? AppColors.primary.withValues(alpha: 0.1) 
+        ? AppColors.primary.withOpacity(0.1) 
         : (color ?? Colors.transparent);
     
     final effectiveIconColor = isSelected 
@@ -133,12 +133,12 @@ class SynqFab extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: bgColor.withValues(alpha: 0.3),
+                  color: bgColor.withOpacity(0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
                 BoxShadow(
-                  color: bgColor.withValues(alpha: 0.1),
+                  color: bgColor.withOpacity(0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),

@@ -385,10 +385,10 @@ class _DailyTimelineViewState extends State<DailyTimelineView> {
             height: p.height,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.18),
+                color: Colors.grey.withOpacity(0.18),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: Colors.grey.withValues(alpha: 0.35),
+                  color: Colors.grey.withOpacity(0.35),
                   width: 1.5,
                 ),
               ),
@@ -587,7 +587,7 @@ class _HourSlots extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
+                    color: Colors.black.withOpacity(0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -613,11 +613,11 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = colorScheme.outlineVariant.withValues(alpha: 0.15)
+      ..color = colorScheme.outlineVariant.withOpacity(0.15)
       ..strokeWidth = 1.0;
 
     final dashPaint = Paint()
-      ..color = colorScheme.outlineVariant.withValues(alpha: 0.08)
+      ..color = colorScheme.outlineVariant.withOpacity(0.08)
       ..strokeWidth = 0.5;
 
     for (var hour = 0; hour <= 24; hour++) {
@@ -657,7 +657,7 @@ class _SnapLine extends StatelessWidget {
       child: IgnorePointer(
         child: Container(
           height: 1.5,
-          color: colorScheme.primary.withValues(alpha: 0.5),
+          color: colorScheme.primary.withOpacity(0.5),
         ),
       ),
     );
@@ -693,7 +693,7 @@ class _CurrentTimeLine extends StatelessWidget {
           Expanded(
             child: Container(
               height: 1.5,
-              color: const Color(0xFF4B7BFF).withValues(alpha: 0.8),
+              color: const Color(0xFF4B7BFF).withOpacity(0.8),
             ),
           ),
         ],
@@ -730,7 +730,7 @@ class _TimeDragTooltip extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: Colors.black.withOpacity(0.15),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),

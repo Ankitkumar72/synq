@@ -261,10 +261,10 @@ class _ChoiceTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         decoration: ShapeDecoration(
-          color: color.withValues(alpha: 0.08),
+          color: color.withOpacity(0.08),
           shape: ContinuousRectangleBorder(
             borderRadius: BorderRadius.circular(32),
-            side: BorderSide(color: color.withValues(alpha: 0.2), width: 1.5),
+            side: BorderSide(color: color.withOpacity(0.2), width: 1.5),
           ),
         ),
         child: Column(
@@ -277,7 +277,7 @@ class _ChoiceTile extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.1),
+                    color: color.withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -301,7 +301,7 @@ class _ChoiceTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
-                color: color.withValues(alpha: 0.6),
+                color: color.withOpacity(0.6),
                 letterSpacing: 0.5,
               ),
             ),

@@ -79,7 +79,7 @@ class _AttachmentBubbleState extends State<AttachmentBubble> {
             border: Border.all(color: Colors.grey.shade300, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -126,7 +126,7 @@ class _AttachmentBubbleState extends State<AttachmentBubble> {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
+                      color: Colors.black.withOpacity(0.6),
                       shape: BoxShape.circle,
                     ),
                     child: _isMigrating

@@ -208,7 +208,7 @@ class _AddFolderSheetState extends ConsumerState<AddFolderSheet> {
                       height: 48,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.1)
+                            ? AppColors.primary.withOpacity(0.1)
                             : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
                         border: isSelected

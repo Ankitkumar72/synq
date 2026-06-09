@@ -20,7 +20,7 @@ class StatsCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.check, color: Colors.white, size: 16),
@@ -42,7 +42,7 @@ class StatsCard extends ConsumerWidget {
                 Text(
                   'of ${stats.total}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Colors.white.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -51,7 +51,7 @@ class StatsCard extends ConsumerWidget {
             Text(
               'Tasks Completed',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: Colors.white.withOpacity(0.6),
               ),
             ),
             if (stats.total > 0) ...[
@@ -60,7 +60,7 @@ class StatsCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: stats.completed / stats.total,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  backgroundColor: Colors.white.withOpacity(0.2),
                   valueColor: const AlwaysStoppedAnimation(Colors.greenAccent),
                   minHeight: 4,
                 ),

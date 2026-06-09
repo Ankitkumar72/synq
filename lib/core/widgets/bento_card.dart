@@ -38,7 +38,7 @@ class BentoCard extends StatelessWidget {
         ),
         shadows: [
           BoxShadow(
-            color: AppColors.shadow.withValues(alpha: 0.05),
+            color: AppColors.shadow.withOpacity(0.05),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),

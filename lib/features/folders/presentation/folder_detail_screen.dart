@@ -62,7 +62,7 @@ class FolderDetailScreen extends ConsumerWidget {
                   Icon(
                     IconUtils.getIconFromCodePoint(folder.iconCodePoint),
                     size: 64,
-                    color: Color(folder.colorValue).withValues(alpha: 0.5),
+                    color: Color(folder.colorValue).withOpacity(0.5),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -134,7 +134,7 @@ class FolderDetailScreen extends ConsumerWidget {
                                         decoration: BoxDecoration(
                                           color: Color(
                                             subFolder.colorValue,
-                                          ).withValues(alpha: 0.15),
+                                          ).withOpacity(0.15),
                                           shape: BoxShape.circle,
                                         ),
                                         child: Icon(
@@ -143,7 +143,7 @@ class FolderDetailScreen extends ConsumerWidget {
                                           ),
                                           color: Color(
                                             subFolder.colorValue,
-                                          ).withValues(alpha: 1.0),
+                                          ).withOpacity(1.0),
                                           size: 16,
                                         ),
                                       ),
@@ -225,7 +225,7 @@ class FolderDetailScreen extends ConsumerWidget {
                             decoration: BoxDecoration(
                               color: Color(
                                 folder.colorValue,
-                              ).withValues(alpha: 0.1),
+                              ).withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -479,15 +479,15 @@ class FolderDetailScreen extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.98),
+                color: Colors.white.withOpacity(0.98),
                 borderRadius: BorderRadius.circular(30),
                 border: Border.all(
-                  color: const Color(0xFF5473F7).withValues(alpha: 0.5),
+                  color: const Color(0xFF5473F7).withOpacity(0.5),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: Colors.black.withOpacity(0.15),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),

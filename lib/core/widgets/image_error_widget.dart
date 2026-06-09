@@ -16,7 +16,7 @@ class ImageErrorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black.withValues(alpha: 0.1),
+      color: Colors.black.withOpacity(0.1),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -48,7 +48,7 @@ class ImageErrorWidget extends StatelessWidget {
                 label: const Text('Retry'),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.white,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  backgroundColor: Colors.white.withOpacity(0.2),
                 ),
               ),
             ],

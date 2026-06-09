@@ -90,10 +90,10 @@ class _InlineTaskChip extends StatelessWidget {
       child: Container(
         constraints: BoxConstraints(maxWidth: maxWidth, minWidth: maxWidth),
         decoration: BoxDecoration(
-          color: chipColor.withValues(alpha: isCompleted ? 0.45 : 0.92),
+          color: chipColor.withOpacity(isCompleted ? 0.45 : 0.92),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: chipColor.withValues(alpha: 0.25),
+            color: chipColor.withOpacity(0.25),
             width: 0.5,
           ),
         ),
@@ -107,7 +107,7 @@ class _InlineTaskChip extends StatelessWidget {
                     ? Icons.check_circle
                     : Icons.check_circle_outline,
                 size: 14,
-                color: Colors.white.withValues(alpha: 0.9),
+                color: Colors.white.withOpacity(0.9),
               ),
               const SizedBox(width: 4),
             ],

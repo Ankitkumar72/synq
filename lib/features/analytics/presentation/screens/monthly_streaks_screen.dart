@@ -141,7 +141,7 @@ class MonthlyStreaksPage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -183,7 +183,7 @@ class MonthlyStreaksPage extends ConsumerWidget {
                 message: "$count tasks on $day ${DateFormat('MMM').format(selectedMonth)}",
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: intensity),
+                    color: AppColors.primary.withOpacity(intensity),
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
@@ -234,7 +234,7 @@ class MonthlyStreaksPage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -310,7 +310,7 @@ class MonthlyStreaksPage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -397,7 +397,7 @@ class MonthlyStreaksPage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -421,7 +421,7 @@ class MonthlyStreaksPage extends ConsumerWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: AppColors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.track_changes, color: AppColors.primary, size: 24),
@@ -463,7 +463,7 @@ class MonthlyStreaksPage extends ConsumerWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: AppColors.primary.withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),

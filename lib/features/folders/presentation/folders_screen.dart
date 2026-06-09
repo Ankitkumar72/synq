@@ -322,7 +322,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
       onTap: () => showAddFolderSheet(context),
       child: CustomPaint(
         painter: _DashedBorderPainter(
-          color: Colors.grey.withValues(alpha: 0.5),
+          color: Colors.grey.withOpacity(0.5),
           strokeWidth: 1.0,
           radius: 100,
         ),
@@ -338,7 +338,7 @@ class _FoldersScreenState extends ConsumerState<FoldersScreen> {
                 width: 32, // Match FolderCard icon size
                 height: 32,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.2), // Grey circle
+                  color: Colors.grey.withOpacity(0.2), // Grey circle
                   shape: BoxShape.circle, // Circular
                 ),
                 child: const Icon(Icons.add, size: 18, color: Colors.grey),

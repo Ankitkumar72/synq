@@ -749,7 +749,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                               ),
                               color: Color(
                                 folder.colorValue,
-                              ).withValues(alpha: 1.0),
+                              ).withOpacity(1.0),
                             ),
                             title: Text(
                               folder.name,
@@ -818,15 +818,15 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.98),
+                color: Colors.white.withOpacity(0.98),
                 borderRadius: BorderRadius.circular(30),
                 border: Border.all(
-                  color: const Color(0xFF5473F7).withValues(alpha: 0.5),
+                  color: const Color(0xFF5473F7).withOpacity(0.5),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: Colors.black.withOpacity(0.15),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -1039,7 +1039,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF5473F7).withValues(alpha: 0.1),
+                      color: const Color(0xFF5473F7).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -1151,7 +1151,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.1),
+                  color: AppColors.success.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -1493,7 +1493,7 @@ Container(
                     ),
                     shadows: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
+                        color: Colors.black.withOpacity(0.08),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),

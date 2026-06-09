@@ -357,7 +357,7 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
           boxShadow: [
             BoxShadow(
               color: (isCompleted ? const Color(0xFF10B981) : const Color(0xFF5372F6))
-                  .withValues(alpha: 0.3),
+                  .withOpacity(0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -405,7 +405,7 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Colors.black.withOpacity(0.04),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
@@ -457,7 +457,7 @@ class _ViewEventPageState extends ConsumerState<ViewEventPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),

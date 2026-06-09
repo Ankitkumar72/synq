@@ -115,7 +115,7 @@ class _DeviceManagementScreenState
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF5473F7).withValues(alpha: 0.1),
+              color: const Color(0xFF5473F7).withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.devices_other, color: Color(0xFF5473F7)),
@@ -195,7 +195,7 @@ class _DeviceManagementScreenState
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF5473F7).withValues(alpha: 0.1),
+                        color: const Color(0xFF5473F7).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(

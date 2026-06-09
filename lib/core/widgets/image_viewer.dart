@@ -122,7 +122,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> with SingleTickerProv
     final double scale = (1.0 - (_dragOffset.abs() / 1500)).clamp(0.8, 1.0);
 
     return Scaffold(
-      backgroundColor: Colors.black.withValues(alpha: opacity),
+      backgroundColor: Colors.black.withOpacity(opacity),
       resizeToAvoidBottomInset: false,
       extendBody: true,
       extendBodyBehindAppBar: true,

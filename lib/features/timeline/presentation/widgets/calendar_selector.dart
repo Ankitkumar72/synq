@@ -397,14 +397,14 @@ class _DayItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(35),
           border: isToday && !isSelected
               ? Border.all(
-                  color: const Color(0xFF5473F7).withValues(alpha: 0.5),
+                  color: const Color(0xFF5473F7).withOpacity(0.5),
                   width: 1.5,
                 )
               : null,
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF5473F7).withValues(alpha: 0.3),
+                    color: const Color(0xFF5473F7).withOpacity(0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -418,7 +418,7 @@ class _DayItem extends StatelessWidget {
               DateFormat('E').format(date).substring(0, 3).toUpperCase(),
               style: GoogleFonts.roboto(
                 color: isSelected
-                    ? Colors.white.withValues(alpha: 0.8)
+                    ? Colors.white.withOpacity(0.8)
                     : Colors.grey.shade500,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -480,7 +480,7 @@ class _MonthGrid extends StatelessWidget {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -600,7 +600,7 @@ class _MonthlyDayCell extends StatelessWidget {
               shape: BoxShape.circle,
               border: isToday && !isSelected
                   ? Border.all(
-                      color: const Color(0xFF5473F7).withValues(alpha: 0.5),
+                      color: const Color(0xFF5473F7).withOpacity(0.5),
                       width: 1.5,
                     )
                   : null,
@@ -630,7 +630,7 @@ class _MonthlyDayCell extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
       decoration: BoxDecoration(
         color: event.color != null 
-            ? Color(event.color!).withValues(alpha: 0.15)
+            ? Color(event.color!).withOpacity(0.15)
             : const Color(0xFFE8EEFF),
         borderRadius: BorderRadius.circular(4),
       ),
@@ -703,7 +703,7 @@ class _MonthYearPickerContentState extends State<_MonthYearPickerContent> {
     return Dialog(
       backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      shadowColor: Colors.black.withValues(alpha: 0.1),
+      shadowColor: Colors.black.withOpacity(0.1),
       elevation: 20,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
       child: Container(
@@ -803,7 +803,7 @@ class _MonthYearPickerContentState extends State<_MonthYearPickerContent> {
                   isSelected
                       ? [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
+                          color: AppColors.primary.withOpacity(0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),

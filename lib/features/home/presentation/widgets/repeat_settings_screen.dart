@@ -427,7 +427,7 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
+                        color: AppColors.primary.withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -547,7 +547,7 @@ class _RepeatSettingsScreenState extends State<RepeatSettingsScreen> {
         border: Border.all(
           color: selected
               ? AppColors.primary
-              : AppColors.textSecondary.withValues(alpha: 0.5),
+              : AppColors.textSecondary.withOpacity(0.5),
           width: 2,
         ),
       ),

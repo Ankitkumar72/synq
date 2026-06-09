@@ -181,14 +181,14 @@ class _TimelineTaskChipState extends State<TimelineTaskChip> {
               boxShadow: _isDragging
                   ? [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.18),
+                        color: Colors.black.withOpacity(0.18),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
+                        color: Colors.black.withOpacity(0.06),
                         blurRadius: 2,
                         offset: const Offset(0, 1),
                       ),
@@ -239,8 +239,8 @@ class _TimelineTaskChipState extends State<TimelineTaskChip> {
     if (task.color != null) {
       final base = Color(task.color!);
       return completed
-          ? base.withValues(alpha: 0.25)
-          : base.withValues(alpha: 0.15);
+          ? base.withOpacity(0.25)
+          : base.withOpacity(0.15);
     }
     return completed ? const Color(0xFFE8E8E8) : const Color(0xFFE8EAF6);
   }
@@ -249,8 +249,8 @@ class _TimelineTaskChipState extends State<TimelineTaskChip> {
     if (task.color != null) {
       final base = Color(task.color!);
       return completed
-          ? base.withValues(alpha: 0.3)
-          : base.withValues(alpha: 0.4);
+          ? base.withOpacity(0.3)
+          : base.withOpacity(0.4);
     }
     return completed ? const Color(0xFFD0D0D0) : const Color(0xFFC5CAE9);
   }
@@ -262,7 +262,7 @@ class _TimelineTaskChipState extends State<TimelineTaskChip> {
       final darkVariant = luminance > 0.5
           ? HSLColor.fromColor(base).withLightness(0.25).toColor()
           : base;
-      return completed ? darkVariant.withValues(alpha: 0.5) : darkVariant;
+      return completed ? darkVariant.withOpacity(0.5) : darkVariant;
     }
     return completed ? const Color(0xFF9E9E9E) : const Color(0xFF3949AB);
   }

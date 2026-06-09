@@ -47,7 +47,7 @@ class SubscriptionScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F6FC),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+                  border: Border.all(color: Colors.grey.withOpacity(0.1)),
                 ),
                 child: Column(
                   children: [
@@ -149,7 +149,7 @@ class SubscriptionScreen extends StatelessWidget {
                         color: const Color(0xFFEBF0FF),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.2),
+                          color: AppColors.primary.withOpacity(0.2),
                         ),
                       ),
                       child: Column(
