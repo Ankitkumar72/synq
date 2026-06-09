@@ -14,7 +14,7 @@ import 'package:synq/features/tasks/data/local_db_tasks_repository.dart';
 import 'package:synq/features/notes/data/notes_repository.dart';
 import 'package:synq/features/tasks/data/tasks_repository.dart';
 import 'package:synq/features/analytics/data/activity_repository.dart';
-import 'package:synq/features/notes/data/seed_notes.dart';
+
 import 'package:synq/features/analytics/data/local_db_activity_repository.dart';
 import 'package:synq/features/sync/data/sync_access_provider.dart';
 import 'package:synq/core/services/device_service.dart';
@@ -77,34 +77,10 @@ final appInitializationProvider = Provider<void>((ref) {
       debugPrint('DB_TRANSITION_READY');
     }
 
-    // Step 10: Seed the new database AFTER the transition is fully complete.
-    // The localDatabaseProvider already rebuilt when _currentUserIdProvider
-    // changed, so ref.read gives us the fresh DB for the new user.
-    // The old seed listener was being skipped because the transition flag
-    // was still true when localDatabaseProvider's listener fired.
-    try {
-      final db = ref.read(localDatabaseProvider);
-      await SeedNotesService.seedIfEmpty(db);
-      debugPrint('SEED_POST_TRANSITION: completed for $next');
-    } catch (e) {
-      debugPrint('SEED_POST_TRANSITION_ERROR: $e');
-    }
+    // Post-transition actions can be handled here.
   });
 
-  // Handle initial seeding on first app launch (before any transition occurs).
-  // previous == null means this is the very first time the listener fires,
-  // which is the anonymous DB being created at startup.
-  ref.listen<LocalDatabase>(localDatabaseProvider, (previous, next) async {
-    if (previous != null) return; // Only seed on first creation
-    if (ref.read(databaseTransitionProvider)) return;
-    
-    try {
-      await SeedNotesService.seedIfEmpty(next);
-      debugPrint('SEED_INITIAL: completed');
-    } catch (e) {
-      debugPrint('SEED_NOTES_ERROR: $e');
-    }
-  });
+
 });
 
 
