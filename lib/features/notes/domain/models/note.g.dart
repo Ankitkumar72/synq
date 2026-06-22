@@ -78,6 +78,14 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       deletedAt: json['deletedAt'] == null
           ? null
           : DateTime.parse(json['deletedAt'] as String),
+      workspaceId: json['workspaceId'] as String?,
+      version: (json['version'] as num?)?.toInt() ?? 1,
+      yjsState: (json['yjsState'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList(),
+      yjsStateVector: (json['yjsStateVector'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList(),
     );
 
 Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
@@ -111,6 +119,10 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'order': instance.order,
       'isDeleted': instance.isDeleted,
       'deletedAt': instance.deletedAt?.toIso8601String(),
+      'workspaceId': instance.workspaceId,
+      'version': instance.version,
+      'yjsState': instance.yjsState,
+      'yjsStateVector': instance.yjsStateVector,
     };
 
 const _$NoteCategoryEnumMap = {

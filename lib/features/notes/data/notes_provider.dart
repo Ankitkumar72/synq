@@ -61,6 +61,12 @@ class NotesNotifier extends StreamNotifier<List<Note>> {
   }
 
   Future<void> deleteNote(String id) async {
+    // Optimistic update to prevent Dismissible crash
+    final currentNotes = state.value;
+    if (currentNotes != null) {
+      state = AsyncValue.data(currentNotes.where((n) => n.id != id).toList());
+    }
+
     await _repository.deleteNote(id);
     await NotificationService().cancelNotification(id.hashCode);
   }

@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:synq/features/notes/utils/markdown_bridge.dart';
@@ -74,6 +75,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   bool _isSaving = false;
   late final ValueNotifier<String> _saveStatusNotifier;
   Timer? _autoSaveTimer;
+  Timer? _attachmentSyncDebounce;
   StreamSubscription<Note?>? _noteSubscription;
   StreamSubscription<quill.DocChange>? _quillSubscription;
   String? _deviceId;
@@ -159,6 +161,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     _titleFocusNode.dispose();
     _bodyFocusNode.dispose();
     _autoSaveTimer?.cancel();
+    _attachmentSyncDebounce?.cancel();
     _noteSubscription?.cancel();
     _quillSubscription?.cancel();
     _saveStatusNotifier.dispose();
@@ -166,6 +169,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   }
 
   void _setupQuillChangeTracking() {
+    _quillSubscription?.cancel();
     _quillSubscription = _quillController.document.changes.listen((change) {
       // 1. Analyze for slash command (/image )
       final delta = change.change;
@@ -197,7 +201,10 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       }
 
       if (hasImageChange) {
-        _syncAttachmentsFromDelta();
+        _attachmentSyncDebounce?.cancel();
+        _attachmentSyncDebounce = Timer(const Duration(milliseconds: 500), () {
+          if (mounted) _syncAttachmentsFromDelta();
+        });
       }
 
       // Trigger auto-save
@@ -215,6 +222,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   void _setupNoteSubscription() {
     if (widget.noteToEdit == null) return;
 
+    _noteSubscription?.cancel();
+
     _noteSubscription = ref
         .read(notesRepositoryProvider)
         .watchNote(widget.noteToEdit!.id)
@@ -230,9 +239,11 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
             setState(() {
               _editingNote = note;
               _titleController.text = note.title;
+              _quillSubscription?.cancel();
               _quillController.document = MarkdownBridge.deltaFromMarkdown(
                 note.body,
               );
+              _setupQuillChangeTracking();
               _selectedFolderId = note.folderId;
               _tags.clear();
               _tags.addAll(note.tags);
@@ -265,7 +276,9 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     _draftNoteId = draft.noteId ?? _draftNoteId;
     _titleController.text = draft.title;
 
+    _quillSubscription?.cancel();
     _quillController.document = MarkdownBridge.deltaFromMarkdown(draft.body);
+    _setupQuillChangeTracking();
 
     _selectedFolderId = draft.selectedFolderId;
     _tags
@@ -313,28 +326,21 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
 
   void _onTextChanged() {
     _markUnsaved();
-
-    // Auto-save logic
     _saveStatusNotifier.value = 'Saving...';
 
     _autoSaveTimer?.cancel();
     _autoSaveTimer = Timer(const Duration(seconds: 2), () async {
-      if (!_isSaving) {
-        await _handleSave();
-      } else {
-        // Already saving — reschedule with a proper async closure so we
-        // await the next save and don't silently drop it.
-        _autoSaveTimer?.cancel();
-        _autoSaveTimer = Timer(
-          const Duration(seconds: 1),
-          () async => await _handleSave(),
-        );
+      if (_isSaving) {
+        // Wait and retry once
+        await Future.delayed(const Duration(seconds: 1));
+        if (_isSaving) return; // Still saving? Skip this cycle
       }
+      await _handleSave();
     });
   }
 
   Future<void> _handleSave() async {
-    if (_isSaving) return;
+    if (!mounted || _isSaving) return;
 
     final title = _titleController.text.trim();
     final body = MarkdownBridge.markdownFromDelta(
@@ -441,6 +447,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
+    if (!mounted) return;
 
     _handleSingleImagePath(image.path);
   }
@@ -456,6 +463,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
 
     final List<File> images = await _mediaService.pickMultiImage();
     if (images.isEmpty) return;
+    if (!mounted) return;
 
     for (final img in images) {
       await _handleSingleImagePath(img.path);
@@ -478,6 +486,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         planTier: user.planTier,
       );
 
+      if (!mounted) return;
+
       String finalUri;
 
       if (user.planTier.isPro && storageResult.hasServerCopy) {
@@ -496,6 +506,8 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
       } else {
         finalUri = storageResult.localOriginalPath;
       }
+
+      if (!mounted) return;
 
       final selection = _quillController.selection;
       final index = selection.isValid ? selection.end : _quillController.document.length;
@@ -623,6 +635,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
   Future<void> _pickImageFromSource(ImageSource source) async {
     final file = await _mediaService.pickImage(source: source);
     if (file != null) {
+      if (!mounted) return;
       await _handleSingleImagePath(file.path);
     }
   }
@@ -1091,6 +1104,25 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     );
   }
 
+  Map<String, dynamic>? _getAttributesAtPosition(int position) {
+    final ops = _quillController.document.toDelta().toList();
+    int cursor = 0;
+
+    for (final op in ops) {
+      if (!op.isInsert) continue;
+
+      final int opLength = op.data is String
+          ? (op.data as String).length
+          : 1;
+
+      if (cursor + opLength > position) {
+        return op.attributes?.isEmpty ?? true ? null : op.attributes;
+      }
+      cursor += opLength;
+    }
+    return null;
+  }
+
   void _performReplace(String find, String replace) {
     if (find.isEmpty) return;
 
@@ -1098,11 +1130,29 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
     final matches = find.allMatches(plainText).toList();
     if (matches.isEmpty) return;
 
-    // Apply replacements from end → start so earlier offsets stay valid
-    // without shifting, while preserving rich text formatting.
     for (final match in matches.reversed) {
-      _quillController.replaceText(match.start, find.length, replace, null);
+      final Map<String, dynamic>? attributes = _getAttributesAtPosition(match.start);
+
+      final Delta change = Delta()
+        ..retain(match.start)
+        ..delete(find.length)
+        ..insert(replace, attributes);
+
+      _quillController.compose(
+        change,
+        _quillController.selection,
+        quill.ChangeSource.local,
+      );
     }
+
+    final lastMatchInDoc = matches.first; // Because reversed: first = last in document
+    final newOffset = lastMatchInDoc.start + replace.length;
+    _quillController.updateSelection(
+      TextSelection.collapsed(
+        offset: newOffset.clamp(0, _quillController.document.length - 1),
+      ),
+      quill.ChangeSource.local,
+    );
 
     _showToast(context, 'Replaced ${matches.length} occurrence${matches.length == 1 ? '' : 's'}');
     _markUnsaved();
@@ -1302,7 +1352,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                   opacity: _fadeAnimation,
                   child: SlideTransition(
                     position: _slideAnimation,
-                    child: SingleChildScrollView(
+                    child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         24,
                         0,
@@ -1345,34 +1395,41 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                               maxLines: null,
                             ),
                           ),
-Container(
-                            constraints: BoxConstraints(
-                              minHeight: MediaQuery.of(context).size.height * 0.5,
-                            ),
+                          Expanded(
                             child: DropRegion(
                               formats: const [Formats.png, Formats.jpeg],
                               onDropOver: (event) => DropOperation.copy,
                               onPerformDrop: (event) async {
-                                final item = event.session.items.first;
-                                final reader = item.dataReader;
-                                if (reader == null) return;
+                                try {
+                                  final item = event.session.items.first;
+                                  final reader = item.dataReader;
+                                  if (reader == null) return;
 
-                                if (reader.canProvide(Formats.png) || reader.canProvide(Formats.jpeg)) {
-                                  final format = reader.canProvide(Formats.png) ? Formats.png : Formats.jpeg;
-                                  final extension = format == Formats.png ? 'png' : 'jpg';
+                                  if (reader.canProvide(Formats.png) || reader.canProvide(Formats.jpeg)) {
+                                    final format = reader.canProvide(Formats.png) ? Formats.png : Formats.jpeg;
+                                    final extension = format == Formats.png ? 'png' : 'jpg';
 
-                                  final completer = Completer<Uint8List?>();
-                                  reader.getFile(format, (file) async {
-                                    final bytes = await file.readAll();
-                                    completer.complete(bytes);
-                                  }, onError: (e) => completer.complete(null));
+                                    final completer = Completer<Uint8List?>();
+                                    reader.getFile(format, (file) async {
+                                      final bytes = await file.readAll();
+                                      completer.complete(bytes);
+                                    }, onError: (e) => completer.complete(null));
 
-                                  final bytes = await completer.future;
-                                  if (bytes != null) {
-                                    final path = await _mediaService.saveBytesToLocalDocuments(bytes, extension: extension);
-                                    if (path != null) {
-                                      _handleSingleImagePath(path);
+                                    final bytes = await completer.future;
+                                    if (bytes != null) {
+                                      final path = await _mediaService.saveBytesToLocalDocuments(bytes, extension: extension);
+                                      if (path != null) {
+                                        if (!mounted) return;
+                                        await _handleSingleImagePath(path);
+                                      }
                                     }
+                                  }
+                                } catch (e, stack) {
+                                  debugPrint('Drop error: $e\n$stack');
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Failed to process dropped image')),
+                                    );
                                   }
                                 }
                               },
@@ -1399,10 +1456,10 @@ Container(
                                             onInvoke: (intent) => _handleCustomPaste().then((_) => null),
                                           ),
                                     },
-                                    scrollable: false,
-                                    padding: EdgeInsets.zero,
+                                    scrollable: true,
+                                    padding: const EdgeInsets.only(bottom: 100),
                                     autoFocus: false,
-                                    expands: false,
+                                    expands: true,
                                     customStyles: quill.DefaultStyles(
                                       paragraph: quill.DefaultTextBlockStyle(
                                         GoogleFonts.roboto(
@@ -1470,7 +1527,6 @@ Container(
                               ),
                             ),
                           ),
-                        const SizedBox(height: 100),
                         ],
                       ),
                     ),
@@ -1683,17 +1739,41 @@ Container(
       }
     }
 
-    // 3. Plain Text Fallback
+    // 3. Plain Text Fallback (Parse as Markdown to support .md content)
     if (reader.canProvide(Formats.plainText)) {
       final text = await reader.readValue(Formats.plainText);
       if (text != null) {
         final selection = _quillController.selection;
-        _quillController.replaceText(
-          selection.start,
-          selection.end - selection.start,
-          text,
-          TextSelection.collapsed(offset: selection.start + text.length),
-        );
+        
+        try {
+          // Parse pasted text as Markdown to retain formatting from complex .md files
+          final mdDoc = MarkdownBridge.deltaFromMarkdown(text);
+          final delta = mdDoc.toDelta();
+          
+          // We compose a change instead of replaceText to safely insert a full Delta
+          final Delta change = Delta()
+            ..retain(selection.start)
+            ..delete(selection.end - selection.start);
+            
+          for (final op in delta.toList()) {
+            change.push(op);
+          }
+          
+          _quillController.compose(
+            change,
+            TextSelection.collapsed(offset: selection.start + mdDoc.length),
+            quill.ChangeSource.local,
+          );
+        } catch (e) {
+          debugPrint('Error parsing pasted markdown: $e');
+          // Fallback to basic plain text insertion if parsing fails
+          _quillController.replaceText(
+            selection.start,
+            selection.end - selection.start,
+            text,
+            TextSelection.collapsed(offset: selection.start + text.length),
+          );
+        }
       }
     }
   }

@@ -142,20 +142,13 @@ class _ResizableInlineImageState extends State<ResizableInlineImage> {
   Widget _buildLocalImage() {
     final displayFile = _fullResLoaded ? _fullRes : _thumbnail;
 
-    if (displayFile == null) {
-      return const SizedBox(
-        height: 200,
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      );
-    }
-
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       transitionBuilder: (Widget child, Animation<double> animation) {
         return FadeTransition(opacity: animation, child: child);
       },
       child: Image.file(
-        displayFile,
+        displayFile ?? File(widget.path),
         key: ValueKey(_fullResLoaded ? 'full_${widget.path}' : 'thumb_${widget.path}'),
         fit: BoxFit.contain,
         errorBuilder: (_, __, ___) => const SizedBox(

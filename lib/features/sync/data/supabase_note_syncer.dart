@@ -8,6 +8,7 @@ import 'package:synq/core/crdt/field_level_crdt.dart';
 import 'package:synq/core/database/local_database.dart';
 import 'package:synq/features/notes/domain/models/note.dart';
 import 'package:synq/core/constants/database_constants.dart';
+import 'package:synq/core/utils/document_converter.dart';
 
 /// Handles note-specific sync operations between local SQLite and Supabase.
 ///
@@ -88,12 +89,19 @@ class SupabaseNoteSyncer {
     Map<String, dynamic> payload,
     Map<String, String> fieldVersions,
   ) {
+    // Convert body string (Quill Delta) to Neutral JSON for 'content'
+    final bodyString = payload['body'] as String?;
+    final contentMap = bodyString != null && bodyString.isNotEmpty 
+        ? DocumentConverter.deltaToNeutralJson(bodyString) 
+        : {'type': 'doc', 'content': []};
+
     return {
       DatabaseConstants.id: payload['id'],
       DatabaseConstants.userId: userId,
+      'workspace_id': payload['workspaceId'],
       DatabaseConstants.title: payload['title'] ?? '',
-      DatabaseConstants.body: payload['body'],
-      'content': payload['body'],
+      'content': contentMap,
+      'version': payload['version'] ?? 1,
       DatabaseConstants.category: payload['category'] ?? 'personal',
       DatabaseConstants.priority: payload['priority'] ?? 'none',
       DatabaseConstants.isTask:
@@ -385,10 +393,28 @@ class SupabaseNoteSyncer {
   /// Converts a Supabase row to a map suitable for merging.
   Map<String, dynamic> _rowToMergeableMap(Map<String, dynamic> row) {
     // Supabase uses snake_case, Note uses camelCase — normalize here
+    // Handle content mapping
+    String? bodyStr;
+    if (row['content'] != null) {
+      if (row['content'] is Map) {
+        bodyStr = DocumentConverter.neutralJsonToDelta(row['content'] as Map<String, dynamic>);
+      } else if (row['content'] is String) {
+        try {
+          bodyStr = DocumentConverter.neutralJsonToDelta(jsonDecode(row['content']));
+        } catch (_) {
+          bodyStr = row['content'];
+        }
+      }
+    } else {
+      bodyStr = row[DatabaseConstants.body] as String?;
+    }
+
     return {
       'id': row[DatabaseConstants.id],
+      'workspaceId': row['workspace_id'],
       'title': row[DatabaseConstants.title],
-      'body': row['content'] ?? row[DatabaseConstants.body],
+      'body': bodyStr,
+      'version': row['version'] ?? 1,
       'category': row[DatabaseConstants.category],
       'priority': row[DatabaseConstants.priority],
       'isTask': _safeBool(row[DatabaseConstants.isTask]),
@@ -522,7 +548,9 @@ class SupabaseNoteSyncer {
       'isAllDay': false,
       'scheduledTime': _safeTimestamp(row['start_date']),
       'endTime': _safeTimestamp(row['end_date']),
-      'color': row['color'],
+      'color': row['color'] is int
+          ? row['color']
+          : int.tryParse(row['color']?.toString() ?? ''),
       'hlcTimestamp': row['hlc_timestamp']?.toString(),
       'fieldVersions': row['field_versions'],
       'isDeleted': _safeBool(row['is_deleted']),
@@ -543,10 +571,27 @@ class SupabaseNoteSyncer {
   /// Notion rule: Never crash on data from the wire.
   /// Every field is treated as potentially null, missing, or wrong type.
   Map<String, dynamic> _supabaseRowToNoteJson(Map<String, dynamic> row) {
+    String? bodyStr;
+    if (row['content'] != null) {
+      if (row['content'] is Map) {
+        bodyStr = DocumentConverter.neutralJsonToDelta(row['content'] as Map<String, dynamic>);
+      } else if (row['content'] is String) {
+        try {
+          bodyStr = DocumentConverter.neutralJsonToDelta(jsonDecode(row['content']));
+        } catch (_) {
+          bodyStr = row['content'];
+        }
+      }
+    } else {
+      bodyStr = row[DatabaseConstants.body] as String?;
+    }
+
     return {
       'id': row[DatabaseConstants.id]?.toString() ?? '',
+      'workspaceId': row['workspace_id']?.toString(),
       'title': row[DatabaseConstants.title] as String? ?? '',
-      'body': (row['content'] ?? row[DatabaseConstants.body]) as String?,
+      'body': bodyStr,
+      'version': row['version'] ?? 1,
       'category': _safeString(row[DatabaseConstants.category], 'personal'),
       'priority': _safeString(row[DatabaseConstants.priority], 'none'),
       'isTask': _safeBool(row[DatabaseConstants.isTask]),

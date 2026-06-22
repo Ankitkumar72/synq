@@ -53,6 +53,9 @@ android {
 
     buildTypes {
         debug {
+            // Sign debug builds with the release keystore so you can switch between
+            // debug and release without Android throwing "signatures do not match" errors.
+            signingConfig = signingConfigs.getByName("release")
             // applicationIdSuffix = ".debug" // Removed to match Google Cloud Console SHA-1 fingerprint
             versionNameSuffix = "-debug"
         }
@@ -70,3 +73,4 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 }
+

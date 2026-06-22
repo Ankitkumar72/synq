@@ -219,6 +219,10 @@ mixin _$Note {
   int get order => throw _privateConstructorUsedError;
   bool get isDeleted => throw _privateConstructorUsedError;
   DateTime? get deletedAt => throw _privateConstructorUsedError;
+  String? get workspaceId => throw _privateConstructorUsedError;
+  int get version => throw _privateConstructorUsedError;
+  List<int>? get yjsState => throw _privateConstructorUsedError;
+  List<int>? get yjsStateVector => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -258,7 +262,11 @@ abstract class $NoteCopyWith<$Res> {
       int? color,
       int order,
       bool isDeleted,
-      DateTime? deletedAt});
+      DateTime? deletedAt,
+      String? workspaceId,
+      int version,
+      List<int>? yjsState,
+      List<int>? yjsStateVector});
 
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
 }
@@ -304,6 +312,10 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? order = null,
     Object? isDeleted = null,
     Object? deletedAt = freezed,
+    Object? workspaceId = freezed,
+    Object? version = null,
+    Object? yjsState = freezed,
+    Object? yjsStateVector = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -418,6 +430,22 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
           ? _value.deletedAt
           : deletedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      workspaceId: freezed == workspaceId
+          ? _value.workspaceId
+          : workspaceId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      version: null == version
+          ? _value.version
+          : version // ignore: cast_nullable_to_non_nullable
+              as int,
+      yjsState: freezed == yjsState
+          ? _value.yjsState
+          : yjsState // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
+      yjsStateVector: freezed == yjsStateVector
+          ? _value.yjsStateVector
+          : yjsStateVector // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
     ) as $Val);
   }
 
@@ -469,7 +497,11 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       int? color,
       int order,
       bool isDeleted,
-      DateTime? deletedAt});
+      DateTime? deletedAt,
+      String? workspaceId,
+      int version,
+      List<int>? yjsState,
+      List<int>? yjsStateVector});
 
   @override
   $RecurrenceRuleCopyWith<$Res>? get recurrenceRule;
@@ -513,6 +545,10 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? order = null,
     Object? isDeleted = null,
     Object? deletedAt = freezed,
+    Object? workspaceId = freezed,
+    Object? version = null,
+    Object? yjsState = freezed,
+    Object? yjsStateVector = freezed,
   }) {
     return _then(_$NoteImpl(
       id: null == id
@@ -627,6 +663,22 @@ class __$$NoteImplCopyWithImpl<$Res>
           ? _value.deletedAt
           : deletedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      workspaceId: freezed == workspaceId
+          ? _value.workspaceId
+          : workspaceId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      version: null == version
+          ? _value.version
+          : version // ignore: cast_nullable_to_non_nullable
+              as int,
+      yjsState: freezed == yjsState
+          ? _value._yjsState
+          : yjsState // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
+      yjsStateVector: freezed == yjsStateVector
+          ? _value._yjsStateVector
+          : yjsStateVector // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
     ));
   }
 }
@@ -663,11 +715,17 @@ class _$NoteImpl extends _Note {
       this.color,
       this.order = 0,
       this.isDeleted = false,
-      this.deletedAt})
+      this.deletedAt,
+      this.workspaceId,
+      this.version = 1,
+      final List<int>? yjsState,
+      final List<int>? yjsStateVector})
       : _tags = tags,
         _attachments = attachments,
         _links = links,
         _subtasks = subtasks,
+        _yjsState = yjsState,
+        _yjsStateVector = yjsStateVector,
         super._();
 
   factory _$NoteImpl.fromJson(Map<String, dynamic> json) =>
@@ -766,10 +824,34 @@ class _$NoteImpl extends _Note {
   final bool isDeleted;
   @override
   final DateTime? deletedAt;
+  @override
+  final String? workspaceId;
+  @override
+  @JsonKey()
+  final int version;
+  final List<int>? _yjsState;
+  @override
+  List<int>? get yjsState {
+    final value = _yjsState;
+    if (value == null) return null;
+    if (_yjsState is EqualUnmodifiableListView) return _yjsState;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<int>? _yjsStateVector;
+  @override
+  List<int>? get yjsStateVector {
+    final value = _yjsStateVector;
+    if (value == null) return null;
+    if (_yjsStateVector is EqualUnmodifiableListView) return _yjsStateVector;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, deviceLastEdited: $deviceLastEdited, color: $color, order: $order, isDeleted: $isDeleted, deletedAt: $deletedAt)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, deviceLastEdited: $deviceLastEdited, color: $color, order: $order, isDeleted: $isDeleted, deletedAt: $deletedAt, workspaceId: $workspaceId, version: $version, yjsState: $yjsState, yjsStateVector: $yjsStateVector)';
   }
 
   @override
@@ -822,7 +904,13 @@ class _$NoteImpl extends _Note {
             (identical(other.isDeleted, isDeleted) ||
                 other.isDeleted == isDeleted) &&
             (identical(other.deletedAt, deletedAt) ||
-                other.deletedAt == deletedAt));
+                other.deletedAt == deletedAt) &&
+            (identical(other.workspaceId, workspaceId) ||
+                other.workspaceId == workspaceId) &&
+            (identical(other.version, version) || other.version == version) &&
+            const DeepCollectionEquality().equals(other._yjsState, _yjsState) &&
+            const DeepCollectionEquality()
+                .equals(other._yjsStateVector, _yjsStateVector));
   }
 
   @JsonKey(ignore: true)
@@ -856,7 +944,11 @@ class _$NoteImpl extends _Note {
         color,
         order,
         isDeleted,
-        deletedAt
+        deletedAt,
+        workspaceId,
+        version,
+        const DeepCollectionEquality().hash(_yjsState),
+        const DeepCollectionEquality().hash(_yjsStateVector)
       ]);
 
   @JsonKey(ignore: true)
@@ -902,7 +994,11 @@ abstract class _Note extends Note {
       final int? color,
       final int order,
       final bool isDeleted,
-      final DateTime? deletedAt}) = _$NoteImpl;
+      final DateTime? deletedAt,
+      final String? workspaceId,
+      final int version,
+      final List<int>? yjsState,
+      final List<int>? yjsStateVector}) = _$NoteImpl;
   const _Note._() : super._();
 
   factory _Note.fromJson(Map<String, dynamic> json) = _$NoteImpl.fromJson;
@@ -963,6 +1059,14 @@ abstract class _Note extends Note {
   bool get isDeleted;
   @override
   DateTime? get deletedAt;
+  @override
+  String? get workspaceId;
+  @override
+  int get version;
+  @override
+  List<int>? get yjsState;
+  @override
+  List<int>? get yjsStateVector;
   @override
   @JsonKey(ignore: true)
   _$$NoteImplCopyWith<_$NoteImpl> get copyWith =>

@@ -58,6 +58,10 @@ class Note with _$Note {
     @Default(0) int order,
     @Default(false) bool isDeleted,
     DateTime? deletedAt,
+    String? workspaceId,
+    @Default(1) int version,
+    List<int>? yjsState,
+    List<int>? yjsStateVector,
   }) = _Note;
 
   factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);

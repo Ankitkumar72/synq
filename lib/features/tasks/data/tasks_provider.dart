@@ -70,6 +70,12 @@ class TasksNotifier extends StreamNotifier<List<Task>> {
   }
 
   Future<void> deleteTask(String id) async {
+    // Optimistic update to prevent Dismissible crash
+    final currentTasks = state.value;
+    if (currentTasks != null) {
+      state = AsyncValue.data(currentTasks.where((t) => t.id != id).toList());
+    }
+
     await _repository.deleteTask(id);
     await NotificationService().cancelNotification(id.hashCode);
   }
