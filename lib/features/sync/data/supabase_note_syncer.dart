@@ -159,6 +159,13 @@ class SupabaseNoteSyncer {
       } catch (_) {
         markdownBody = deltaBody; // Already plain text/markdown
       }
+      
+      // Prevent syncing the raw empty delta string if it somehow got into the DB previously
+      if (markdownBody != null && 
+         (markdownBody.trim() == '{"ops":[{"insert":"\\n"}]}' || 
+          markdownBody.trim() == '{"ops":[{"insert":"\\n\\n"}]}')) {
+        markdownBody = null;
+      }
     }
     
     // Convert Delta → Neutral JSON for Supabase 'content' column

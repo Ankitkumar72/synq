@@ -65,18 +65,10 @@ class DocumentConverter {
       }
 
       // Fallback
-      return jsonEncode({
-        'ops': [
-          {'insert': '\n'}
-        ]
-      });
+      return '';
     } catch (e, st) {
       debugPrint('Error converting Neutral JSON to Delta: $e\n$st');
-      return jsonEncode({
-        'ops': [
-          {'insert': '\n'}
-        ]
-      });
+      return '';
     }
   }
 }
