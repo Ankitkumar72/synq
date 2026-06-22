@@ -100,6 +100,17 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         document: MarkdownBridge.deltaFromMarkdown(note.body),
         selection: const TextSelection.collapsed(offset: 0),
         readOnly: _isReadOnly,
+        // ignore: experimental_member_use
+        config: quill.QuillControllerConfig(
+          // ignore: experimental_member_use
+          clipboardConfig: quill.QuillClipboardConfig(
+            // ignore: experimental_member_use
+            onClipboardPaste: () async {
+              await _handleCustomPaste();
+              return true;
+            },
+          ),
+        ),
       );
       _selectedFolderId = note.folderId;
       _tags.addAll(note.tags);
@@ -115,6 +126,17 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
         document: quill.Document(),
         selection: const TextSelection.collapsed(offset: 0),
         readOnly: _isReadOnly,
+        // ignore: experimental_member_use
+        config: quill.QuillControllerConfig(
+          // ignore: experimental_member_use
+          clipboardConfig: quill.QuillClipboardConfig(
+            // ignore: experimental_member_use
+            onClipboardPaste: () async {
+              await _handleCustomPaste();
+              return true;
+            },
+          ),
+        ),
       );
       _editingNote = null;
     }
@@ -1750,19 +1772,12 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
           final mdDoc = MarkdownBridge.deltaFromMarkdown(text);
           final delta = mdDoc.toDelta();
           
-          // We compose a change instead of replaceText to safely insert a full Delta
-          final Delta change = Delta()
-            ..retain(selection.start)
-            ..delete(selection.end - selection.start);
-            
-          for (final op in delta.toList()) {
-            change.push(op);
-          }
-          
-          _quillController.compose(
-            change,
-            TextSelection.collapsed(offset: selection.start + mdDoc.length),
-            quill.ChangeSource.local,
+          // We use replaceText with a Delta just like we do for HTML
+          _quillController.replaceText(
+            selection.start,
+            selection.end - selection.start,
+            delta,
+            TextSelection.collapsed(offset: selection.start + mdDoc.length - 1),
           );
         } catch (e) {
           debugPrint('Error parsing pasted markdown: $e');

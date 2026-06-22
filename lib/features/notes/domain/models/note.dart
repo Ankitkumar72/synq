@@ -44,6 +44,7 @@ class Note with _$Note {
     DateTime? completedAt,
     @Default(TaskPriority.none) TaskPriority priority,
     @Default(false) bool isTask,
+    @Default(false) bool isEvent,
     @Default(false) bool isAllDay,
     @Default(false) bool isRecurringInstance,
     @Default(false) bool isCompleted,

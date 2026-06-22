@@ -50,6 +50,7 @@ _$NoteImpl _$$NoteImplFromJson(Map<String, dynamic> json) => _$NoteImpl(
       priority: $enumDecodeNullable(_$TaskPriorityEnumMap, json['priority']) ??
           TaskPriority.none,
       isTask: json['isTask'] as bool? ?? false,
+      isEvent: json['isEvent'] as bool? ?? false,
       isAllDay: json['isAllDay'] as bool? ?? false,
       isRecurringInstance: json['isRecurringInstance'] as bool? ?? false,
       isCompleted: json['isCompleted'] as bool? ?? false,
@@ -105,6 +106,7 @@ Map<String, dynamic> _$$NoteImplToJson(_$NoteImpl instance) =>
       'completedAt': instance.completedAt?.toIso8601String(),
       'priority': _$TaskPriorityEnumMap[instance.priority]!,
       'isTask': instance.isTask,
+      'isEvent': instance.isEvent,
       'isAllDay': instance.isAllDay,
       'isRecurringInstance': instance.isRecurringInstance,
       'isCompleted': instance.isCompleted,

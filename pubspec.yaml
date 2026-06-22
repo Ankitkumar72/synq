@@ -56,6 +56,9 @@ dependencies:
   supabase_flutter: ^2.8.1
   flutter_dotenv: ^5.2.1
   super_drag_and_drop: ^0.9.1
+  workmanager: ^0.9.0+3
+  connectivity_plus: ^5.0.0
+  dart_quill_delta: ^10.8.3
 
 dev_dependencies:
   flutter_test:

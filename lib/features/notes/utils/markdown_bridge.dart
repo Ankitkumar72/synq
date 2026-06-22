@@ -4,7 +4,10 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:markdown_quill/markdown_quill.dart';
 
 class MarkdownBridge {
-  static final md.Document _mdDocument = md.Document(encodeHtml: false);
+  static final md.Document _mdDocument = md.Document(
+    encodeHtml: false,
+    extensionSet: md.ExtensionSet.gitHubFlavored,
+  );
   static final MarkdownToDelta _mdToDelta = MarkdownToDelta(
     markdownDocument: _mdDocument,
   );

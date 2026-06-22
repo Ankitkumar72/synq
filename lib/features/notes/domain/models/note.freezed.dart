@@ -205,6 +205,7 @@ mixin _$Note {
   DateTime? get completedAt => throw _privateConstructorUsedError;
   TaskPriority get priority => throw _privateConstructorUsedError;
   bool get isTask => throw _privateConstructorUsedError;
+  bool get isEvent => throw _privateConstructorUsedError;
   bool get isAllDay => throw _privateConstructorUsedError;
   bool get isRecurringInstance => throw _privateConstructorUsedError;
   bool get isCompleted => throw _privateConstructorUsedError;
@@ -249,6 +250,7 @@ abstract class $NoteCopyWith<$Res> {
       DateTime? completedAt,
       TaskPriority priority,
       bool isTask,
+      bool isEvent,
       bool isAllDay,
       bool isRecurringInstance,
       bool isCompleted,
@@ -298,6 +300,7 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
     Object? completedAt = freezed,
     Object? priority = null,
     Object? isTask = null,
+    Object? isEvent = null,
     Object? isAllDay = null,
     Object? isRecurringInstance = null,
     Object? isCompleted = null,
@@ -373,6 +376,10 @@ class _$NoteCopyWithImpl<$Res, $Val extends Note>
       isTask: null == isTask
           ? _value.isTask
           : isTask // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isEvent: null == isEvent
+          ? _value.isEvent
+          : isEvent // ignore: cast_nullable_to_non_nullable
               as bool,
       isAllDay: null == isAllDay
           ? _value.isAllDay
@@ -484,6 +491,7 @@ abstract class _$$NoteImplCopyWith<$Res> implements $NoteCopyWith<$Res> {
       DateTime? completedAt,
       TaskPriority priority,
       bool isTask,
+      bool isEvent,
       bool isAllDay,
       bool isRecurringInstance,
       bool isCompleted,
@@ -531,6 +539,7 @@ class __$$NoteImplCopyWithImpl<$Res>
     Object? completedAt = freezed,
     Object? priority = null,
     Object? isTask = null,
+    Object? isEvent = null,
     Object? isAllDay = null,
     Object? isRecurringInstance = null,
     Object? isCompleted = null,
@@ -606,6 +615,10 @@ class __$$NoteImplCopyWithImpl<$Res>
       isTask: null == isTask
           ? _value.isTask
           : isTask // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isEvent: null == isEvent
+          ? _value.isEvent
+          : isEvent // ignore: cast_nullable_to_non_nullable
               as bool,
       isAllDay: null == isAllDay
           ? _value.isAllDay
@@ -702,6 +715,7 @@ class _$NoteImpl extends _Note {
       this.completedAt,
       this.priority = TaskPriority.none,
       this.isTask = false,
+      this.isEvent = false,
       this.isAllDay = false,
       this.isRecurringInstance = false,
       this.isCompleted = false,
@@ -763,6 +777,9 @@ class _$NoteImpl extends _Note {
   @override
   @JsonKey()
   final bool isTask;
+  @override
+  @JsonKey()
+  final bool isEvent;
   @override
   @JsonKey()
   final bool isAllDay;
@@ -851,7 +868,7 @@ class _$NoteImpl extends _Note {
 
   @override
   String toString() {
-    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, deviceLastEdited: $deviceLastEdited, color: $color, order: $order, isDeleted: $isDeleted, deletedAt: $deletedAt, workspaceId: $workspaceId, version: $version, yjsState: $yjsState, yjsStateVector: $yjsStateVector)';
+    return 'Note(id: $id, title: $title, body: $body, category: $category, createdAt: $createdAt, scheduledTime: $scheduledTime, endTime: $endTime, reminderTime: $reminderTime, recurrenceRule: $recurrenceRule, parentRecurringId: $parentRecurringId, originalScheduledTime: $originalScheduledTime, completedAt: $completedAt, priority: $priority, isTask: $isTask, isEvent: $isEvent, isAllDay: $isAllDay, isRecurringInstance: $isRecurringInstance, isCompleted: $isCompleted, tags: $tags, attachments: $attachments, links: $links, subtasks: $subtasks, folderId: $folderId, updatedAt: $updatedAt, deviceLastEdited: $deviceLastEdited, color: $color, order: $order, isDeleted: $isDeleted, deletedAt: $deletedAt, workspaceId: $workspaceId, version: $version, yjsState: $yjsState, yjsStateVector: $yjsStateVector)';
   }
 
   @override
@@ -882,6 +899,7 @@ class _$NoteImpl extends _Note {
             (identical(other.priority, priority) ||
                 other.priority == priority) &&
             (identical(other.isTask, isTask) || other.isTask == isTask) &&
+            (identical(other.isEvent, isEvent) || other.isEvent == isEvent) &&
             (identical(other.isAllDay, isAllDay) ||
                 other.isAllDay == isAllDay) &&
             (identical(other.isRecurringInstance, isRecurringInstance) ||
@@ -931,6 +949,7 @@ class _$NoteImpl extends _Note {
         completedAt,
         priority,
         isTask,
+        isEvent,
         isAllDay,
         isRecurringInstance,
         isCompleted,
@@ -981,6 +1000,7 @@ abstract class _Note extends Note {
       final DateTime? completedAt,
       final TaskPriority priority,
       final bool isTask,
+      final bool isEvent,
       final bool isAllDay,
       final bool isRecurringInstance,
       final bool isCompleted,
@@ -1031,6 +1051,8 @@ abstract class _Note extends Note {
   TaskPriority get priority;
   @override
   bool get isTask;
+  @override
+  bool get isEvent;
   @override
   bool get isAllDay;
   @override
