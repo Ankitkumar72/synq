@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dart_quill_delta/dart_quill_delta.dart' as quill;
 import 'package:markdown_quill/markdown_quill.dart' as md_quill;
-import 'package:markdown/markdown.dart' as md;
+
 
 import 'package:synq/core/crdt/hlc.dart';
 import 'package:synq/core/crdt/field_level_crdt.dart';
@@ -12,17 +12,9 @@ import 'package:synq/core/database/local_database.dart';
 import 'package:synq/features/notes/domain/models/note.dart';
 import 'package:synq/core/constants/database_constants.dart';
 import 'package:synq/core/utils/document_converter.dart';
+import 'package:synq/features/notes/utils/markdown_bridge.dart';
 
-/// Handles note-specific sync operations between local SQLite and Supabase.
-///
-/// Responsibilities:
-///   - Pushing notes from the outbox to Supabase (upsert with field_versions)
-///   - Merging incoming remote notes with local state via field-level CRDT
-///   - Bootstrap pull of all remote notes
-///
-/// The CRDT merge logic ensures that if Device A edits the title and
-/// Device B edits the body, both edits survive — unlike whole-document
-/// LWW where one would be lost.
+
 class SupabaseNoteSyncer {
   SupabaseNoteSyncer({
     required SupabaseClient client,
@@ -40,9 +32,6 @@ class SupabaseNoteSyncer {
 
   static const String _table = DatabaseConstants.notesTable;
 
-  // Reusable markdown converter instances
-  static final _mdDocument = md.Document(encodeHtml: false);
-  static final _mdToDelta = md_quill.MarkdownToDelta(markdownDocument: _mdDocument);
   static final _deltaToMd = md_quill.DeltaToMarkdown();
 
   static int? _parseColor(dynamic value) {
@@ -55,16 +44,7 @@ class SupabaseNoteSyncer {
     return int.tryParse(colorStr);
   }
 
-  /// Converts a Markdown string to Quill Delta JSON (`List<dynamic>`)
-  static List<dynamic>? _markdownToDelta(String? markdown) {
-    if (markdown == null || markdown.isEmpty) return null;
-    try {
-      final delta = _mdToDelta.convert(markdown);
-      return delta.toJson();
-    } catch (_) {
-      return null;
-    }
-  }
+
 
   /// Converts Quill Delta JSON (`List<dynamic>`) to Markdown string
   static String? _deltaToMarkdown(dynamic deltaJson) {
@@ -77,14 +57,6 @@ class SupabaseNoteSyncer {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Push: Local → Supabase
-  // ---------------------------------------------------------------------------
-
-  /// Pushes a single sync queue operation to Supabase.
-  ///
-  /// The operation payload is the serialized Note JSON. We enrich it with
-  /// CRDT metadata (user_id, hlc_timestamp, field_versions) before upsert.
   Future<void> pushNote(SyncQueueOperation op) async {
     if (op.payload == null) {
       // Delete operation
@@ -138,49 +110,53 @@ class SupabaseNoteSyncer {
     debugPrint('SYNC_PUSH_NOTE ($targetTable): ${op.entityId}');
   }
 
+  String? _normalizeBodyToMarkdown(dynamic bodyPayload) {
+    if (bodyPayload == null) return null;
+    String? markdownBody;
+    
+    if (bodyPayload is String) {
+      if (MarkdownBridge.looksLikeLegacyDeltaJson(bodyPayload)) {
+        try {
+          final decoded = jsonDecode(bodyPayload);
+          if (decoded is List) {
+            markdownBody = _deltaToMarkdown(decoded);
+          } else if (decoded is Map && decoded.containsKey('ops')) {
+            markdownBody = _deltaToMarkdown(decoded['ops']);
+          } else {
+            markdownBody = bodyPayload;
+          }
+          if (markdownBody == null) {
+            debugPrint('Failed to convert parsed delta to markdown');
+          }
+        } catch (e) {
+          debugPrint('Error parsing legacy delta json in _normalizeBodyToMarkdown: $e');
+          markdownBody = bodyPayload;
+        }
+      } else {
+        markdownBody = bodyPayload;
+      }
+    } else if (bodyPayload is List && bodyPayload.isNotEmpty) {
+      markdownBody = _deltaToMarkdown(bodyPayload);
+    } else if (bodyPayload is Map && bodyPayload.containsKey('ops')) {
+      markdownBody = _deltaToMarkdown(bodyPayload['ops']);
+    }
+    
+    if (markdownBody != null && markdownBody.trim().isEmpty) {
+      return null;
+    }
+    return markdownBody?.trim();
+  }
+
   /// Converts a local Note payload + field versions into a Supabase row.
   Map<String, dynamic> _notePayloadToRow(
     Map<String, dynamic> payload,
     Map<String, String> fieldVersions,
   ) {
-    // payload['body'] is Quill Delta JSON (List<dynamic>)
-    final dynamic deltaBody = payload['body'];
+    // payload['body'] should be Markdown string, but might be legacy Delta JSON string
+    final markdownBody = _normalizeBodyToMarkdown(payload['body']);
     
-    // Convert Delta → Markdown for Supabase 'body' column
-    String? markdownBody;
-    if (deltaBody is List && deltaBody.isNotEmpty) {
-      markdownBody = _deltaToMarkdown(deltaBody);
-    } else if (deltaBody is String) {
-      try {
-        final decoded = jsonDecode(deltaBody);
-        if (decoded is List) {
-          markdownBody = _deltaToMarkdown(decoded);
-        }
-      } catch (_) {
-        markdownBody = deltaBody; // Already plain text/markdown
-      }
-      
-      // Prevent syncing the raw empty delta string if it somehow got into the DB previously
-      if (markdownBody != null && 
-         (markdownBody.trim() == '{"ops":[{"insert":"\\n"}]}' || 
-          markdownBody.trim() == '{"ops":[{"insert":"\\n\\n"}]}')) {
-        markdownBody = null;
-      }
-    }
-    
-    // Convert Delta → Neutral JSON for Supabase 'content' column
-    // DocumentConverter expects a JSON string representation of the Delta
-    Map<String, dynamic> contentMap;
-    if (deltaBody is List && deltaBody.isNotEmpty) {
-      try {
-        final deltaJsonStr = jsonEncode(deltaBody);
-        contentMap = DocumentConverter.deltaToNeutralJson(deltaJsonStr);
-      } catch (_) {
-        contentMap = {'type': 'doc', 'content': []};
-      }
-    } else {
-      contentMap = {'type': 'doc', 'content': []};
-    }
+    // Default neutral JSON for Supabase 'content' column since it is legacy
+    final contentMap = {'type': 'doc', 'content': []};
 
     return {
       DatabaseConstants.id: payload['id'],
@@ -243,28 +219,14 @@ class SupabaseNoteSyncer {
     final scheduledTime = payload['scheduledTime'] ?? payload['scheduled_time'];
     final endTime = payload['endTime'] ?? payload['end_time'];
 
-    // Convert local Quill Delta (stored in payload['body']) to Markdown for Supabase
-    final dynamic deltaBody = payload['body'];
-    String? markdownBody;
-    if (deltaBody is List && deltaBody.isNotEmpty) {
-      markdownBody = _deltaToMarkdown(deltaBody);
-    } else if (deltaBody is String) {
-      // Edge case: body might already be a JSON-encoded string of Delta
-      try {
-        final decoded = jsonDecode(deltaBody);
-        if (decoded is List) {
-          markdownBody = _deltaToMarkdown(decoded);
-        }
-      } catch (_) {
-        markdownBody = deltaBody; // Already plain text/markdown
-      }
-    }
+    // Convert local body (Markdown string or legacy Delta JSON string)
+    final markdownBody = _normalizeBodyToMarkdown(payload['body']);
 
     return {
       'id': payload['id'],
       'user_id': userId,
       'title': payload['title'] ?? '',
-      'description': markdownBody ?? payload['body'],
+      'description': markdownBody,
       'body': markdownBody,
       'status': isCompleted ? 'done' : 'todo',
       'priority': payload['priority'] ?? 'none',
@@ -291,28 +253,14 @@ class SupabaseNoteSyncer {
     final scheduledTime = payload['scheduledTime'] ?? payload['scheduled_time'] ?? DateTime.now().toUtc().toIso8601String();
     final endTime = payload['endTime'] ?? payload['end_time'] ?? DateTime.now().toUtc().toIso8601String();
     
-    // Convert local Quill Delta (stored in payload['body']) to Markdown for Supabase
-    final dynamic deltaBody = payload['body'];
-    String? markdownBody;
-    if (deltaBody is List && deltaBody.isNotEmpty) {
-      markdownBody = _deltaToMarkdown(deltaBody);
-    } else if (deltaBody is String) {
-      // Edge case: body might already be a JSON-encoded string of Delta
-      try {
-        final decoded = jsonDecode(deltaBody);
-        if (decoded is List) {
-          markdownBody = _deltaToMarkdown(decoded);
-        }
-      } catch (_) {
-        markdownBody = deltaBody; // Already plain text/markdown
-      }
-    }
+    // Convert local body (Markdown string or legacy Delta JSON string)
+    final markdownBody = _normalizeBodyToMarkdown(payload['body']);
 
     return {
       'id': payload['id'],
       'user_id': userId,
       'title': payload['title'] ?? '',
-      'description': markdownBody ?? payload['body'],
+      'description': markdownBody,
       'body': markdownBody,
       'start_date': scheduledTime,
       'end_date': endTime,
@@ -326,21 +274,10 @@ class SupabaseNoteSyncer {
     };
   }
 
-  // ---------------------------------------------------------------------------
-  // Pull / Merge: Supabase → Local
-  // ---------------------------------------------------------------------------
-
-  /// Merges a remote note (from Realtime or bootstrap) with local state.
-  ///
-  /// For each field, the HLC version from field_versions is compared:
-  ///   - If remote HLC > local HLC: accept remote value
-  ///   - If local HLC >= remote HLC: keep local value
-  ///   - If field doesn't exist locally: accept remote value
   Future<void> mergeRemoteNote(Map<String, dynamic> remoteRow) async {
     final noteId = remoteRow['id'] as String;
 
-    // Read local note first. getNote intentionally hides local tombstones, so a
-    // null here can mean either "absent" or "already deleted locally".
+
     final localNote = await _database.getNote(noteId);
 
     if (_isRemoteDeleted(remoteRow)) {
@@ -401,9 +338,6 @@ class SupabaseNoteSyncer {
     );
   }
 
-  /// Pulls all items (Notes, Tasks, Events) from Supabase and merges them into
-  /// the local Note storage. This ensures the mobile app stays in sync with 
-  /// the decoupled desktop architecture.
   Future<void> bootstrapNotes() async {
     // 1. Fetch regular Notes
     await _bootstrapTable(table: 'notes', entityType: 'notes');
@@ -515,18 +449,9 @@ class SupabaseNoteSyncer {
   }
 
 
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
-
-  /// Reads field versions from the local SQLite note.
-  ///
   /// TODO(impl): Extend the notes table schema to include a `field_versions`
   /// column, then read it here. For the skeleton, returns empty.
   Future<Map<String, String>> _readLocalFieldVersions(String noteId) async {
-    // TODO: Read from local DB once the schema is extended
-    // final row = await _database.getRawNote(noteId);
-    // return _parseFieldVersions(row?['field_versions']);
     return {};
   }
 
@@ -693,18 +618,10 @@ class SupabaseNoteSyncer {
   Map<String, dynamic> taskRowToNoteJson(Map<String, dynamic> row) {
     final Map<String, dynamic> json = Map.from(row);
     
-    final String? bodyMarkdown = row['body']?.toString();
-    if (bodyMarkdown != null && bodyMarkdown.isNotEmpty) {
-      final delta = _markdownToDelta(bodyMarkdown);
-      if (delta != null) {
-        json['body'] = delta;
-      }
-    }
-
     return {
       'id': json['id']?.toString() ?? '',
       'title': json['title'] as String? ?? '',
-      'body': json['body'] != null ? jsonEncode(json['body']) : json['description'] as String?,
+      'body': json['body']?.toString() ?? json['description']?.toString(),
       'category': _safeString(json['category'], 'personal'),
       'priority': _safeString(row['priority'], 'none'),
       'isTask': true,
@@ -732,18 +649,10 @@ class SupabaseNoteSyncer {
   Map<String, dynamic> eventRowToNoteJson(Map<String, dynamic> row) {
     final Map<String, dynamic> json = Map.from(row);
     
-    final String? bodyMarkdown = row['body']?.toString();
-    if (bodyMarkdown != null && bodyMarkdown.isNotEmpty) {
-      final delta = _markdownToDelta(bodyMarkdown);
-      if (delta != null) {
-        json['body'] = delta;
-      }
-    }
-
     return {
       'id': json['id']?.toString() ?? '',
       'title': json['title'] as String? ?? '',
-      'body': json['body'] != null ? jsonEncode(json['body']) : json['description'] as String?,
+      'body': json['body']?.toString() ?? json['description']?.toString(),
       'isTask': false,
       'isEvent': true,
       'isAllDay': false,
@@ -774,16 +683,8 @@ class SupabaseNoteSyncer {
   Map<String, dynamic> _supabaseRowToNoteJson(Map<String, dynamic> row) {
     final Map<String, dynamic> json = Map.from(row);
     
-    final String? bodyMarkdown = row['body']?.toString();
-    if (bodyMarkdown != null && bodyMarkdown.isNotEmpty) {
-      final delta = _markdownToDelta(bodyMarkdown);
-      if (delta != null) {
-        json['body'] = delta;
-      }
-    }
-
-    String? bodyStr;
-    if (json['content'] != null) {
+    String? bodyStr = json['body']?.toString() ?? json[DatabaseConstants.body]?.toString();
+    if (bodyStr == null && json['content'] != null) {
       if (json['content'] is Map) {
         bodyStr = DocumentConverter.neutralJsonToDelta(row['content'] as Map<String, dynamic>);
       } else if (row['content'] is String) {
@@ -793,15 +694,13 @@ class SupabaseNoteSyncer {
           bodyStr = json['content'];
         }
       }
-    } else {
-      bodyStr = json[DatabaseConstants.body] as String?;
     }
 
     return {
       'id': json[DatabaseConstants.id]?.toString() ?? '',
       'workspaceId': json['workspace_id']?.toString(),
       'title': json[DatabaseConstants.title] as String? ?? '',
-      'body': json['body'] != null ? jsonEncode(json['body']) : bodyStr,
+      'body': bodyStr,
       'version': json['version'] ?? 1,
       'category': _safeString(json[DatabaseConstants.category], 'personal'),
       'priority': _safeString(json[DatabaseConstants.priority], 'none'),

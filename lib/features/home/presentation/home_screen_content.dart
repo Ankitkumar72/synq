@@ -517,8 +517,7 @@ class HomeScreenContent extends ConsumerWidget {
   }
 
   Widget _buildNoteItem(BuildContext context, WidgetRef ref, Note note) {
-    final body = note.body ?? '';
-    final plainText = MarkdownBridge.deltaFromMarkdown(body).toPlainText();
+    final plainText = MarkdownBridge.previewTextFromMarkdown(note.body);
     final firstBodyLine = plainText
         .split(RegExp(r'\r?\n'))
         .map((line) => line.trim())

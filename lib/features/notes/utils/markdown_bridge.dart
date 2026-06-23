@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -13,10 +14,34 @@ class MarkdownBridge {
   );
   static final DeltaToMarkdown _deltaToMd = DeltaToMarkdown();
 
+  /// Helper to reliably detect both forms of legacy Quill Delta JSON
+  static bool looksLikeLegacyDeltaJson(String? value) {
+    if (value == null) return false;
+    final trimmed = value.trim();
+    return trimmed.startsWith('[{"insert":') || trimmed.startsWith('{"ops":');
+  }
+
   /// Converts a Markdown string from Firestore into a Quill [Document] Delta format
   /// Allows the editor to render the `.md` content natively.
   static Document deltaFromMarkdown(String? markdown) {
     if (markdown == null || markdown.trim().isEmpty) {
+      return Document();
+    }
+
+    final trimmed = markdown.trim();
+    if (looksLikeLegacyDeltaJson(trimmed)) {
+      try {
+        final decoded = jsonDecode(trimmed);
+        if (decoded is List) {
+          return Document.fromJson(decoded);
+        } else if (decoded is Map && decoded.containsKey('ops')) {
+          return Document.fromJson(decoded['ops'] as List);
+        }
+      } catch (e) {
+        debugPrint('Error parsing legacy delta json: $e');
+      }
+      // If it looks like a legacy delta but parsing fails, returning an empty document
+      // prevents leaking raw JSON string into the editor and potentially resaving it as plain text.
       return Document();
     }
 
@@ -29,6 +54,34 @@ class MarkdownBridge {
       final doc = Document();
       doc.insert(0, markdown);
       return doc;
+    }
+  }
+
+  /// Extracts plain text from a Markdown string or legacy Delta JSON string for previews.
+  static String previewTextFromMarkdown(String? body) {
+    if (body == null || body.trim().isEmpty) {
+      return '';
+    }
+    
+    final trimmed = body.trim();
+    if (looksLikeLegacyDeltaJson(trimmed)) {
+      try {
+        final decoded = jsonDecode(trimmed);
+        if (decoded is List) {
+          return Document.fromJson(decoded).toPlainText().trim();
+        } else if (decoded is Map && decoded.containsKey('ops')) {
+          return Document.fromJson(decoded['ops'] as List).toPlainText().trim();
+        }
+      } catch (_) {}
+      // Prevent leaking raw JSON into preview if parsing legacy delta fails
+      return '';
+    }
+
+    try {
+      final delta = _mdToDelta.convert(body);
+      return Document.fromDelta(delta).toPlainText().trim();
+    } catch (_) {
+      return trimmed;
     }
   }
 

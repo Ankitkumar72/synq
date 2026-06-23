@@ -11,6 +11,7 @@ import 'package:synq/core/utils/icon_utils.dart';
 import 'package:synq/features/notes/presentation/note_detail_screen.dart';
 import 'package:synq/features/notes/presentation/widgets/delete_confirmation_sheet.dart';
 import 'package:synq/features/notes/presentation/widgets/note_options_sheet.dart';
+import 'package:synq/features/notes/utils/markdown_bridge.dart';
 
 class FolderDetailScreen extends ConsumerWidget {
   final Folder folder;
@@ -245,7 +246,7 @@ class FolderDetailScreen extends ConsumerWidget {
                           ),
                           subtitle: note.body != null && note.body!.isNotEmpty
                               ? Text(
-                                  note.body!,
+                                  MarkdownBridge.previewTextFromMarkdown(note.body!),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(color: Colors.black87),
