@@ -154,16 +154,12 @@ class SupabaseNoteSyncer {
   ) {
     // payload['body'] should be Markdown string, but might be legacy Delta JSON string
     final markdownBody = _normalizeBodyToMarkdown(payload['body']);
-    
-    // Default neutral JSON for Supabase 'content' column since it is legacy
-    final contentMap = {'type': 'doc', 'content': []};
 
     return {
       DatabaseConstants.id: payload['id'],
       DatabaseConstants.userId: userId,
       'workspace_id': payload['workspaceId'],
       DatabaseConstants.title: payload['title'] ?? '',
-      'content': contentMap,
       'body': markdownBody,
       'version': payload['version'] ?? 1,
       DatabaseConstants.category: payload['category'] ?? 'personal',
@@ -498,8 +494,10 @@ class SupabaseNoteSyncer {
   Map<String, dynamic> _rowToMergeableMap(Map<String, dynamic> row) {
     // Supabase uses snake_case, Note uses camelCase — normalize here
     // Handle content mapping
-    String? bodyStr;
-    if (row['content'] != null) {
+    // We prioritize 'body' since it contains the actual markdown sync text from both Web and Flutter.
+    String? bodyStr = row[DatabaseConstants.body] as String?;
+    
+    if ((bodyStr == null || bodyStr.trim().isEmpty) && row['content'] != null) {
       if (row['content'] is Map) {
         bodyStr = DocumentConverter.neutralJsonToDelta(row['content'] as Map<String, dynamic>);
       } else if (row['content'] is String) {
@@ -509,8 +507,6 @@ class SupabaseNoteSyncer {
           bodyStr = row['content'];
         }
       }
-    } else {
-      bodyStr = row[DatabaseConstants.body] as String?;
     }
 
     return {
