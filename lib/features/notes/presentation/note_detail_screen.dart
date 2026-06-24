@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -1456,7 +1457,44 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen>
                                 }
                               },
                               child: RepaintBoundary(
-                                  child: quill.QuillEditor.basic(
+                                  child: _isReadOnly
+                                    ? SingleChildScrollView(
+                                        padding: const EdgeInsets.only(bottom: 100),
+                                        child: MarkdownBody(
+                                          data: MarkdownBridge.markdownFromDelta(_quillController.document),
+                                          selectable: true,
+                                          styleSheet: MarkdownStyleSheet(
+                                            p: GoogleFonts.roboto(
+                                              fontSize: 18,
+                                              height: 1.6,
+                                              color: Colors.black87,
+                                            ),
+                                            h1: GoogleFonts.roboto(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.black,
+                                              height: 1.15,
+                                            ),
+                                            h2: GoogleFonts.roboto(
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.black,
+                                              height: 1.15,
+                                            ),
+                                            code: GoogleFonts.robotoMono(
+                                              fontSize: 15,
+                                              color: Colors.blue.shade900,
+                                              backgroundColor: Colors.grey.shade100,
+                                            ),
+                                            codeblockDecoration: BoxDecoration(
+                                              color: Colors.grey.shade100,
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: Colors.grey.shade200),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : quill.QuillEditor.basic(
                                     controller: _quillController,
                                     focusNode: _bodyFocusNode,
                                     config: quill.QuillEditorConfig(

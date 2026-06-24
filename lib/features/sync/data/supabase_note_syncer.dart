@@ -161,6 +161,7 @@ class SupabaseNoteSyncer {
       'workspace_id': payload['workspaceId'],
       DatabaseConstants.title: payload['title'] ?? '',
       'body': markdownBody,
+      'content_markdown': markdownBody,
       'version': payload['version'] ?? 1,
       DatabaseConstants.category: payload['category'] ?? 'personal',
       DatabaseConstants.priority: payload['priority'] ?? 'none',
@@ -224,6 +225,7 @@ class SupabaseNoteSyncer {
       'title': payload['title'] ?? '',
       'description': markdownBody,
       'body': markdownBody,
+      'content_markdown': markdownBody,
       'status': isCompleted ? 'done' : 'todo',
       'priority': payload['priority'] ?? 'none',
       'due_date': scheduledTime,
@@ -258,6 +260,7 @@ class SupabaseNoteSyncer {
       'title': payload['title'] ?? '',
       'description': markdownBody,
       'body': markdownBody,
+      'content_markdown': markdownBody,
       'start_date': scheduledTime,
       'end_date': endTime,
       'color': payload['color']?.toString() ?? '#3b82f6',
@@ -314,20 +317,34 @@ class SupabaseNoteSyncer {
     final crdt = FieldLevelCRDT();
     final localMap = _noteToMap(localNote);
 
+    final remoteMap = _rowToMergeableMap(remoteRow);
+    final localBody = localMap['body'] as String?;
+    final remoteBody = remoteMap['body'] as String?;
+
+    bool shouldPushLocal = false;
+    if ((remoteBody == null || remoteBody.trim().isEmpty) && 
+        (localBody != null && localBody.trim().isNotEmpty)) {
+      remoteMap['body'] = localBody;
+      shouldPushLocal = true;
+      debugPrint('SYNC_GUARD: Remote body empty, keeping local body for $noteId and forcing push');
+    }
+
     final result = crdt.merge(
       local: localMap,
       localVersions: localFieldVersions,
-      remote: _rowToMergeableMap(remoteRow),
+      remote: remoteMap,
       remoteVersions: remoteFieldVersions,
     );
 
-    if (!result.hadConflicts) {
+    if (!result.hadConflicts && !shouldPushLocal) {
       debugPrint('SYNC_MERGE_NOTE_NO_CHANGE: $noteId');
       return;
     }
 
-    // Write merged result to SQLite (source: remote to avoid re-enqueue)
-    await _writeMergedNote(noteId, result);
+    final source = shouldPushLocal ? SyncWriteSource.local : SyncWriteSource.remote;
+
+    // Write merged result to SQLite
+    await _writeMergedNote(noteId, result, source: source);
     debugPrint(
       'SYNC_MERGE_NOTE_MERGED: $noteId '
       '(accepted: ${result.acceptedRemoteFields.join(', ')})',
@@ -494,18 +511,39 @@ class SupabaseNoteSyncer {
   Map<String, dynamic> _rowToMergeableMap(Map<String, dynamic> row) {
     // Supabase uses snake_case, Note uses camelCase — normalize here
     // Handle content mapping
-    // We prioritize 'body' since it contains the actual markdown sync text from both Web and Flutter.
-    String? bodyStr = row[DatabaseConstants.body] as String?;
+    // We prioritize 'content_markdown' over 'body', then 'content'.
+    String? bodyStr = (row['content_markdown'] as String?) ?? (row[DatabaseConstants.body] as String?);
     
     if ((bodyStr == null || bodyStr.trim().isEmpty) && row['content'] != null) {
+      Map<String, dynamic>? contentMap;
       if (row['content'] is Map) {
-        bodyStr = DocumentConverter.neutralJsonToDelta(row['content'] as Map<String, dynamic>);
+        contentMap = row['content'] as Map<String, dynamic>;
       } else if (row['content'] is String) {
         try {
-          bodyStr = DocumentConverter.neutralJsonToDelta(jsonDecode(row['content']));
-        } catch (_) {
-          bodyStr = row['content'];
+          contentMap = jsonDecode(row['content']);
+        } catch (_) {}
+      }
+
+      if (contentMap != null) {
+        try {
+          String markdown = DocumentConverter.tiptapJsonToMarkdown(contentMap);
+          if (markdown.trim().isNotEmpty) {
+            bodyStr = markdown;
+          } else {
+            String plainText = DocumentConverter.extractTextFromTiptapJson(contentMap);
+            if (plainText.trim().isNotEmpty) {
+              bodyStr = plainText;
+            }
+          }
+        } catch (e) {
+          debugPrint('Failed to convert content to markdown: $e');
         }
+      }
+      
+      // If conversion completely fails, DO NOT overwrite with empty.
+      // Leave bodyStr as null so it doesn't wipe existing local body on merge
+      if (bodyStr != null && bodyStr.trim().isEmpty) {
+        bodyStr = null;
       }
     }
 
@@ -600,10 +638,10 @@ class SupabaseNoteSyncer {
   }
 
   /// Writes a CRDT-merged note back to SQLite.
-  Future<void> _writeMergedNote(String noteId, MergeResult result) async {
+  Future<void> _writeMergedNote(String noteId, MergeResult result, {SyncWriteSource source = SyncWriteSource.remote}) async {
     try {
       final note = Note.fromJson(result.mergedData);
-      await _database.upsertNote(note, source: SyncWriteSource.remote);
+      await _database.upsertNote(note, source: source);
       // TODO: Also persist result.mergedVersions to the field_versions column
     } catch (e) {
       debugPrint('WRITE_MERGED_NOTE_ERROR: $noteId: $e');
@@ -679,16 +717,36 @@ class SupabaseNoteSyncer {
   Map<String, dynamic> _supabaseRowToNoteJson(Map<String, dynamic> row) {
     final Map<String, dynamic> json = Map.from(row);
     
-    String? bodyStr = json['body']?.toString() ?? json[DatabaseConstants.body]?.toString();
-    if (bodyStr == null && json['content'] != null) {
+    String? bodyStr = json['content_markdown']?.toString() ?? json['body']?.toString() ?? json[DatabaseConstants.body]?.toString();
+    if ((bodyStr == null || bodyStr.trim().isEmpty) && json['content'] != null) {
+      Map<String, dynamic>? contentMap;
       if (json['content'] is Map) {
-        bodyStr = DocumentConverter.neutralJsonToDelta(row['content'] as Map<String, dynamic>);
-      } else if (row['content'] is String) {
+        contentMap = json['content'] as Map<String, dynamic>;
+      } else if (json['content'] is String) {
         try {
-          bodyStr = DocumentConverter.neutralJsonToDelta(jsonDecode(json['content']));
-        } catch (_) {
-          bodyStr = json['content'];
+          contentMap = jsonDecode(json['content']);
+        } catch (_) {}
+      }
+
+      if (contentMap != null) {
+        try {
+          String markdown = DocumentConverter.tiptapJsonToMarkdown(contentMap);
+          if (markdown.trim().isNotEmpty) {
+            bodyStr = markdown;
+          } else {
+            String plainText = DocumentConverter.extractTextFromTiptapJson(contentMap);
+            if (plainText.trim().isNotEmpty) {
+              bodyStr = plainText;
+            }
+          }
+        } catch (e) {
+          debugPrint('Failed to convert content to markdown: $e');
         }
+      }
+      
+      // Prevent saving an empty string if conversion failed, to avoid data loss
+      if (bodyStr != null && bodyStr.trim().isEmpty) {
+        bodyStr = null;
       }
     }
 
